@@ -1,0 +1,119 @@
+import { Room, type Client } from '@colyseus/core';
+import { randomInt } from 'node:crypto';
+import {
+  addPlayer, chooseDuel, createGame, movePiece, readyPlayer, resign,
+  restartVote, setConnected, shuffleSetup, swapSetup, viewFor,
+  type ActionResult, type FighterKind,
+} from '../shared/game.js';
+import type { Snapshot } from '../shared/protocol.js';
+
+const isRecord = (value: unknown): value is Record<string, unknown> =>
+  typeof value === 'object' && value !== null && !Array.isArray(value);
+const isCell = (value: unknown): value is number =>
+  typeof value === 'number' && Number.isInteger(value) && value >= 0 && value < 42;
+const isFighter = (value: unknown): value is FighterKind =>
+  value === 'rock' || value === 'paper' || value === 'scissors';
+
+/**
+ * Colyseus owns seats and transport; the complete board stays exclusively here.
+ * Never assign the private GameState to Room.state or broadcast it.
+ * Every outbound snapshot is built by viewFor() for its one recipient.
+ */
+export class RpsRoom extends Room {
+  maxClients = 2;
+  maxMessagesPerSecond = 40;
+  patchRate = null;
+  private game = createGame({ random: () => randomInt(0, 0x100000000) / 0x100000000 });
+  private reconnectSeconds = 120;
+
+  async onCreate(options: { reconnectSeconds?: number }) {
+    this.reconnectSeconds = options.reconnectSeconds ?? 120;
+    await this.setMatchmaking({ private: true, unlisted: true });
+
+    this.onMessage('sync', (client) => this.sendView(client));
+    this.onMessage('shuffle', (client) => this.run(client, () => shuffleSetup(this.game, client.sessionId)));
+    this.onMessage('ready', (client) => this.run(client, () => readyPlayer(this.game, client.sessionId)));
+    this.onMessage('swap', (client, data: unknown) => {
+      if (!isRecord(data) || !isCell(data.from) || !isCell(data.to)) return this.problem(client, 'Ungültige Felder.');
+      const { from, to } = data;
+      this.run(client, () => swapSetup(this.game, client.sessionId, from, to));
+    });
+    this.onMessage('move', (client, data: unknown) => {
+      if (!isRecord(data) || !isCell(data.from) || !isCell(data.to)) return this.problem(client, 'Ungültiger Zug.');
+      if (data.revision !== this.game.revision) return this.problem(client, 'Der Spielstand wurde aktualisiert. Bitte wähle deinen Zug erneut.');
+      const { from, to } = data;
+      this.run(client, () => movePiece(this.game, client.sessionId, from, to));
+    });
+    this.onMessage('duel', (client, data: unknown) => {
+      if (!isRecord(data) || !isFighter(data.kind)) return this.problem(client, 'Wähle Stein, Papier oder Schere.');
+      // Both players can submit concurrently. A global revision check here would
+      // incorrectly reject whichever valid choice happened to arrive second.
+      const duel = this.game.duel;
+      if (!duel || data.duelId !== duel.id || data.round !== duel.round) {
+        return this.problem(client, 'Dieses Duell wurde bereits aktualisiert. Bitte wähle erneut.');
+      }
+      const kind = data.kind;
+      this.run(client, () => chooseDuel(this.game, client.sessionId, kind));
+    });
+    this.onMessage('resign', (client) => this.run(client, () => resign(this.game, client.sessionId)));
+    this.onMessage('restart', (client) => this.run(client, () => restartVote(this.game, client.sessionId)));
+    this.onMessage('*', (client) => this.problem(client, 'Unbekannte Aktion.'));
+  }
+
+  async onJoin(client: Client, options: unknown) {
+    const supplied = isRecord(options) && typeof options.name === 'string' ? options.name : '';
+    const name = Array.from(supplied.replace(/[\u0000-\u001f\u007f]/g, '').trim()).slice(0, 24).join('')
+      || `Spieler ${this.game.players.length + 1}`;
+    const result = addPlayer(this.game, client.sessionId, name);
+    if (!result.ok) throw new Error(result.error);
+    // Keep the same two seats even after a permanent leave. An invitation must
+    // never let a new person take over a departed player's secret army.
+    if (this.game.players.length === 2) await this.lock();
+    this.sendViews();
+  }
+
+  onDrop(client: Client) {
+    if (!this.game.players.some((player) => player.id === client.sessionId)) return;
+    // Also handle a drop during handshake or shutdown, before a seat exists.
+    void this.allowReconnection(client, this.reconnectSeconds).catch(() => {});
+    setConnected(this.game, client.sessionId, false);
+    this.sendViews();
+  }
+
+  onReconnect(client: Client) {
+    setConnected(this.game, client.sessionId, true);
+    this.sendViews();
+  }
+
+  onLeave(client: Client) {
+    if (!this.game.players.some((player) => player.id === client.sessionId)) return;
+    setConnected(this.game, client.sessionId, false);
+    if (this.game.players.length === 2 && this.game.phase !== 'finished') resign(this.game, client.sessionId);
+    this.sendViews();
+  }
+
+  private run(client: Client, action: () => ActionResult) {
+    const result = action();
+    if (!result.ok) return this.problem(client, result.error);
+    this.sendViews();
+  }
+
+  private problem(client: Client, message: string) {
+    client.send('problem', { message });
+    this.sendView(client);
+  }
+
+  private sendView(client: Client) {
+    if (!this.game.players.some((player) => player.id === client.sessionId)) return;
+    const snapshot: Snapshot = {
+      ...viewFor(this.game, client.sessionId),
+      roomId: this.roomId,
+      reconnectSeconds: this.reconnectSeconds,
+    };
+    client.send('snapshot', snapshot);
+  }
+
+  private sendViews() {
+    for (const client of this.clients) this.sendView(client);
+  }
+}
