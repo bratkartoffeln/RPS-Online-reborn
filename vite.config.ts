@@ -1,0 +1,11 @@
+import { defineConfig } from 'vite';
+
+export default defineConfig({
+  server: { host: '0.0.0.0', port: 5173, strictPort: true },
+  build: {
+    outDir: 'dist/client',
+    emptyOutDir: true,
+    rollupOptions: { output: { manualChunks: { phaser: ['phaser'] } } },
+    chunkSizeWarningLimit: 1600,
+  },
+});
