@@ -1,5 +1,6 @@
 import { networkInterfaces } from 'node:os';
 import { startServer } from './app.js';
+import { APP_VERSION } from './version.js';
 
 const port = Number(process.env.PORT || 2567);
 const reconnectSeconds = Number(process.env.RECONNECT_SECONDS || 120);
@@ -12,18 +13,32 @@ const running = await startServer({
   reconnectSeconds,
   allowedOrigins: process.env.ALLOWED_ORIGINS?.split(',').map((value) => value.trim()).filter(Boolean),
 });
-console.log(`\nRPS Arena v0.1\nLokal: http://localhost:${running.port}`);
-for (const addresses of Object.values(networkInterfaces())) {
-  for (const address of addresses ?? []) {
-    if (!address.internal && address.family === 'IPv4') console.log(`LAN:   http://${address.address}:${running.port}`);
-  }
-}
-console.log('Beenden mit Strg+C.\n');
 let stopping = false;
 async function stop() {
   if (stopping) return;
   stopping = true;
-  await running.close();
+  try {
+    await running.close();
+  } catch (error) {
+    console.error('Der Spielserver konnte nicht vollständig beendet werden.', error);
+    process.exitCode = 1;
+  }
 }
+// Install lifecycle hooks before optional status output. An unavailable OS
+// network inventory must never break startup or disable orderly shutdown.
 process.once('SIGINT', stop);
 process.once('SIGTERM', stop);
+
+console.log(`\nRPS Arena v${APP_VERSION}\nLokal: http://localhost:${running.port}`);
+if (process.env.NODE_ENV !== 'production') {
+  try {
+    for (const addresses of Object.values(networkInterfaces())) {
+      for (const address of addresses ?? []) {
+        if (!address.internal && address.family === 'IPv4') console.log(`LAN:   http://${address.address}:${running.port}`);
+      }
+    }
+  } catch {
+    console.warn('LAN-Adressen konnten nicht automatisch ermittelt werden. Der Spielserver läuft trotzdem.');
+  }
+}
+console.log('Beenden mit Strg+C.\n');

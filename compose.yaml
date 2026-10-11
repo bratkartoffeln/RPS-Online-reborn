@@ -1,0 +1,12 @@
+services:
+  rps:
+    build: .
+    init: true
+    restart: unless-stopped
+    environment:
+      NODE_ENV: production
+      HOST: 0.0.0.0
+      PORT: "2567"
+      RECONNECT_SECONDS: "120"
+    ports:
+      - "${RPS_PORT:-2567}:2567"

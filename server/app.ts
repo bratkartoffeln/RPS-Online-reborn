@@ -5,6 +5,7 @@ import type { AddressInfo } from 'node:net';
 import { Server } from '@colyseus/core';
 import { WebSocketTransport } from '@colyseus/ws-transport';
 import { RpsRoom } from './RpsRoom.js';
+import { APP_VERSION } from './version.js';
 
 export interface ServerConfig {
   port?: number;
@@ -15,17 +16,23 @@ export interface ServerConfig {
 }
 
 export async function startServer(config: ServerConfig = {}) {
+  let ready = false;
+  const staticDirectory = config.staticDirectory ?? path.resolve('dist/client');
+  const hasStaticClient = existsSync(path.join(staticDirectory, 'index.html'));
+  if (process.env.NODE_ENV === 'production' && !hasStaticClient) {
+    throw new Error('Der Produktionsbuild fehlt. Vor dem Serverstart npm run build ausführen.');
+  }
   const allowed = new Set(config.allowedOrigins ?? []);
   const transport = new WebSocketTransport({
     maxPayload: 16 * 1024,
     pingInterval: 5000,
     pingMaxRetries: 2,
     beforeUpgrade: (request) => {
+      if (!ready) return new Response('Der Spielserver ist noch nicht bereit oder wird beendet.', { status: 503 });
       const origin = request.headers.get('origin');
       if (allowed.size && origin && !allowed.has(origin)) return new Response('Origin not allowed', { status: 403 });
     },
   });
-  const staticDirectory = config.staticDirectory ?? path.resolve('dist/client');
   const gameServer = new Server({
     transport,
     greet: false,
@@ -33,8 +40,10 @@ export async function startServer(config: ServerConfig = {}) {
     express: (app) => {
       app.disable('x-powered-by');
       app.use((_request, response, next) => { response.setHeader('X-Content-Type-Options', 'nosniff'); next(); });
-      app.get('/health', (_request, response) => response.json({ ok: true, version: '0.1.0' }));
-      if (existsSync(path.join(staticDirectory, 'index.html'))) {
+      app.get('/health', (_request, response) => response.set('Cache-Control', 'no-store').json({ ok: true, version: APP_VERSION }));
+      app.get('/ready', (_request, response) => response.status(ready ? 200 : 503)
+        .set('Cache-Control', 'no-store').json({ ok: ready, version: APP_VERSION }));
+      if (hasStaticClient) {
         app.use(express.static(staticDirectory, { index: false }));
         app.get('/', (_request, response) => response.sendFile(path.join(staticDirectory, 'index.html')));
       } else {
@@ -42,14 +51,24 @@ export async function startServer(config: ServerConfig = {}) {
       }
     },
   });
+  gameServer.onBeforeShutdown(() => { ready = false; });
   gameServer.define('rps', RpsRoom, { reconnectSeconds: config.reconnectSeconds ?? 120 });
   await gameServer.listen(config.port ?? 2567, config.host ?? '0.0.0.0');
+  ready = true;
   const address = transport.server!.address() as AddressInfo;
+  let closePromise: Promise<void> | undefined;
+  const close = () => {
+    // Synchronous readiness change also covers repeated or concurrent SIGTERM
+    // handling while Colyseus asynchronously closes rooms and the transport.
+    ready = false;
+    closePromise ??= gameServer.gracefullyShutdown(false);
+    return closePromise;
+  };
   return {
     gameServer,
     httpServer: transport.server!,
     port: address.port,
     url: `http://127.0.0.1:${address.port}`,
-    close: () => gameServer.gracefullyShutdown(false),
+    close,
   };
 }

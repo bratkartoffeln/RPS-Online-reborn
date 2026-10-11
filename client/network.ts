@@ -1,14 +1,17 @@
-import { Client, ErrorCode, MatchMakeError, ServerError, type Room } from '@colyseus/sdk';
-import type { Snapshot, Problem } from '../shared/protocol';
+import { Client, CloseCode, ErrorCode, MatchMakeError, ServerError, type Room } from '@colyseus/sdk';
+import { SERVER_SHUTDOWN_MESSAGE as SHUTDOWN_MESSAGE, type Snapshot, type Problem, type ServerShutdown } from '../shared/protocol';
 
-export type NetworkStatus = 'idle' | 'connecting' | 'connected' | 'reconnecting' | 'disconnected';
+export type NetworkStatus = 'idle' | 'connecting' | 'connected' | 'reconnecting' | 'disconnected' | 'ended';
+export type SessionEnd = { reason: 'server_shutdown' | 'session_expired'; message: string };
 type Callbacks = {
   onStatus: (status: NetworkStatus) => void;
   onSnapshot: (snapshot: Snapshot) => void;
   onProblem: (message: string) => void;
+  onEnded: (end: SessionEnd) => void;
 };
 
 const SESSION_PREFIX = 'rps-arena:reconnect:';
+const EXPIRED_MESSAGE = 'Dieser Raum oder deine gespeicherte Sitzung ist nicht mehr verfügbar. Die vorige Partie lässt sich nicht fortsetzen. Du kannst eine neue Partie erstellen oder mit einem neuen Link beitreten.';
 
 export function readSession(key: string): string | null {
   try { return sessionStorage.getItem(key); } catch { return null; }
@@ -36,9 +39,13 @@ function isInvalidSession(error: unknown): boolean {
   return error instanceof Error && error.message.startsWith('Invalid reconnection token format.\n');
 }
 
+function isServerShutdown(error: unknown): boolean {
+  return (error instanceof MatchMakeError || error instanceof ServerError) && error.code === CloseCode.SERVER_SHUTDOWN;
+}
+
 function serverEndpoint(): string {
-  if (import.meta.env.VITE_SERVER_URL) return import.meta.env.VITE_SERVER_URL;
-  if (import.meta.env.DEV) {
+  if (import.meta.env?.VITE_SERVER_URL) return import.meta.env.VITE_SERVER_URL;
+  if (import.meta.env?.DEV) {
     const endpoint = new URL(window.location.href);
     endpoint.port = '2567';
     return endpoint.origin;
@@ -88,6 +95,10 @@ export class RpsConnection {
       this.attach(room, generation);
     } catch (error) {
       if (generation !== this.generation) return;
+      if (isServerShutdown(error)) {
+        this.endSession('server_shutdown');
+        throw new Error(SHUTDOWN_MESSAGE);
+      }
       this.setStatus('idle');
       throw new Error(friendlyError(error));
     }
@@ -102,6 +113,10 @@ export class RpsConnection {
       this.attach(room, generation);
     } catch (error) {
       if (generation !== this.generation) return;
+      if (isServerShutdown(error) || isInvalidSession(error)) {
+        this.endSession(isServerShutdown(error) ? 'server_shutdown' : 'session_expired');
+        throw new Error(isServerShutdown(error) ? SHUTDOWN_MESSAGE : EXPIRED_MESSAGE);
+      }
       this.setStatus('idle');
       throw new Error(friendlyError(error));
     }
@@ -124,7 +139,10 @@ export class RpsConnection {
       return true;
     } catch (error) {
       if (generation !== this.generation) return false;
-      if (isInvalidSession(error)) removeSession(SESSION_PREFIX + roomCode);
+      if (isServerShutdown(error) || isInvalidSession(error)) {
+        this.endSession(isServerShutdown(error) ? 'server_shutdown' : 'session_expired');
+        throw new Error(isServerShutdown(error) ? SHUTDOWN_MESSAGE : EXPIRED_MESSAGE);
+      }
       this.setStatus(this.room ? 'disconnected' : 'idle');
       throw new Error(friendlyError(error));
     }
@@ -155,7 +173,14 @@ export class RpsConnection {
     room.onMessage<Problem>('problem', (problem) => {
       if (current()) this.callbacks.onProblem(problem.message || 'Diese Aktion ist gerade nicht möglich.');
     });
-    room.onDrop(() => {
+    room.onMessage<ServerShutdown>('server_shutdown', (shutdown) => {
+      if (current()) this.endSession('server_shutdown', shutdown?.message);
+    });
+    room.onDrop((code) => {
+      if (current() && code === CloseCode.SERVER_SHUTDOWN) {
+        this.endSession('server_shutdown');
+        return;
+      }
       if (current()) this.setStatus('reconnecting');
     });
     room.onReconnect(() => {
@@ -169,17 +194,43 @@ export class RpsConnection {
         room.send('sync');
       });
     });
-    room.onLeave(() => {
+    room.onLeave((code) => {
       if (!current()) return;
+      if (code === CloseCode.SERVER_SHUTDOWN) {
+        this.endSession('server_shutdown');
+        return;
+      }
       this.room = null;
       this.setStatus('disconnected');
     });
-    room.onError((_code, message) => {
-      if (current() && message) this.callbacks.onProblem(friendlyError(new Error(message)));
+    room.onError((code, message) => {
+      if (!current()) return;
+      if (code === CloseCode.SERVER_SHUTDOWN) {
+        this.endSession('server_shutdown');
+        return;
+      }
+      if (message && isInvalidSession(new ServerError(code, message))) {
+        this.endSession('session_expired');
+        return;
+      }
+      if (message) this.callbacks.onProblem(friendlyError(new Error(message)));
     });
     this.setStatus('connected');
     // This also recovers a snapshot sent before handlers could be attached.
     room.send('sync');
+  }
+
+  private endSession(reason: SessionEnd['reason'], message?: string): void {
+    const room = this.room;
+    this.generation += 1;
+    this.room = null;
+    if (this.roomCode) removeSession(SESSION_PREFIX + this.roomCode);
+    this.roomCode = null;
+    const fallback = reason === 'server_shutdown' ? SHUTDOWN_MESSAGE : EXPIRED_MESSAGE;
+    const detail = typeof message === 'string' && message.trim() ? message.slice(0, 500) : fallback;
+    this.callbacks.onEnded({ reason, message: detail });
+    this.setStatus('ended');
+    if (room) void this.closeRoom(room).catch(() => {});
   }
 
   async leave(): Promise<void> {

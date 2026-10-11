@@ -1,6 +1,6 @@
 {
   "name": "rps-remake",
-  "version": "0.1.0",
+  "version": "0.2.0",
   "private": true,
   "type": "module",
   "description": "RPS Arena – ein eigenständiger Browser-Prototyp mit privaten Zweispieler-Partien.",
@@ -10,9 +10,11 @@
     "dev:server": "node --watch --import tsx server/index.ts",
     "dev:client": "vite --host 0.0.0.0",
     "check": "tsc --noEmit && tsc -p tsconfig.server.json --noEmit",
-    "test": "node --import tsx --test tests/*.test.ts",
+    "test": "node --import tsx --test tests/*.test.ts client/*.test.ts",
     "build": "npm run check && vite build && tsc -p tsconfig.server.json",
-    "start": "node dist/server/server/index.js"
+    "start": "node dist/server/server/index.js",
+    "check:online": "node scripts/check-online.mjs",
+    "check:docker": "node scripts/check-docker.mjs"
   },
   "dependencies": {
     "@colyseus/core": "0.18.18",

@@ -1,8 +1,22 @@
-# RPS Arena – Prototyp v0.1
+# RPS Arena – Prototyp v0.2
 
 Ein eigenständiges Browser-Remake des taktischen Stein-Papier-Schere-Prinzips:
 zwei Spieler, verdeckte Figuren, eine Flagge und eine Falle pro Seite. Diese
-erste Version ist für einen lokalen Start und Partien im LAN vorbereitet.
+Version funktioniert lokal und im LAN und enthält nun die Vorbereitung für
+den Onlinebetrieb. **Eine Internetadresse wurde noch nicht bereitgestellt.**
+
+## Neu in Version 0.2
+
+- Render-Blueprint für eine einzelne Docker-Webinstanz in Frankfurt.
+- Geprüfte Bereitschafts- und Versionsantwort für den Hostingdienst.
+- Verständliche Beendigung bei Serverneustart oder abgelaufenem Raum;
+  vorübergehende Netzwerkstörungen bleiben wiederaufnehmbar.
+- Automatische Prüfung einer lokalen oder bereitgestellten Version mit zwei
+  Spielverbindungen: `npm run check:online -- https://DEIN-DIENST.onrender.com`.
+- Containerprüfung und GitHub-Workflow einschließlich Produktionsstart.
+
+**Der vollständige Weg zur Onlineadresse steht in [ONLINE-START.md](ONLINE-START.md).**
+Die Spielregeln und das grundlegende Layout bleiben gegenüber v0.1 gleich.
 
 ## Schnellstart unter Windows, Linux oder macOS
 
@@ -80,7 +94,7 @@ Es ist keine Router-Portweiterleitung für eine reine LAN-Partie erforderlich.
 - Selbst gezeichnete Vektorsymbole; keine externen Grafik- oder Font-CDNs.
 - Regeltests und Integrationstests mit echten Colyseus-Clients.
 
-## Vorläufige Regeln von v0.1
+## Vorläufige Regeln
 
 Dies ist ein **spielbarer Prototyp**, noch keine vollständig verifizierte
 1:1-Rekonstruktion aller historischen ICQ-Sonderregeln. Folgende Regeln sind
@@ -163,15 +177,21 @@ eigenen Server an einem automatisch gewählten freien Port.
 
 ### Prüfstand dieser Lieferung
 
-- 24 automatisierte Tests bestanden: Spielregeln und Netzwerkabläufe mit
+- 36 automatisierte Tests bestanden: Spielregeln und Netzwerkabläufe mit
   getrennten Clients, einschließlich Geheimhaltung der Figuren, gleichzeitiger
-  Duelleingaben und Wiederbeitritt.
+  Duelleingaben, Wiederbeitritt, Serverneustart und abgelaufenen Sitzungen.
 - TypeScript-Prüfung und Produktionsbuild erfolgreich.
-- Der gebaute Server liefert Startseite, JavaScript, CSS und Health-Endpunkt
-  erfolgreich aus.
-- Darstellung und Interaktion wurden hier noch nicht in einem echten Browser
-  geprüft. Ebenso stehen ein Test auf zwei physischen LAN-Geräten sowie die
-  Ausführung des Windows-Startskripts und des Dockerbaus noch aus.
+- `render.yaml` gegen das offizielle Render-JSON-Schema validiert.
+- Den gebauten Server in einer frischen Laufzeit mit `npm ci --omit=dev`
+  gestartet: Version, `/ready`, Browserdateien, zwei Spielverbindungen, Zug und
+  Wiederbeitritt erfolgreich geprüft. Geordnetes Beenden per `SIGTERM` endet
+  mit Exitcode 0. Dafür waren keine TypeScript-Quelldateien nötig.
+- Version 0.1 wurde vom Nutzer erfolgreich im Browser und mit zwei physischen
+  LAN-Geräten gespielt. Die neuen Statusanzeigen von v0.2 wurden automatisiert,
+  noch nicht in einem echten Browser geprüft.
+- Die Docker-Engine und ein Render-Zugang stehen in dieser Arbeitsumgebung
+  nicht bereit. Der tatsächliche Containerbau und der öffentliche HTTPS-/WSS-
+  Test müssen deshalb noch über die mitgelieferten Prüfungen ausgeführt werden.
 
 ## Konfiguration
 
@@ -193,22 +213,23 @@ $env:PORT = "3000"
 npm start
 ```
 
-## Nächster Schritt: Internetbetrieb
+## Internetbetrieb
 
 Dieselben Dateien können auf einen Host mit einem dauerhaft laufenden
 Node.js-Prozess umziehen. Browserdateien und Multiplayer laufen auf derselben
 Domain. Für den öffentlichen Zugriff HTTPS und WSS über den Host beziehungsweise
 einen Reverse Proxy einrichten, der WebSocket-Upgrades unterstützt.
 
-Eine Dockerdatei ist als Vorbereitung enthalten:
+Eine Dockerdatei mit Tests, Produktionsbuild und Bereitschaftsprüfung ist enthalten:
 
 ```sh
 docker build -t rps-arena .
 docker run --rm -p 2567:2567 rps-arena
 ```
 
-Der Dockerbau ist eine Bereitstellungsvorlage; er wurde in dieser Umgebung
-nicht ausgeführt. Es gibt noch keinen bereitgestellten Internetserver,
+`render.yaml` konfiguriert die Bereitstellung; `ONLINE-START.md` beschreibt
+GitHub, Render, Kosten, Prüfung und spätere Updates. Der Dockerbau wurde in
+dieser Umgebung nicht ausgeführt. Es gibt noch keinen bereitgestellten Internetserver,
 keine Konten, öffentliche Spielersuche, Rangliste, KI oder dauerhafte
 Spielstanddatenbank. Diese Funktionen sind getrennte Ausbauschritte.
 

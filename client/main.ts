@@ -3,14 +3,14 @@ import type { FighterKind, PlayerView } from '../shared/game';
 import type { Snapshot } from '../shared/protocol';
 import { ArenaBoard, coordinate, kindName } from './board';
 import { escapeHtml as esc, icon } from './icons';
-import { RpsConnection, readSession, roomCodeFrom, writeSession, type NetworkStatus } from './network';
+import { RpsConnection, readSession, roomCodeFrom, writeSession, type NetworkStatus, type SessionEnd } from './network';
 
 const app = document.querySelector<HTMLDivElement>('#app')!;
 app.innerHTML = [
   '<div class="app-shell" id="shell">',
   '<header class="app-header"><a class="brand" href="' + esc(location.pathname) + '" aria-label="RPS Arena Startseite" data-action="home">',
   '<span class="brand-emblem">' + icon('rock', '', 29) + '</span><span><span class="brand-title">RPS ARENA</span><span class="brand-tagline" style="display:block">Stein. Papier. Schere.</span></span></a>',
-  '<div class="header-right"><span class="header-note" id="header-note"><span class="status-dot"></span>PRIVATE PARTIEN</span><span class="version">v0.1</span></div></header>',
+  '<div class="header-right"><span class="header-note" id="header-note"><span class="status-dot"></span>PRIVATE PARTIEN</span><span class="version">v' + esc(__APP_VERSION__) + '</span></div></header>',
   '<div class="intro-row"><div><p class="eyebrow" id="page-eyebrow">DAS TAKTISCHE DUELL FÜR ZWEI</p><h1 class="page-title" id="page-title">Dein Zug beginnt hier.</h1></div><p class="page-subtitle" id="page-subtitle">Figuren verdecken.<br>Gedanken lesen. Flagge holen.</p></div>',
   '<div class="notice" id="notice" role="alert" hidden></div>',
   '<main class="arena-grid"><section class="play-panel" aria-label="Spielbereich">',
@@ -19,7 +19,7 @@ app.innerHTML = [
   '<div class="preview-banner" id="preview-banner">' + icon('unknown', '', 18) + '<span>Ein guter Plan bleibt erst einmal geheim.</span></div></div>',
   '<div class="board-footer"><span class="team-key"><span class="team-square"></span><span id="own-count">Dein Team</span></span><span class="team-key enemy"><span class="team-square"></span><span id="enemy-count">Gegner</span></span><span class="board-hint" id="board-hint">Erstelle oder betrete einen Raum.</span></div></section>',
   '<aside class="side-column" id="sidebar" aria-label="Spielsteuerung"></aside></main>',
-  '<footer class="footer"><span>' + icon('info', '', 13) + 'Ein unabhängiges Remake · vorläufige Regeln für Version 0.1</span><span>Figur anklicken oder <kbd>↑</kbd><kbd>←</kbd><kbd>↓</kbd><kbd>→</kbd> + <kbd>Enter</kbd></span></footer></div>',
+  '<footer class="footer"><span>' + icon('info', '', 13) + 'Ein unabhängiges Remake · vorläufige Regeln für Version ' + esc(__APP_VERSION__) + '</span><span>Figur anklicken oder <kbd>↑</kbd><kbd>←</kbd><kbd>↓</kbd><kbd>→</kbd> + <kbd>Enter</kbd></span></footer></div>',
   '<p class="sr-only" id="board-help">Mit den Pfeiltasten ein Feld wählen. Mit Enter oder Leertaste eine eigene Figur und anschließend ein Zielfeld wählen. Escape hebt die Auswahl auf. In der Aufstellung tauschen zwei eigene Figuren die Plätze. Im Spiel sind grün markierte Felder erlaubte Ziele.</p>',
   '<p class="sr-only" id="board-focus" aria-live="polite"></p><p class="sr-only" id="announcement" aria-live="polite" aria-atomic="true"></p>',
   '<div class="toast" id="toast" role="status" aria-live="polite"></div><div id="modal-root"></div>',
@@ -28,6 +28,7 @@ app.innerHTML = [
 const el = <T extends HTMLElement = HTMLElement>(id: string) => document.getElementById(id) as T;
 let view: Snapshot | null = null;
 let networkStatus: NetworkStatus = 'idle';
+let sessionEnd: SessionEnd | null = null;
 let selected: number | null = null;
 let pending = false;
 let pendingTimeout: ReturnType<typeof setTimeout> | undefined;
@@ -42,6 +43,7 @@ let lastModalFocus: HTMLElement | null = null;
 const connection = new RpsConnection({
   onStatus(status) {
     networkStatus = status;
+    if (status === 'connecting' || status === 'connected') sessionEnd = null;
     if (status === 'reconnecting') {
       clearPending();
       el('announcement').textContent = 'Verbindung unterbrochen. Die Arena versucht, dich wieder zu verbinden.';
@@ -51,6 +53,7 @@ const connection = new RpsConnection({
   onSnapshot(snapshot) {
     if (view?.phase !== snapshot.phase) selected = null;
     view = snapshot;
+    sessionEnd = null;
     inputRoom = snapshot.roomId;
     clearPending();
     notice = '';
@@ -69,6 +72,16 @@ const connection = new RpsConnection({
     render();
     toast(message, true);
     connection.send('sync');
+  },
+  onEnded(end) {
+    sessionEnd = end;
+    notice = end.message;
+    inputRoom = '';
+    selected = null;
+    clearPending();
+    setRoomUrl(null);
+    closeModal();
+    el('announcement').textContent = end.message;
   },
 });
 
@@ -166,9 +179,9 @@ function lobbyMarkup(): string {
   const disabled = busy ? ' disabled' : '';
   return [
     '<section class="card lobby-card"><div class="lobby-intro"><p class="eyebrow">DEIN PRIVATER SPIELRAUM</p><h2 class="lobby-title">Zwei Plätze.<br>Ein gutes Duell.</h2>',
-    '<p class="body-copy">' + (inputRoom ? 'Du hast einen Raumcode. Gib deinen Namen ein und tritt der Partie bei.' : 'Erstelle eine Partie und lade jemanden über deinen Link ein.') + '</p></div>',
+    '<p class="body-copy">' + (sessionEnd ? 'Die vorige Partie ist beendet. Erstelle eine neue Partie oder tritt einem anderen Raum bei.' : inputRoom ? 'Du hast einen Raumcode. Gib deinen Namen ein und tritt der Partie bei.' : 'Erstelle eine Partie und lade jemanden über deinen Link ein.') + '</p></div>',
     '<form id="create-form"><label class="field"><span>Dein Spielername</span><input id="player-name" name="player-name" autocomplete="nickname" placeholder="Wie heißt du?" maxlength="24" value="' + esc(name) + '"' + disabled + ' /></label>',
-    '<button class="primary-button full-width action-button" type="submit" id="create-button"' + disabled + '>' + (busy ? '<span class="spinner" aria-hidden="true"></span> Verbinde …' : 'Raum erstellen ' + icon('arrow', 'button-arrow', 18)) + '</button></form>',
+    '<button class="primary-button full-width action-button" type="submit" id="create-button"' + disabled + '>' + (busy ? '<span class="spinner" aria-hidden="true"></span> Verbinde …' : (sessionEnd ? 'Neue Partie erstellen ' : 'Raum erstellen ') + icon('arrow', 'button-arrow', 18)) + '</button></form>',
     '<form class="join-form" id="join-form"><div class="form-divider">oder einem Raum beitreten</div><label class="field join-field"><span>Raumcode oder Einladungslink</span><input id="room-input" name="room-code" autocomplete="off" autocapitalize="off" spellcheck="false" placeholder="Code oder Link einfügen" value="' + esc(inputRoom) + '"' + disabled + ' /></label>',
     '<button class="secondary-button full-width action-button" type="submit" id="join-button"' + disabled + '>' + icon('link', '', 16) + 'Raum beitreten</button></form>',
     '<p class="trust-note">' + icon('check', '', 13) + 'Kein Konto nötig. Nur dein Name und ein Mitspieler.</p></section>',
@@ -177,12 +190,14 @@ function lobbyMarkup(): string {
 }
 
 function playerMarkup(player: PlayerView | undefined, own: boolean): string {
-  if (!player) return '<div class="player-row enemy empty"><span class="player-avatar">' + icon('unknown', '', 17) + '</span><div class="player-info"><p class="player-name">Platz noch frei</p><p class="player-state">Teile deinen Einladungslink.</p></div><span class="waiting-dots" aria-hidden="true">···</span></div>';
+  if (!player) return '<div class="player-row enemy empty"><span class="player-avatar">' + icon('unknown', '', 17) + '</span><div class="player-info"><p class="player-name">' + (networkStatus === 'ended' ? 'Kein Mitspieler' : 'Platz noch frei') + '</p><p class="player-state">' + (networkStatus === 'ended' ? 'Partie beendet.' : 'Teile deinen Einladungslink.') + '</p></div><span class="waiting-dots" aria-hidden="true">···</span></div>';
   const active = view?.currentTurn === player.id && view?.phase === 'playing';
   const preparing = view?.phase === 'waiting' || view?.phase === 'setup';
-  let status = !player.connected ? 'Verbindung unterbrochen' : preparing ? player.ready ? 'Bereit für die Partie' : 'Stellt das Team auf' : active ? 'Am Zug' : view?.phase === 'finished' ? player.restartRequested ? 'Bereit für die Revanche' : 'Partie beendet' : 'Verbunden';
-  if (view?.phase === 'duel' && player.connected) status = view.duel?.choiceLocked[player.id] ? 'Wahl verdeckt abgegeben' : 'Wählt im Duell';
-  const marker = player.connected && player.ready && preparing ? icon('check', 'ready-icon', 17) : '<span class="status-dot ' + (player.connected ? '' : 'offline') + '" aria-label="' + (player.connected ? 'Verbunden' : 'Getrennt') + '"></span>';
+  const ended = networkStatus === 'ended';
+  let status = ended ? 'Partie beendet' : !player.connected ? 'Verbindung unterbrochen' : preparing ? player.ready ? 'Bereit für die Partie' : 'Stellt das Team auf' : active ? 'Am Zug' : view?.phase === 'finished' ? player.restartRequested ? 'Bereit für die Revanche' : 'Partie beendet' : 'Verbunden';
+  if (view?.phase === 'duel' && player.connected && !ended) status = view.duel?.choiceLocked[player.id] ? 'Wahl verdeckt abgegeben' : 'Wählt im Duell';
+  const connected = player.connected && !ended;
+  const marker = connected && player.ready && preparing ? icon('check', 'ready-icon', 17) : '<span class="status-dot ' + (connected ? '' : 'offline') + '" aria-label="' + (connected ? 'Verbunden' : 'Getrennt') + '"></span>';
   return '<div class="player-row ' + (own ? '' : 'enemy') + '"><span class="player-avatar">' + icon(own ? 'flag' : 'unknown', '', 17) + '</span><div class="player-info"><p class="player-name">' + esc(player.name) + (own ? '<span class="player-you">du</span>' : '') + '</p><p class="player-state">' + status + '</p></div>' + marker + '</div>';
 }
 
@@ -195,6 +210,10 @@ function phaseCard(): string {
   const own = me();
   const other = opponent();
   const disabled = pending || networkStatus !== 'connected' ? ' disabled' : '';
+  if (networkStatus === 'ended' && sessionEnd) {
+    return phaseSection('PARTIE BEENDET', sessionEnd.reason === 'server_shutdown' ? 'Der Server startet neu.' : 'Dieser Raum ist beendet.', sessionEnd.message,
+      '<div class="button-row"><button class="primary-button" data-action="new-game" id="new-game-button">Neue Partie</button><button class="secondary-button" data-action="leave" id="ended-lobby-button">Zur Lobby</button></div>', 'paused');
+  }
   if (networkStatus === 'disconnected' || networkStatus === 'idle') {
     return phaseSection('VERBINDUNG BEENDET', 'Die Arena ist nicht erreichbar.', 'Versuche, in deine Partie zurückzukehren. Eine unterbrochene Sitzung bleibt bis zu ' + view.reconnectSeconds + ' Sekunden reserviert.', '<div class="button-row"><button class="primary-button" data-action="retry" id="retry-button">Erneut verbinden</button></div>', 'paused');
   }
@@ -237,20 +256,23 @@ function gameMarkup(): string {
   if (!view) return '';
   const recent = view.log.slice(-4).reverse();
   const connected = networkStatus === 'connected';
+  const ended = networkStatus === 'ended';
+  const connectionLabel = connected ? 'VERBUNDEN' : ended ? 'BEENDET' : networkStatus === 'reconnecting' || networkStatus === 'connecting' ? 'VERBINDE …' : 'GETRENNT';
   return [
-    '<section class="card room-card"><div class="card-heading"><p class="eyebrow">PRIVATER RAUM</p><span class="pill ' + (connected ? 'accent' : 'orange') + '">' + (connected ? 'VERBUNDEN' : 'VERBINDE …') + '</span></div>',
-    '<div class="room-code-row"><code class="room-code" title="Raumcode">' + esc(view.roomId) + '</code><button class="icon-button" data-action="copy" id="copy-button" aria-label="Einladungslink kopieren" title="Einladungslink kopieren">' + icon('copy', '', 17) + '</button></div>',
-    '<p class="room-help">Kopiere den Link und lade deinen Mitspieler ein.</p><div class="players">' + playerMarkup(me(), true) + playerMarkup(opponent(), false) + '</div></section>',
+    '<section class="card room-card"><div class="card-heading"><p class="eyebrow">PRIVATER RAUM</p><span class="pill ' + (connected ? 'accent' : 'orange') + '">' + connectionLabel + '</span></div>',
+    '<div class="room-code-row"><code class="room-code" title="Raumcode">' + esc(view.roomId) + '</code><button class="icon-button" data-action="copy" id="copy-button" aria-label="Einladungslink kopieren" title="Einladungslink kopieren"' + (ended ? ' disabled' : '') + '>' + icon('copy', '', 17) + '</button></div>',
+    '<p class="room-help">' + (ended ? 'Dieser Raum ist beendet. Starte eine neue Partie.' : 'Kopiere den Link und lade deinen Mitspieler ein.') + '</p><div class="players">' + playerMarkup(me(), true) + playerMarkup(opponent(), false) + '</div></section>',
     phaseCard(),
-    '<section class="card history-card"><div class="card-heading"><h2>Was gerade passiert</h2><span class="eyebrow">LIVE</span></div><ol class="move-log">' + (recent.length ? recent.map((entry) => '<li>' + esc(entry) + '</li>').join('') : '<li>Deine Arena wartet auf den ersten Zug.</li>') + '</ol></section>',
+    '<section class="card history-card"><div class="card-heading"><h2>' + (ended ? 'Die letzte Partie' : 'Was gerade passiert') + '</h2><span class="eyebrow">' + (ended ? 'VERLAUF' : 'LIVE') + '</span></div><ol class="move-log">' + (recent.length ? recent.map((entry) => '<li>' + esc(entry) + '</li>').join('') : '<li>Deine Arena wartet auf den ersten Zug.</li>') + '</ol></section>',
     '<div class="game-actions"><button class="text-button" data-action="leave" id="leave-button">' + icon('leave', '', 13) + 'Zur Lobby</button>',
-    view.phase === 'playing' || view.phase === 'duel' ? '<button class="text-button danger" data-action="resign" id="resign-button"' + (!connected || pending ? ' disabled' : '') + '>Partie aufgeben ' + icon('close', '', 12) + '</button>' : '',
+    !ended && (view.phase === 'playing' || view.phase === 'duel') ? '<button class="text-button danger" data-action="resign" id="resign-button"' + (!connected || pending ? ' disabled' : '') + '>Partie aufgeben ' + icon('close', '', 12) + '</button>' : '',
     '</div>', rulesCard(),
   ].join('');
 }
 
 function boardHint(): string {
   if (!view) return 'Erstelle oder betrete einen Raum.';
+  if (networkStatus === 'ended') return 'Diese Partie ist beendet.';
   if (pending) return 'Zug wird bestätigt …';
   if (view.paused || networkStatus !== 'connected') return 'Die Partie pausiert.';
   if (view.phase === 'waiting' || view.phase === 'setup') return me()?.ready ? 'Deine Aufstellung steht.' : selected !== null ? 'Zweite eigene Figur wählen.' : 'Zwei Figuren zum Tauschen wählen.';
@@ -267,9 +289,9 @@ function render(): void {
   if (detailsOpen) el('sidebar').querySelector<HTMLDetailsElement>('.rules-details')!.open = true;
   if (focusId) el(focusId)?.focus({ preventScroll: true });
   el('preview-banner').hidden = !!view;
-  const paused = networkStatus === 'reconnecting' || networkStatus === 'disconnected';
-  el('header-note').innerHTML = '<span class="status-dot ' + (paused ? 'offline' : '') + '"></span>' + (view ? networkStatus === 'connected' ? 'VERBUNDEN' : 'VERBINDUNG PAUSIERT' : 'PRIVATE PARTIEN');
-  el('page-title').textContent = view ? view.phase === 'waiting' || view.phase === 'setup' ? 'Die Aufstellung zählt.' : view.phase === 'finished' ? 'Die Runde ist entschieden.' : 'Jeder Zug zählt.' : 'Dein Zug beginnt hier.';
+  const paused = networkStatus === 'reconnecting' || networkStatus === 'disconnected' || networkStatus === 'ended';
+  el('header-note').innerHTML = '<span class="status-dot ' + (paused ? 'offline' : '') + '"></span>' + (networkStatus === 'ended' ? 'PARTIE BEENDET' : view ? networkStatus === 'connected' ? 'VERBUNDEN' : 'VERBINDUNG PAUSIERT' : 'PRIVATE PARTIEN');
+  el('page-title').textContent = view ? networkStatus === 'ended' ? 'Diese Partie ist beendet.' : view.phase === 'waiting' || view.phase === 'setup' ? 'Die Aufstellung zählt.' : view.phase === 'finished' ? 'Die Runde ist entschieden.' : 'Jeder Zug zählt.' : 'Dein Zug beginnt hier.';
   el('page-eyebrow').textContent = view ? 'DEINE PRIVATE ARENA' : 'DAS TAKTISCHE DUELL FÜR ZWEI';
   el('page-subtitle').innerHTML = view ? 'Ein Plan. Ein Gegner.<br>Und eine Flagge.' : 'Figuren verdecken.<br>Gedanken lesen. Flagge holen.';
   el('board-title').textContent = view ? 'Dein Spielfeld' : 'Das Spielfeld';
@@ -277,6 +299,7 @@ function render(): void {
   const badge = el('board-phase');
   badge.className = 'pill accent';
   if (!view) badge.textContent = 'DEINE ARENA';
+  else if (networkStatus === 'ended') { badge.textContent = 'BEENDET'; badge.className = 'pill orange'; }
   else if (networkStatus !== 'connected' || view.paused) { badge.textContent = 'PAUSE'; badge.className = 'pill orange'; }
   else if (view.phase === 'setup' || view.phase === 'waiting') badge.textContent = 'AUFSTELLUNG';
   else if (view.phase === 'finished') badge.textContent = 'BEENDET';
@@ -313,7 +336,7 @@ function playerName(): string | null {
 }
 
 async function begin(action: 'create' | 'join'): Promise<void> {
-  if (networkStatus !== 'idle' && networkStatus !== 'disconnected') return;
+  if (networkStatus !== 'idle' && networkStatus !== 'disconnected' && networkStatus !== 'ended') return;
   const chosenName = playerName();
   if (!chosenName) return;
   inputRoom = el<HTMLInputElement>('room-input').value.trim();
@@ -332,7 +355,7 @@ async function begin(action: 'create' | 'join'): Promise<void> {
 }
 
 async function copyInvitation(): Promise<void> {
-  if (!view) return;
+  if (!view || networkStatus === 'ended') return;
   const url = new URL(location.href);
   url.searchParams.set('room', view.roomId);
   url.hash = '';
@@ -376,6 +399,7 @@ function closeModal(): void {
 
 async function leaveRoom(): Promise<void> {
   view = null;
+  sessionEnd = null;
   selected = null;
   inputRoom = '';
   notice = '';
@@ -386,9 +410,19 @@ async function leaveRoom(): Promise<void> {
 }
 
 function requestLeave(): void {
-  if (view && (view.phase === 'playing' || view.phase === 'duel')) {
+  if (networkStatus !== 'ended' && view && (view.phase === 'playing' || view.phase === 'duel')) {
     confirm('Zur Lobby zurück?', 'Wenn du die laufende Partie verlässt, gewinnt dein Gegner. Du kannst anschließend einen neuen Raum erstellen.', 'Partie verlassen', () => { connection.send('resign'); void leaveRoom(); });
   } else void leaveRoom();
+}
+
+async function newGame(): Promise<void> {
+  const chosenName = (me()?.name ?? name).trim();
+  await leaveRoom();
+  name = chosenName;
+  if (!chosenName) { el('player-name').focus(); return; }
+  writeSession('rps-arena:name', chosenName);
+  try { await connection.create(chosenName); }
+  catch (error) { notice = error instanceof Error ? error.message : 'Der neue Raum konnte nicht erstellt werden. Bitte versuche es erneut.'; render(); }
 }
 
 async function retry(): Promise<void> {
@@ -425,6 +459,7 @@ app.addEventListener('click', (event) => {
   if (action === 'duel' && view?.duel) send('duel', { kind: button.dataset.kind as FighterKind, duelId: view.duel.id, round: view.duel.round });
   if (action === 'resign') confirm('Diese Partie aufgeben?', 'Dein Gegner gewinnt diese Runde. Danach könnt ihr im selben Raum eine Revanche starten.', 'Partie aufgeben', () => send('resign'));
   if (action === 'leave') requestLeave();
+  if (action === 'new-game') void newGame();
   if (action === 'retry') void retry();
   if (action === 'cancel-modal') closeModal();
   if (action === 'confirm-modal') { const callback = confirmAction; closeModal(); callback?.(); }

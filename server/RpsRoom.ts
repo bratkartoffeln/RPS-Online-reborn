@@ -1,11 +1,11 @@
-import { Room, type Client } from '@colyseus/core';
+import { CloseCode, Room, type Client } from '@colyseus/core';
 import { randomInt } from 'node:crypto';
 import {
   addPlayer, chooseDuel, createGame, movePiece, readyPlayer, resign,
   restartVote, setConnected, shuffleSetup, swapSetup, viewFor,
   type ActionResult, type FighterKind,
 } from '../shared/game.js';
-import type { Snapshot } from '../shared/protocol.js';
+import { SERVER_SHUTDOWN_MESSAGE, type ServerShutdown, type Snapshot } from '../shared/protocol.js';
 
 const isRecord = (value: unknown): value is Record<string, unknown> =>
   typeof value === 'object' && value !== null && !Array.isArray(value);
@@ -25,6 +25,19 @@ export class RpsRoom extends Room {
   patchRate = null;
   private game = createGame({ random: () => randomInt(0, 0x100000000) / 0x100000000 });
   private reconnectSeconds = 120;
+  private shuttingDown = false;
+
+  override onBeforeShutdown() {
+    if (this.shuttingDown) return;
+    this.shuttingDown = true;
+    const message: ServerShutdown = { message: SERVER_SHUTDOWN_MESSAGE };
+    for (const client of this.clients) client.send('server_shutdown', message);
+    // Close after the terminal message using Colyseus' non-retrying close code.
+    // Pending reconnection seats are also discarded by disconnect().
+    void this.disconnect(CloseCode.SERVER_SHUTDOWN).catch((error: unknown) => {
+      console.error('Ein Spielraum konnte beim Serverstopp nicht geschlossen werden.', error);
+    });
+  }
 
   async onCreate(options: { reconnectSeconds?: number }) {
     this.reconnectSeconds = options.reconnectSeconds ?? 120;
@@ -61,6 +74,7 @@ export class RpsRoom extends Room {
   }
 
   async onJoin(client: Client, options: unknown) {
+    if (this.shuttingDown) throw new Error(SERVER_SHUTDOWN_MESSAGE);
     const supplied = isRecord(options) && typeof options.name === 'string' ? options.name : '';
     const name = Array.from(supplied.replace(/[\u0000-\u001f\u007f]/g, '').trim()).slice(0, 24).join('')
       || `Spieler ${this.game.players.length + 1}`;
@@ -73,6 +87,7 @@ export class RpsRoom extends Room {
   }
 
   onDrop(client: Client) {
+    if (this.shuttingDown) return;
     if (!this.game.players.some((player) => player.id === client.sessionId)) return;
     // Also handle a drop during handshake or shutdown, before a seat exists.
     void this.allowReconnection(client, this.reconnectSeconds).catch(() => {});
@@ -81,11 +96,14 @@ export class RpsRoom extends Room {
   }
 
   onReconnect(client: Client) {
+    if (this.shuttingDown) return;
     setConnected(this.game, client.sessionId, true);
     this.sendViews();
   }
 
   onLeave(client: Client) {
+    // A server restart is not a resignation and must not award a false winner.
+    if (this.shuttingDown) return;
     if (!this.game.players.some((player) => player.id === client.sessionId)) return;
     setConnected(this.game, client.sessionId, false);
     if (this.game.players.length === 2 && this.game.phase !== 'finished') resign(this.game, client.sessionId);
@@ -93,17 +111,20 @@ export class RpsRoom extends Room {
   }
 
   private run(client: Client, action: () => ActionResult) {
+    if (this.shuttingDown) return;
     const result = action();
     if (!result.ok) return this.problem(client, result.error);
     this.sendViews();
   }
 
   private problem(client: Client, message: string) {
+    if (this.shuttingDown) return;
     client.send('problem', { message });
     this.sendView(client);
   }
 
   private sendView(client: Client) {
+    if (this.shuttingDown) return;
     if (!this.game.players.some((player) => player.id === client.sessionId)) return;
     const snapshot: Snapshot = {
       ...viewFor(this.game, client.sessionId),
