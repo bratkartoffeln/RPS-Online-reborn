@@ -1,7 +1,7 @@
 import assert from 'node:assert/strict';
 import { afterEach, beforeEach, test } from 'node:test';
 import { CloseCode, ErrorCode, MatchMakeError, type Room } from '@colyseus/sdk';
-import { SERVER_SHUTDOWN_MESSAGE } from '../shared/protocol';
+import { SERVER_SHUTDOWN_MESSAGE, type ChatProblem, type ChatState, type Snapshot } from '../shared/protocol';
 import { RpsConnection, readSession, writeSession, type NetworkStatus, type SessionEnd } from './network';
 import type { SeriesMode } from '../shared/game';
 
@@ -73,12 +73,17 @@ function harness(room = new FakeRoom()) {
   const statuses: NetworkStatus[] = [];
   const ends: SessionEnd[] = [];
   const problems: string[] = [];
+  const snapshots: Snapshot[] = [];
+  const chats: ChatState[] = [];
+  const chatProblems: ChatProblem[] = [];
   const creations: Array<{ roomName: string; options: { name: string; seriesMode: SeriesMode } }> = [];
   const connection = new RpsConnection({
     onStatus: (status) => { statuses.push(status); },
-    onSnapshot() {},
+    onSnapshot: (snapshot) => { snapshots.push(snapshot); },
     onProblem: (message) => { problems.push(message); },
     onEnded: (end) => { ends.push(end); },
+    onChat: (state) => { chats.push(state); },
+    onChatProblem: (problem) => { chatProblems.push(problem); },
   });
   const client = {
     create: async (roomName: string, options: { name: string; seriesMode: SeriesMode }) => {
@@ -89,8 +94,51 @@ function harness(room = new FakeRoom()) {
     reconnect: async () => room.asRoom(),
   };
   Object.defineProperty(connection, 'client', { value: client, writable: true });
-  return { connection, client, room, statuses, ends, problems, creations };
+  return { connection, client, room, statuses, ends, problems, creations, snapshots, chats, chatProblems };
 }
+
+test('room chat and chat errors use their own callbacks without changing the game or connection status', async () => {
+  const h = harness();
+  await h.connection.create('Ada');
+  const statusCount = h.statuses.length;
+  const state: ChatState = { roomId: h.room.roomId, messages: [{
+    id: 1, requestId: 'one', playerId: h.room.sessionId, playerName: 'Ada', seat: 0,
+    text: '<b>Gutes Spiel!</b>', sentAt: 1_800_000_000_000,
+  }] };
+  const problem: ChatProblem = { requestId: 'two', message: 'Bitte warte kurz.' };
+  h.room.messages.get('chat')?.(state);
+  h.room.messages.get('chat_problem')?.(problem);
+  assert.deepEqual(h.chats, [state]);
+  assert.deepEqual(h.chatProblems, [problem]);
+  assert.deepEqual(h.snapshots, []);
+  assert.deepEqual(h.problems, []);
+  assert.equal(h.statuses.length, statusCount);
+  assert.equal(h.connection.send('chat_send', { requestId: 'three', text: 'Weiter geht’s!' }), true);
+});
+
+test('chat from a wrong or former room cannot enter a new room or report a stale error', async () => {
+  const h = harness();
+  await h.connection.create('Ada');
+  h.room.messages.get('chat')?.({ roomId: 'wrong-room', messages: [] });
+  assert.deepEqual(h.chats, []);
+  await h.connection.leave();
+  const nextRoom = new FakeRoom('roomTwo02');
+  h.client.create = async () => nextRoom.asRoom();
+  await h.connection.create('Ada');
+  h.room.messages.get('chat')?.({ roomId: h.room.roomId, messages: [] });
+  h.room.messages.get('chat_problem')?.({ requestId: 'old', message: 'Alte Nachricht.' });
+  assert.deepEqual(h.chats, []);
+  assert.deepEqual(h.chatProblems, []);
+  const state: ChatState = { roomId: nextRoom.roomId, messages: [] };
+  nextRoom.messages.get('chat')?.(state);
+  assert.deepEqual(h.chats, [state]);
+  nextRoom.messages.get('server_shutdown')?.({ message: SERVER_SHUTDOWN_MESSAGE });
+  nextRoom.messages.get('chat')?.(state);
+  nextRoom.messages.get('chat_problem')?.({ message: 'Zu spät.' });
+  assert.deepEqual(h.chats, [state]);
+  assert.deepEqual(h.chatProblems, []);
+  assert.equal(h.connection.send('chat_send', { requestId: 'late', text: 'Hallo' }), false);
+});
 
 test('room creation sends the selected series mode and defaults to a free series', async () => {
   for (const mode of [undefined, 'best-of-3', 'best-of-5'] as const) {

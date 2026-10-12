@@ -1,3 +1,4 @@
+import { mobileGraphics } from './mobile-graphics';
 import type { FighterKind, GameActionView, PieceView } from '../shared/game';
 import type { Snapshot } from '../shared/protocol';
 import { escapeHtml as esc, icon } from './icons';
@@ -7,7 +8,7 @@ import { teamColorForSeat, teamColorName } from './team-ui';
 
 const WEAPONS: FighterKind[] = ['rock', 'paper', 'scissors'];
 const LABELS = { rock: 'Stein', paper: 'Papier', scissors: 'Schere', trap: 'Falle', flag: 'Flagge', unknown: 'Verdeckte Figur' };
-export const COMBAT_TIMING = Object.freeze({ impact: 300, shatter: 600, winner: 950, complete: 1500, reduced: 350 });
+export const COMBAT_TIMING = Object.freeze({ choicePause: 600, impact: 600, shatter: 1200, winner: 1900, complete: 3000, reduced: 350 });
 export type CombatStage = 'approach' | 'impact' | 'shatter' | 'winner' | 'result';
 export interface CombatOptions { connected: boolean; pending: boolean }
 export interface Combatant {
@@ -41,6 +42,11 @@ export interface DuelChoiceState {
   locked: boolean;
   disabled: boolean;
   status: string;
+}
+interface QueuedCombat {
+  model: CombatModel;
+  action: GameActionView;
+  choice: DuelChoiceState | null;
 }
 
 /** One animation endpoint, with a bounded fallback for missing CSS/events. Returns an idempotent cancellation. */
@@ -118,6 +124,30 @@ export function duelChoiceState(view: Snapshot | null, options: CombatOptions, b
   return { identity: JSON.stringify([matchKey(view), duel.id, duel.round]), duelId: duel.id, round: duel.round, team: teamColorForSeat(player.seat), selected, locked, disabled, status };
 }
 
+/** Hold only the viewer's confirmed weapon; the opponent and result are painted after the pause. */
+export function confirmedDuelChoice(model: CombatModel, previous: DuelChoiceState | null): DuelChoiceState | null {
+  if (model.round === null) return null;
+  const own = model.attacker.own ? model.attacker : model.defender.own ? model.defender : null;
+  if (!own) return null;
+  const sameRound = previous?.round === model.round ? previous : null;
+  // The second submitter may receive the resolved action without an intermediate
+  // yourChoice snapshot. Their own public action piece confirms that selection.
+  const selected = own.kind && WEAPONS.includes(own.kind as FighterKind) ? own.kind as FighterKind : null;
+  return {
+    identity: sameRound?.identity ?? JSON.stringify([model.identity, model.actionId, 'confirmed-choice']),
+    duelId: sameRound?.duelId ?? 'confirmed-' + model.actionId,
+    round: model.round, team: own.team, selected, locked: true, disabled: true,
+    status: 'Beide Waffen sind bestätigt. Der Kampf beginnt gleich …',
+  };
+}
+
+/** An arriving choice must not interrupt a message or another text entry. */
+export function isTextEntry(element: Element | null): boolean {
+  if (!element) return false;
+  if (element.tagName === 'TEXTAREA' || (element as HTMLElement).isContentEditable) return true;
+  return element.tagName === 'INPUT' && !['button', 'checkbox', 'color', 'file', 'hidden', 'image', 'radio', 'range', 'reset', 'submit'].includes((element as HTMLInputElement).type);
+}
+
 function artwork(skin: LoadedSkin, fighter: Combatant, size: number): string {
   return fighter.kind && WEAPONS.includes(fighter.kind as FighterKind)
     ? weaponIcon(skin, fighter.kind as FighterKind, size, fighter.team)
@@ -133,7 +163,10 @@ export class CombatOverlay {
   private options: CombatOptions = { connected: false, pending: false };
   private identity: string | null = null;
   private active: CombatModel | null = null;
-  private queue: CombatModel[] = [];
+  private activeAction: GameActionView | null = null;
+  private activeStarted = false;
+  private waitingChoice: DuelChoiceState | null = null;
+  private queue: QueuedCombat[] = [];
   private timers: Array<ReturnType<typeof setTimeout>> = [];
   private cancelAnimation: (() => void) | null = null;
   private epoch = 0;
@@ -148,6 +181,7 @@ export class CombatOverlay {
   constructor(private readonly root: HTMLElement, private readonly callbacks: {
     onBusyChange: (busy: boolean) => void;
     onCelebrate: (ownerId: string) => void;
+    onBattleStart?: (action: GameActionView) => void;
   }) {
     root.classList.add('combat-overlay');
     root.hidden = true;
@@ -155,6 +189,7 @@ export class CombatOverlay {
   }
 
   get busy(): boolean { return this.busyState; }
+  get waitingForReveal(): boolean { return this.waitingChoice !== null; }
 
   update(view: Snapshot | null, skin: LoadedSkin, options: CombatOptions): void {
     if (!view || this.identity !== null && this.identity !== matchKey(view)) this.reset();
@@ -172,15 +207,20 @@ export class CombatOverlay {
     const model = combatModel(action, view);
     if (!model || view.paused || view.players.some((player) => !player.connected)) return;
     if (this.identity !== null && this.identity !== model.identity) this.reset();
+    const previousChoice = duelChoiceState(this.view, this.options);
     this.identity = model.identity;
     this.view = view;
-    this.queue.push(model);
+    this.queue.push({
+      model,
+      action: { ...action, attacker: { ...action.attacker }, defender: action.defender ? { ...action.defender } : null, removedIds: [...action.removedIds] },
+      choice: action.kind === 'duel' ? confirmedDuelChoice(model, previousChoice) : null,
+    });
     if (!this.active && this.skin && this.options.connected) this.startNext();
   }
 
   setAnimationsEnabled(enabled: boolean): void {
     this.animationsEnabled = enabled;
-    if (!enabled && this.active && !this.activeReduced) {
+    if (!enabled && this.activeStarted && this.active && !this.activeReduced) {
       this.clearTimers();
       this.activeReduced = true;
       this.activeStage = 'result';
@@ -219,19 +259,38 @@ export class CombatOverlay {
     this.clearTimers();
     this.queue = [];
     this.active = null;
+    this.activeAction = null;
+    this.activeStarted = false;
+    this.waitingChoice = null;
     this.setBusy(false);
   }
 
   private startNext(): void {
     if (!this.skin || !this.view || !this.options.connected || this.view.paused) return;
     this.clearTimers();
-    this.active = this.queue.shift() ?? null;
+    const next = this.queue.shift();
+    this.active = next?.model ?? null;
+    this.activeAction = next?.action ?? null;
+    this.activeStarted = false;
+    this.waitingChoice = next?.choice ?? null;
     if (!this.active) { this.setBusy(false); return; }
-    this.activeReduced = !this.animationsEnabled || this.root.ownerDocument.defaultView?.matchMedia?.('(prefers-reduced-motion: reduce)').matches === true;
+    this.setBusy(true);
+    if (this.waitingChoice) {
+      this.paintRevealChoice();
+      this.schedule(COMBAT_TIMING.choicePause, () => this.beginBattle());
+    } else this.beginBattle();
+  }
+
+  private beginBattle(): void {
+    if (!this.active || !this.activeAction || this.activeStarted) return;
+    this.clearTimers();
+    this.waitingChoice = null;
+    this.activeStarted = true;
+    this.activeReduced = mobileGraphics() || !this.animationsEnabled || this.root.ownerDocument.defaultView?.matchMedia?.('(prefers-reduced-motion: reduce)').matches === true;
     this.activeStage = this.activeReduced ? 'result' : 'approach';
     this.mountedChoice = null;
-    this.setBusy(true);
     this.paintBattle();
+    this.callbacks.onBattleStart?.(this.activeAction);
   }
 
   /** Later phases start only after the current CSS animation has run, including on a cold SVG renderer. */
@@ -265,6 +324,9 @@ export class CombatOverlay {
     if (!model) return;
     this.clearTimers();
     this.active = null;
+    this.activeAction = null;
+    this.activeStarted = false;
+    this.waitingChoice = null;
     if (this.queue.length) this.startNext();
     else { this.setBusy(false); this.paint(); }
     if (model.winnerOwnerId && this.view && model.identity === this.identity && this.options.connected && !this.view.paused) {
@@ -283,7 +345,8 @@ export class CombatOverlay {
 
   private paint(): void {
     if (this.active) {
-      if (this.paintedSkin !== this.skin || this.root.dataset.mode !== 'battle') this.paintBattle();
+      if (this.waitingChoice) this.paintRevealChoice();
+      else if (this.paintedSkin !== this.skin || this.root.dataset.mode !== 'battle') this.paintBattle();
       return;
     }
     const choice = duelChoiceState(this.view, this.options);
@@ -302,23 +365,31 @@ export class CombatOverlay {
     const hadFocus = this.root.contains(this.root.ownerDocument.activeElement);
     this.rememberFocus();
     const model = this.active, skin = this.skin;
+    const mobile = mobileGraphics();
     const fighter = (piece: Combatant): string => {
       const art = artwork(skin, piece, 104);
-      const shards = piece.result === 'loser' ? '<span class="combat-shards" aria-hidden="true">' + Array.from({ length: 6 }, (_, index) => `<span class="combat-shard combat-shard-${index}">${art}</span>`).join('') + '</span>' : '';
+      const shards = !mobile && piece.result === 'loser' ? '<span class="combat-shards" aria-hidden="true">' + Array.from({ length: 6 }, (_, index) => `<span class="combat-shard combat-shard-${index}">${art}</span>`).join('') + '</span>' : '';
       return `<div class="combat-fighter" data-piece-id="${esc(piece.id)}" data-owner-id="${esc(piece.ownerId)}" data-team-color="${piece.team}" data-result="${piece.result}"><p class="combat-fighter-role">${piece.role}</p><div class="combat-art"><span class="combat-art-main">${art}</span>${shards}</div><div class="combat-fighter-caption"><strong>${esc(piece.name)}</strong><span>${teamColorName(piece.team)} · ${LABELS[piece.kind ?? 'unknown']}</span><span class="combat-fighter-result">${piece.result === 'winner' ? 'Sieger' : piece.result === 'loser' ? 'Besiegt' : 'Neue Wahl'}</span></div></div>`;
     };
     this.root.hidden = false;
     this.root.dataset.mode = 'battle';
     this.root.dataset.actionId = String(model.actionId);
     this.root.dataset.motion = this.activeReduced ? 'reduced' : 'full';
+    delete this.root.dataset.transition;
     delete this.root.dataset.duelId;
     delete this.root.dataset.duelRound;
-    this.root.innerHTML = `<section class="combat-stage" data-stage="${this.activeStage}" data-motion="${this.root.dataset.motion}" aria-label="Kampf" tabindex="-1"><header class="combat-heading"><p>${model.round ? 'DUELL · RUNDE ' + model.round : 'KAMPF · ZUG ' + model.turn}</p><h2>${esc(model.heading)}</h2></header><div class="combat-fighters">${fighter(model.attacker)}${fighter(model.defender)}${CLOUD}</div><p class="combat-result" role="status" aria-live="polite"></p></section>`;
+    this.root.innerHTML = `<section class="combat-stage" data-stage="${this.activeStage}" data-motion="${this.root.dataset.motion}" aria-label="Kampf" tabindex="-1"><header class="combat-heading"><p>${model.round ? 'DUELL · RUNDE ' + model.round : 'KAMPF · ZUG ' + model.turn}</p><h2>${esc(model.heading)}</h2></header><div class="combat-fighters">${fighter(model.attacker)}${fighter(model.defender)}${mobile ? '' : CLOUD}</div><p class="combat-result" role="status" aria-live="polite"></p></section>`;
     this.paintedSkin = skin;
     this.setStage(this.activeStage);
     if (hadFocus) this.root.querySelector<HTMLElement>('.combat-stage')?.focus({ preventScroll: true });
     // A skin switch replaces animated nodes. Rebind only the current phase and discard its old listener/timer.
     this.continueBattle();
+  }
+
+  private paintRevealChoice(): void {
+    if (!this.waitingChoice) return;
+    this.paintChoice(this.waitingChoice);
+    this.root.dataset.transition = 'reveal';
   }
 
   private paintChoice(choice: DuelChoiceState): void {
@@ -337,6 +408,7 @@ export class CombatOverlay {
     delete this.root.dataset.stage;
     delete this.root.dataset.actionId;
     delete this.root.dataset.motion;
+    delete this.root.dataset.transition;
     const panel = this.root.querySelector<HTMLElement>('.combat-choice-panel')!;
     panel.dataset.teamColor = choice.team;
     panel.dataset.locked = String(choice.locked);
@@ -351,7 +423,9 @@ export class CombatOverlay {
     const status = this.root.querySelector<HTMLElement>('.combat-choice-status')!;
     if (status.textContent !== choice.status) status.textContent = choice.status;
     this.paintedSkin = this.skin;
-    if (mounted && !this.root.ownerDocument.querySelector('[aria-modal="true"]')) {
+    const focused = this.root.ownerDocument.activeElement;
+    const editingOutside = !this.root.contains(focused) && isTextEntry(focused);
+    if (mounted && !editingOutside && !this.root.ownerDocument.querySelector('[aria-modal="true"]')) {
       const first = !choice.disabled ? this.root.querySelector<HTMLButtonElement>('#duel-' + (choice.selected ?? 'rock')) : panel;
       first?.focus({ preventScroll: true });
     } else if (hadFocus && choice.disabled && this.root.ownerDocument.activeElement !== panel) panel.focus({ preventScroll: true });
@@ -366,6 +440,7 @@ export class CombatOverlay {
     delete this.root.dataset.motion;
     delete this.root.dataset.duelId;
     delete this.root.dataset.duelRound;
+    delete this.root.dataset.transition;
     if (this.root.childElementCount) this.root.replaceChildren();
     this.mountedChoice = null;
     this.paintedSkin = null;

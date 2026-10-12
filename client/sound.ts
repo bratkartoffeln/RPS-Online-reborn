@@ -26,7 +26,7 @@ export class GameSounds {
     } catch { /* Muted or unavailable audio must never interrupt a move. */ }
   }
 
-  playAction(action: GameActionView, you: string, battleMs: number): void {
+  playAction(action: GameActionView, you: string, resultAfterMs: number): void {
     if (!this.enabled || this.context?.state !== 'running' || document.hidden) return;
     if (action.kind === 'move') {
       this.tone(330, .065, 0, 'triangle');
@@ -34,7 +34,7 @@ export class GameSounds {
       return;
     }
     this.tone(160, .075, 0, 'triangle');
-    const delay = Math.min(battleMs / 1000 * .4, .45);
+    const delay = Math.max(0, resultAfterMs) / 1000;
     if (action.outcome === 'duel' || action.outcome === 'tie') {
       [392, 392].forEach((note, index) => this.tone(note, .1, delay + index * .13, 'sine'));
     } else {

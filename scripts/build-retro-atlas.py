@@ -13,7 +13,9 @@ import colorsys
 from copy import deepcopy
 import gzip
 import hashlib
+import io
 import json
+import os
 from pathlib import Path
 import re
 import shutil
@@ -40,7 +42,9 @@ WEAPONS = [f'weapon-{kind}' for kind in KINDS[:3]]
 BASE_REFEREES = ['referee-blue-turn', 'referee-red-turn', 'referee-neutral']
 DIRECTIONAL_REFEREES = ['referee-blue-top', 'referee-red-bottom']
 REFEREES = [*BASE_REFEREES, *DIRECTIONAL_REFEREES]
-PITCH, CONTENT, COLUMNS, ROWS = 288, 272, 6, 7
+FLAG_VICTORIES = ['blue-front-flag-victory', 'red-front-flag-victory']
+PITCH, CONTENT, COLUMNS, ROWS = 288, 272, 7, 7
+LEGACY_COLUMNS = 6
 WIDTH, HEIGHT = PITCH * COLUMNS, PITCH * ROWS
 
 
@@ -209,6 +213,22 @@ def vector_referees(definitions: ET.Element) -> dict[str, ET.Element]:
     return groups
 
 
+def vector_flag_victories(definitions: ET.Element) -> dict[str, ET.Element]:
+    source = ET.parse(SOURCE / 'flag-victory.svg').getroot()
+    for child in source:
+        if tag_name(child) == 'defs':
+            definitions.extend(deepcopy(child))
+    groups = {}
+    for name in FLAG_VICTORIES:
+        original = next((item for item in source.iter() if item.get('id') == name), None)
+        if original is None:
+            raise ValueError(f'Die Sieger-Vorlage enthält {name} nicht.')
+        artwork = deepcopy(original)
+        artwork.attrib.pop('id', None)
+        groups[name] = artwork
+    return groups
+
+
 def vector_logo(tile: Image.Image, definitions: ET.Element) -> ET.Element:
     """Original letter outlines with a real, continuous SVG gradient."""
     width, height = tile.size
@@ -258,6 +278,26 @@ def validate(root: ET.Element) -> None:
                 raise ValueError('Der Atlas darf nur lokale SVG-Definitionen verwenden.')
 
 
+def atomic_write(path: Path, data: bytes) -> None:
+    """Publish a complete, flushed asset rather than exposing a partial export."""
+    descriptor, temporary_name = tempfile.mkstemp(prefix=path.name + '.', suffix='.tmp', dir=path.parent)
+    temporary = Path(temporary_name)
+    try:
+        with os.fdopen(descriptor, 'wb') as output:
+            os.fchmod(output.fileno(), 0o644)
+            output.write(data)
+            output.flush()
+            os.fsync(output.fileno())
+        os.replace(temporary, path)
+        directory = os.open(path.parent, os.O_RDONLY)
+        try:
+            os.fsync(directory)
+        finally:
+            os.close(directory)
+    finally:
+        temporary.unlink(missing_ok=True)
+
+
 def build(destination: Path) -> dict[str, object]:
     inkscape = shutil.which('inkscape')
     if not inkscape:
@@ -276,8 +316,9 @@ def build(destination: Path) -> dict[str, object]:
     root = element('svg', width=WIDTH, height=HEIGHT, viewBox=f'0 0 {WIDTH} {HEIGHT}')
     title, description = element('title'), element('desc')
     title.text = 'ICQ Retro – vollständiger Vektoratlas'
-    description.text = ('41 Vektormotive: blaue und rote Figuren in beiden Blickrichtungen, gelbe Fallen, '
-                        'Aufdeckposen, Brettkacheln, Logo, vier Schiedsrichter-Richtungsposen, eine neutrale Pose und Einzelwaffen. '
+    description.text = ('43 Vektormotive: blaue und rote Figuren in beiden Blickrichtungen, gelbe Fallen, '
+                        'Aufdeckposen, Brettkacheln, Logo, vier Schiedsrichter-Richtungsposen, eine neutrale Pose, Einzelwaffen '
+                        'und zwei frontale Flaggeneroberer mit dem tatsächlich eroberten Tuch. '
                         'Spieler 1 ist blau, Spieler 2 rot. Keine eingebetteten Rasterbilder oder Schriftdateien.')
     root.extend([title, description])
     definitions = element('defs')
@@ -300,21 +341,28 @@ def build(destination: Path) -> dict[str, object]:
     sizes.update({name: (320, 240) for name in REFEREES})
     artwork.update(vector_weapons(definitions))
     sizes.update({name: (320, 320) for name in WEAPONS})
+    artwork.update(vector_flag_victories(definitions))
+    sizes.update({name: (320, 320) for name in FLAG_VICTORIES})
 
     order = [f'{color}-{direction}-{kind}' for color in ['blue', 'red']
              for direction in ['back', 'front'] for kind in KINDS]
     order += [f'{color}-back-{kind}-revealed' for color in ['blue', 'red'] for kind in KINDS[:3]]
-    # Append the two extra poses after the weapons to keep all existing frame coordinates.
+    # New motifs stay after the original 41; legacy frame coordinates never move.
     order += ['board-light', 'board-dark', 'logo', *BASE_REFEREES, *WEAPONS, *DIRECTIONAL_REFEREES]
-    if len(order) != 41 or len(artwork) != len(order):
-        raise ValueError('Der vollständige Satz muss 41 Motive enthalten.')
+    order += FLAG_VICTORIES
+    if len(order) != 43 or len(artwork) != len(order):
+        raise ValueError('Der vollständige Satz muss 43 Motive enthalten.')
     frames = {}
     for index, name in enumerate(order):
         w, h = sizes[name]
         scale = CONTENT / max(w, h)
         fw, fh = round(w * scale), round(h * scale)
-        x = (index % COLUMNS) * PITCH + (PITCH - fw) // 2
-        y = (index // COLUMNS) * PITCH + (PITCH - fh) // 2
+        # Fill the last old slot, then the new right column. Keeping the atlas
+        # square also preserves 2x rendering within a 4096-pixel texture limit.
+        legacy_slots = LEGACY_COLUMNS * ROWS
+        column, row = (index % LEGACY_COLUMNS, index // LEGACY_COLUMNS) if index < legacy_slots else (LEGACY_COLUMNS, index - legacy_slots)
+        x = column * PITCH + (PITCH - fw) // 2
+        y = row * PITCH + (PITCH - fh) // 2
         frames[name] = dict(x=x, y=y, width=fw, height=fh)
         clipping = element('clipPath', id=f'clip-frame-{name}', clipPathUnits='userSpaceOnUse')
         clipping.append(element('rect', width=fw, height=fh))
@@ -349,6 +397,7 @@ def build(destination: Path) -> dict[str, object]:
         'red': {'top': 'referee-red-turn', 'bottom': 'referee-red-bottom'},
     }
     manifest['weapons'] = {kind: f'weapon-{kind}' for kind in KINDS[:3]}
+    manifest['flagVictoryFrames'] = {'blue': FLAG_VICTORIES[0], 'red': FLAG_VICTORIES[1]}
     manifest.pop('weaponAtlas', None)
     validate(root)
     ET.indent(root, space='  ')
@@ -369,9 +418,15 @@ def build(destination: Path) -> dict[str, object]:
             x, y, w, h = (frame[key] for key in ['x', 'y', 'width', 'height'])
             if not rendered.crop((x, y, x + w, y + h)).getchannel('A').getbbox():
                 raise ValueError(f'Der PNG-Export enthält ein leeres Motiv: {name}')
-        (destination / 'atlas.svg').write_bytes(result)
-        rendered.save(destination / 'atlas.png', optimize=True)
-        (destination / 'skin.json').write_text(json.dumps(manifest, ensure_ascii=False, indent=2) + '\n')
+        png_buffer = io.BytesIO()
+        rendered.save(png_buffer, format='PNG', optimize=True)
+        png_result = png_buffer.getvalue()
+        if not png_result.endswith(bytes.fromhex('0000000049454e44ae426082')):
+            raise ValueError('Der PNG-Export ist unvollständig.')
+        Image.open(io.BytesIO(png_result)).load()
+        atomic_write(destination / 'atlas.svg', result)
+        atomic_write(destination / 'atlas.png', png_result)
+        atomic_write(destination / 'skin.json', (json.dumps(manifest, ensure_ascii=False, indent=2) + '\n').encode('utf-8'))
     return {
         'file': str(destination / 'atlas.svg'), 'width': WIDTH, 'height': HEIGHT,
         'frames': len(frames), 'paths': sum(tag_name(node) == 'path' for node in root.iter()),

@@ -1,8 +1,10 @@
+import { mobileGraphics, mobileRenderScale } from './mobile-graphics';
 import Phaser from 'phaser';
 import type { GameActionView, GameView, PieceView } from '../shared/game';
 import {
   artworkForPiece, artworkFrame, canContinueEffect, captureMotionFrame, CELEBRATION_MS,
-  celebrationOffset, clipDuration, freshActionFromFrame, smoothStep, type MotionFrame,
+  celebrationOffset, clipDuration, FLAG_CELEBRATION_MS, flagCelebrationOffset, flagVictoryForView,
+  freshActionFromFrame, smoothStep, type FlagVictory, type MotionFrame,
 } from './board-motion';
 import type { ArtworkVariant, BoardPalette, LoadedSkin, SkinAnimationState, TeamColor } from './skin-types';
 import { builtInSkin, SKIN_LIMITS } from './skins';
@@ -75,6 +77,7 @@ type BoardEffect = {
 type TeamCelebration = {
   ownerId: string;
   pieceIds: string[];
+  heroId: string | null;
   seriesId: string;
   matchId: string;
   signature: string;
@@ -114,10 +117,11 @@ class ArenaScene extends Phaser.Scene {
   private visuals = new Map<string, PieceVisual>();
   private effect: BoardEffect | null = null;
   private celebration: TeamCelebration | null = null;
+  private flagVictory: FlagVictory | null = null;
   private gesture: Gesture | null = null;
   private demoBoard = previewPieces();
 
-  constructor(private callbacks: BoardCallbacks, private renderScale: number) {
+  constructor(private callbacks: BoardCallbacks, private renderScale: number, private mobile = false) {
     super('arena');
   }
 
@@ -143,6 +147,29 @@ class ArenaScene extends Phaser.Scene {
     this.paint();
   }
 
+  private wakeFrame: number | null = null;
+
+  requestRender(): void {
+    if (!this.ready || document.hidden || this.sys.game.loop.running || this.wakeFrame !== null) return;
+    // Defer until input has been queued and snapshot/effect changes are complete.
+    this.wakeFrame = requestAnimationFrame(() => {
+      this.wakeFrame = null;
+      if (!this.ready || document.hidden || this.sys.game.loop.running) return;
+      this.sys.game.loop.resetDelta();
+      this.sys.game.loop.wake();
+    });
+  }
+
+  resizeRender(scale: number): void {
+    this.renderScale = scale;
+    if (!this.ready) return;
+    const width = Math.round(WIDTH * scale), height = Math.round(HEIGHT * scale);
+    this.sys.game.scale.resize(width, height);
+    this.cameras.main.setSize(width, height).setZoom(scale).centerOn(WIDTH / 2, HEIGHT / 2);
+    this.cameras.main.preRender();
+    this.paint();
+  }
+
   update(_time: number, delta: number): void {
     if (!this.ready) return;
     const elapsed = Number.isFinite(delta) ? Math.max(0, delta) : 0;
@@ -155,10 +182,21 @@ class ArenaScene extends Phaser.Scene {
       this.applyCelebration();
     }
     for (const visual of this.visuals.values()) this.animateArtwork(visual, elapsed);
+    // Only the visual clock sleeps. Network, chat and combat timers stay alive.
+    const animated = !this.mobile && this.animationsEnabled && [...this.visuals.values()].some(visual => {
+      const frames = visual.artwork?.animations?.[this.normalState(visual)]?.frames;
+      return visual.sprite && frames && new Set(frames).size > 1;
+    });
+    if (!this.effect && !this.celebration && !this.gesture?.dragging && !animated) this.sys.game.loop.sleep();
   }
 
   setView(view: GameView | null, selected: number | null, enabled: boolean): void {
     const nextFrame = captureMotionFrame(view);
+    if (this.mobile && this.ready && this.motionFrame?.signature === nextFrame?.signature &&
+        this.view?.revision === view?.revision && this.selected === selected && this.enabled === enabled) {
+      this.view = view;
+      return;
+    }
     const action = this.ready && this.animationsEnabled ? freshActionFromFrame(this.motionFrame, view) : null;
     if (this.celebration && (this.celebration.seriesId !== view?.series.id ||
         this.celebration.matchId !== view?.series.matchId || this.celebration.signature !== nextFrame?.signature)) {
@@ -189,6 +227,7 @@ class ArenaScene extends Phaser.Scene {
   setAnimationsEnabled(enabled: boolean): void {
     if (this.animationsEnabled === enabled) return;
     this.animationsEnabled = enabled;
+    this.requestRender();
     if (!enabled) {
       this.finishCelebration();
       this.finishEffect();
@@ -213,8 +252,10 @@ class ArenaScene extends Phaser.Scene {
     this.cancelGesture();
     this.celebration = {
       ownerId, pieceIds, seriesId: this.view.series.id, matchId: this.view.series.matchId,
+      heroId: this.flagVictory?.ownerId === ownerId ? this.flagVictory.pieceId : null,
       signature: this.motionFrame.signature, elapsed: 0,
     };
+    this.requestRender();
     this.applyCelebration();
     for (const id of pieceIds) {
       const visual = this.visuals.get(id);
@@ -455,6 +496,8 @@ class ArenaScene extends Phaser.Scene {
   }
 
   private dispose(): void {
+    if (this.wakeFrame !== null) cancelAnimationFrame(this.wakeFrame);
+    this.wakeFrame = null;
     this.finishCelebration();
     this.finishEffect();
     this.gesture = null;
@@ -464,6 +507,9 @@ class ArenaScene extends Phaser.Scene {
 
   private paint(): void {
     if (!this.ready) return;
+    this.requestRender();
+    const victory = flagVictoryForView(this.skin.definition, this.view);
+    this.flagVictory = victory && this.textureKey && this.atlasFrames.has(victory.frame) ? victory : null;
     this.paintBoard();
     this.syncVisuals();
     this.applyCelebration();
@@ -616,10 +662,11 @@ class ArenaScene extends Phaser.Scene {
     const own = visual.piece.owner === this.you;
     const color = this.teamColor(visual.piece.owner);
     const selected = !visual.ghost && visual.index === this.selected;
-    const appearance = JSON.stringify([visual.piece.kind, visual.piece.revealed, own, color, selected, visual.ghost]);
+    const heroFrame = !visual.ghost && this.flagVictory?.pieceId === visual.piece.id ? this.flagVictory.frame : null;
+    const appearance = JSON.stringify([visual.piece.kind, visual.piece.revealed, own, color, selected, visual.ghost, heroFrame]);
     if (appearance === visual.appearance) return;
     visual.appearance = appearance;
-    const artwork = artworkForPiece(this.skin.definition, own, visual.piece.kind, visual.piece.revealed, color);
+    const artwork = heroFrame ? { frame: heroFrame } : artworkForPiece(this.skin.definition, own, visual.piece.kind, visual.piece.revealed, color);
     visual.artwork = artwork && this.textureKey && this.atlasFrames.has(artwork.frame) ? artwork : undefined;
     visual.vector.clear();
     visual.question.setVisible(false);
@@ -708,7 +755,7 @@ class ArenaScene extends Phaser.Scene {
       visual.clipElapsed = 0;
     } else visual.clipElapsed += delta;
     const elapsed = visual.effectState ? visual.effectElapsed : visual.clipElapsed;
-    const frame = artworkFrame(visual.artwork, state, elapsed, this.animationsEnabled);
+    const frame = artworkFrame(visual.artwork, state, elapsed, this.animationsEnabled && (!this.mobile || !!this.effect || !!this.celebration));
     if (frame === visual.shownFrame || !this.atlasFrames.has(frame)) return;
     visual.sprite.setTexture(this.textureKey!, frame);
     const source = visual.sprite.frame;
@@ -750,12 +797,15 @@ class ArenaScene extends Phaser.Scene {
   private applyCelebration(): void {
     const celebration = this.celebration;
     if (!celebration) return;
-    if (celebration.elapsed >= CELEBRATION_MS) { this.finishCelebration(); return; }
+    const duration = celebration.heroId ? FLAG_CELEBRATION_MS : CELEBRATION_MS;
+    if (celebration.elapsed >= duration) { this.finishCelebration(); return; }
     celebration.pieceIds.forEach((id, ordinal) => {
       const visual = this.visuals.get(id);
       if (!visual || visual.ghost || visual.piece.owner !== celebration.ownerId || this.board[visual.index]?.id !== id) return;
       const position = this.position(visual.index);
-      visual.container.setPosition(position.x, position.y + celebrationOffset(celebration.elapsed, ordinal)).setScale(1).setAlpha(1);
+      const offset = celebration.heroId ? flagCelebrationOffset(celebration.elapsed, id === celebration.heroId) :
+        celebrationOffset(celebration.elapsed, ordinal);
+      visual.container.setPosition(position.x, position.y + offset).setScale(1).setAlpha(1);
       this.override(visual, 'win', celebration.elapsed);
     });
   }
@@ -876,17 +926,23 @@ export class ArenaBoard {
   private scene: ArenaScene;
   private handleKeyboard: (event: KeyboardEvent) => void;
   private handleBlur: () => void;
+  private wake = () => this.scene.requestRender();
+  private resizeObserver?: ResizeObserver;
 
   constructor(private container: HTMLElement, callbacks: BoardCallbacks) {
     const pixelRatio = Number.isFinite(window.devicePixelRatio) ? window.devicePixelRatio : 1;
     // Quarter steps keep both canvas dimensions integral, including common
     // 125/150/175% desktop scaling. Cap the buffer at 1360 x 1232 pixels.
-    const renderScale = Math.min(MAX_RENDER_SCALE, Math.max(1, Math.ceil(pixelRatio * 4) / 4));
-    this.scene = new ArenaScene(callbacks, renderScale);
+    const mobile = mobileGraphics();
+    const bounds = container.getBoundingClientRect();
+    const renderScale = mobile ? mobileRenderScale(bounds.width, bounds.height, pixelRatio) :
+      Math.min(MAX_RENDER_SCALE, Math.max(1, Math.ceil(pixelRatio * 4) / 4));
+    this.scene = new ArenaScene(callbacks, renderScale, mobile);
     this.game = new Phaser.Game({
       type: Phaser.AUTO,
-      width: WIDTH * renderScale,
-      height: HEIGHT * renderScale,
+      width: Math.round(WIDTH * renderScale),
+      height: Math.round(HEIGHT * renderScale),
+      ...(mobile ? { fps: { target: 30, limit: 30 } } : {}),
       parent: container,
       transparent: true,
       antialias: true,
@@ -902,6 +958,19 @@ export class ArenaBoard {
     this.handleBlur = () => this.scene.onBlur();
     container.addEventListener('keydown', this.handleKeyboard);
     container.addEventListener('blur', this.handleBlur);
+    {
+      // Phaser processes native input in its next step, so wake before it queues events.
+      for (const event of ['pointerdown', 'pointermove', 'pointerup', 'pointercancel', 'touchstart', 'touchend', 'keydown']) {
+        container.addEventListener(event, this.wake, { capture: true, passive: true });
+      }
+      document.addEventListener('visibilitychange', this.wake);
+      if (mobile) this.resizeObserver = new ResizeObserver(() => {
+        const size = container.getBoundingClientRect();
+        const scale = mobileRenderScale(size.width, size.height, window.devicePixelRatio);
+        this.scene.resizeRender(scale);
+      });
+      this.resizeObserver?.observe(container);
+    }
   }
 
   update(view: GameView | null, selected: number | null, enabled = true): void {
@@ -923,6 +992,11 @@ export class ArenaBoard {
   destroy(): void {
     this.container.removeEventListener('keydown', this.handleKeyboard);
     this.container.removeEventListener('blur', this.handleBlur);
+    this.resizeObserver?.disconnect();
+    document.removeEventListener('visibilitychange', this.wake);
+    for (const event of ['pointerdown', 'pointermove', 'pointerup', 'pointercancel', 'touchstart', 'touchend', 'keydown']) {
+      this.container.removeEventListener(event, this.wake, true);
+    }
     this.game.destroy(true);
   }
 }

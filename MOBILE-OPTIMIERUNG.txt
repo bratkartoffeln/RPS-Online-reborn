@@ -1,0 +1,96 @@
+RPS Arena v0.4.7 – mobile Grafikoptimierung
+Stand: 12.10.2026
+
+Grundlage
+RPS-Arena-v0.4.7-komplett.zip aus dem lokalen Downloadordner.
+Die Projektspiegelung sources/ war leer und wurde nicht verändert.
+Live-Prüfung: https://flusensieb.dns.navy:8443 und /ready lieferten HTTP 200;
+Version 0.4.7. Die live gelieferte ICQ-Retro-Grafikdefinition entspricht der
+Originaldefinition des Archivs. Kein Zugriff auf das NAS-Arbeitsverzeichnis.
+Kein Deployment durchgeführt.
+
+Konkrete Ursachen
+client/board.ts betreibt ohne Optimierung eine fortlaufende Phaser-Schleife.
+Der Standardatlas atlas.svg hat 9.943.910 Bytes. Seine intrinsischen Maße
+betragen 2016 x 2016; mit renderScale=2 entsteht eine 4032 x 4032 große
+Textur (ca. 62 MiB RGBA allein auf der GPU). Außerdem wurden ruhende Figuren
+weiter animiert, Sidebar-Markup ersetzt und Kampfsplitter mehrfach erzeugt.
+
+Umsetzung – nur Touch-Geräte ohne Hover und mit grobem Zeiger
+1. ICQ Retro: verlustfrei gespeicherter WebP-Atlas 1008 x 1008, 501.112 Bytes.
+   Grundlage ist der vorhandene transparente PNG-Ersatzatlas. Alle 43 Frames
+   sind mit separat skalierten Koordinaten vorhanden. Keine Laufzeit-SVG-
+   Rasterisierung. Texturspeicher rechnerisch ca. 3,88 MiB (93,75 % weniger
+   gegenüber 4032 x 4032). Keine gemessene Gesamt-RAM-Einsparung behauptet.
+2. Der Canvas orientiert sich an der tatsächlichen Containergröße und nutzt
+   höchstens doppelte Pixeldichte und die logische Auflösung 680 x 616.
+   ResizeObserver berücksichtigt Größenwechsel. Kamera und Touchkoordinaten
+   werden mitgeführt. Bei 284 CSS-Pixeln Brettbreite: 568 x 515 Canvas-Pixel.
+3. Phaser-FPS-Limit 30 bei Bewegung. Im Leerlauf schläft nur der Grafikloop.
+   Eingaben, neue Zustände, Skinwechsel und Sichtbarkeitswechsel wecken ihn.
+   Aufwachen wird bis nach der Eingabeverarbeitung zurückgestellt; die Delta-
+   Zeit wird zurückgesetzt. Nach beendeter Animation wird wieder pausiert.
+4. Ruhende, ausgewählte und wartende Figuren behalten mobil ihr Standbild.
+   Züge und Siegesbewegungen bleiben erhalten. Die Kampfansicht nutzt den
+   vorhandenen kurzen, statischen Ergebnisablauf. Keine Kampfwolke und keine
+   sechs Splitterkopien im mobilen DOM; Filter, Schatten und Hintergrundblur
+   in den betroffenen mobilen Oberflächen sind reduziert.
+5. Identisches Sidebar-/Status-/Hinweis-Markup wird mobil nicht neu eingesetzt.
+   Unveränderte Brettansichten werden nicht nochmals gezeichnet.
+6. Ältere oder externe Grafiksets bleiben kompatibel: vorhandene Raster-
+   Ersatzbilder werden mobil bevorzugt. Fehlt der optionale kleine Atlas,
+   wird erst der bisherige Rasteratlas und nötigenfalls der SVG geladen.
+   Ein externer Skin ohne mobileAtlas nutzt daher nicht automatisch 1008 x 1008.
+
+Desktop
+Die bisherigen SVGs, Renderdichte bis 2x, fortlaufende Schleife, Ruheanimationen,
+Kampfanimationen, Filter und DOM-Verhalten bleiben erhalten. Mobile Erkennung
+verwendet (hover: none) and (pointer: coarse), nicht nur die Fensterbreite.
+Die App-Versionsnummer bleibt 0.4.7; Lieferdateien tragen den Zusatz mobile.
+
+Gameplay, Netzwerk und Chat
+Keine Änderungen an shared/ und server/, Spielregeln oder Netzwerkprotokoll.
+Nur die grafische Zeitschleife wird pausiert; WebSocket, Chat, Wiederbeitritt
+und Kampftimer laufen unabhängig davon weiter. Server- und Integrationstests
+prüfen weiterhin geheime Waffen, Züge, Duelle, Serien, Chat und Reconnect.
+
+Prüfung
+- Client- und Server-Typprüfung: erfolgreich.
+- Produktionsbuild einschließlich SVG-Komprimierung und Serverbuild: erfolgreich.
+- Vollständige Tests: 206, davon 205 erfolgreich, ein umgebungsbedingter Fehler.
+  Der vorhandene Test tests/skin-compression-build.test.ts kann unter diesem
+  Windows-Konto keine symbolische Dateiverknüpfung erstellen (EPERM).
+  Dieser Test und die Komprimierungsimplementierung wurden nicht geändert.
+  Die Suite ist damit unter dieser Windows-Umgebung nicht vollständig grün.
+- Fünf zusätzliche Mobiltests: Displayauflösung, vollständiger Rasteratlas,
+  kleiner Raster-Ladepfad, fehlendes Mobilasset und ältere Grafiksets.
+- Edge/Chromium mit emuliertem Touch-Gerät und Desktop: erfolgreich.
+  Mobil: Frame-Zähler bleibt zwischen zwei Leerlaufmessungen bei 4; Touch-Zug
+  wird ausgeführt, Animation endet, Loop schläft wieder. Limit 30 konfiguriert.
+  Größenwechsel 390 -> 320 Pixel: kleinere Canvasauflösung und korrekt
+  zentrierte Kamera. Nur WebP geladen, kein Haupt-SVG.
+  Desktop: 1360 x 1232 Canvas, SVG geladen, Frame-Zähler wächst im Leerlauf,
+  kein 30-FPS-Limit. Vollständige Kampfwolke und sechs Splitter.
+  Mobil: statischer Kampf, null Wolken und null Splitter. Keine Browserfehler.
+- Gesamte App-Vorschau mobil und Desktop geladen und visuell geprüft.
+- Keine Messung auf deinem physischen Telefon; Browserprüfung ist Emulation.
+
+Lieferung und Einspielen
+Vollständiges ZIP mit Quellcode, neuem Mobilasset, Tests und aktualisiertem dist/.
+Zusätzlich Änderungen-ZIP mit den geänderten Quell-/Assetdateien und Bericht.
+MOBILE-AENDERUNGEN.patch enthält die Textänderungen; das WebP separat übernehmen.
+VALIDIERUNG.txt und browser-mobile-results.json dokumentieren die Prüfungen.
+
+Wie bisher das vollständige Projekt auf dem NAS aktualisieren; bestehende
+.env, secrets/ und eigene skins/ erhalten. Eingebaute Assets in public/skins/
+einschließlich skin.json UND atlas-mobile.webp gemeinsam übernehmen.
+Bei einer eigenen skins/icq-retro/skin.json hat diese Vorrang: für den kleinen
+Atlas mobileAtlas aus der neuen Definition übernehmen und das WebP in denselben
+externen Skinordner legen. Individuelle Grafiken nicht unbesehen ersetzen.
+
+Container zwischen Partien neu bauen (aktive Räume liegen im RAM):
+cd /share/Container/rps-arena/rps-remake
+docker compose -p rps-arena -f compose.yaml -f compose.dns.yaml --profile https up -d --build --wait --wait-timeout 120
+
+Danach Mobilbrowser neu laden und bei Bedarf veralteten Seiten-Cache leeren.
+Rollback: Original-Komplettarchiv wieder einspielen und Container neu bauen.

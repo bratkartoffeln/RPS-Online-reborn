@@ -1,6 +1,6 @@
 import type { GameActionView, GamePhase, GameView } from '../shared/game';
 import type { ArtworkVariant, SkinAnimationState, SkinDefinition, SkinPiece, TeamColor } from './skin-types';
-import { legacyTeamForColor } from './team-ui';
+import { legacyTeamForColor, teamColorForSeat } from './team-ui';
 
 /** Only identity/positions are retained. Rendering always reads the new public DTO. */
 export interface MotionFrame {
@@ -80,6 +80,25 @@ export function artworkForPiece(skin: SkinDefinition, own: boolean, kind: SkinPi
   return revealed === true && kind !== null && kind !== 'unknown' && artwork?.revealed ? artwork.revealed : artwork;
 }
 
+export interface FlagVictory { pieceId: string; ownerId: string; frame: string }
+
+/** Derive the persistent pose from the final public capture, never from a former match or camera direction. */
+export function flagVictoryForView(skin: SkinDefinition, view: GameView | null): FlagVictory | null {
+  if (!view || view.phase !== 'finished' || view.finishReason !== 'flag') return null;
+  const action = view.lastAction;
+  if (!action || action.kind !== 'battle' || action.outcome !== 'flag' ||
+      !action.attacker.revealed || !['rock', 'paper', 'scissors'].includes(action.attacker.kind ?? '') ||
+      action.defender?.kind !== 'flag' || !action.defender.revealed ||
+      action.attacker.owner === action.defender.owner || action.winnerId !== action.attacker.id ||
+      view.winner !== action.attacker.owner || !action.removedIds.includes(action.defender.id) ||
+      action.removedIds.includes(action.attacker.id)) return null;
+  const survivor = view.board[action.to];
+  const winner = view.players.find((player) => player.id === action.attacker.owner);
+  if (!winner || survivor?.id !== action.attacker.id || survivor.owner !== winner.id) return null;
+  const frame = skin.flagVictoryFrames?.[teamColorForSeat(winner.seat)];
+  return frame && skin.atlas?.frames[frame] ? { pieceId: survivor.id, ownerId: winner.id, frame } : null;
+}
+
 export function oneShotState(state: SkinAnimationState): boolean {
   return state === 'move' || state === 'attack' || state === 'win' || state === 'lose';
 }
@@ -114,5 +133,17 @@ export function celebrationOffset(elapsedMs: number, ordinal: number): number {
   if (!(local > 0 && local < CELEBRATION_HOP_MS * 2)) return 0;
   const progress = (local % CELEBRATION_HOP_MS) / CELEBRATION_HOP_MS;
   const height = local < CELEBRATION_HOP_MS ? 16 : 13;
+  return progress === 0 ? 0 : -height * 4 * progress * (1 - progress);
+}
+
+const FLAG_CELEBRATION_HOP_MS = 420;
+export const FLAG_CELEBRATION_MS = FLAG_CELEBRATION_HOP_MS * 4;
+
+/** Four shared takeoffs/landings; the happy capturer jumps slightly higher with its army. */
+export function flagCelebrationOffset(elapsedMs: number, hero = false): number {
+  if (!(elapsedMs > 0 && elapsedMs < FLAG_CELEBRATION_MS)) return 0;
+  const hop = Math.floor(elapsedMs / FLAG_CELEBRATION_HOP_MS);
+  const progress = (elapsedMs % FLAG_CELEBRATION_HOP_MS) / FLAG_CELEBRATION_HOP_MS;
+  const height = (hero ? 24 : 16) - hop * (hero ? 2 : 1);
   return progress === 0 ? 0 : -height * 4 * progress * (1 - progress);
 }

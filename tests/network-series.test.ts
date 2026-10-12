@@ -24,6 +24,7 @@ function observe(room: Room) {
     },
   };
   room.onMessage('snapshot', (snapshot: Snapshot) => { observer.snapshot = snapshot; observer.updates++; });
+  room.onMessage('chat', () => {}); // The separate chat suite inspects room history.
   room.onMessage('problem', (value: { message: string }) => observer.problems.push(value.message));
   room.onMessage('server_shutdown', () => {});
   room.onError(() => {});

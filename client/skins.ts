@@ -1,3 +1,4 @@
+import { mobileGraphics } from './mobile-graphics';
 import type {
   ArtworkVariant, AtlasFrame, BoardPalette, LoadedSkin, PerspectivePieces, PieceArtwork, PieceSet, PortraitDirection, SkinAnimation,
   SkinAnimationState, SkinAtlas, SkinCatalog, SkinDefinition, SkinEntry, SkinPiece, SkinTeam, SkinWeapon, TeamColor, UiPalette,
@@ -177,7 +178,7 @@ export function parseSkinCatalog(value: unknown): SkinCatalog {
 /** Pure, strict parser; partial optional palettes/artwork retain vector fallbacks. */
 export function parseSkinDefinition(value: unknown): SkinDefinition {
   const source = record(value, 'Grafikset');
-  keys(source, ['version', 'name', 'presentation', 'palette', 'atlas', 'weapons', 'weaponAtlas', 'board', 'logo', 'portrait', 'turnPortraits', 'colorTurnPortraits', 'directionalTurnPortraits', 'pieces', 'teamPieces', 'motion'], 'Grafikset');
+  keys(source, ['version', 'name', 'presentation', 'palette', 'atlas', 'weapons', 'weaponAtlas', 'mobileAtlas', 'board', 'logo', 'portrait', 'turnPortraits', 'colorTurnPortraits', 'directionalTurnPortraits', 'flagVictoryFrames', 'pieces', 'teamPieces', 'motion'], 'Grafikset');
   if (source.version !== 1) invalid('Das Grafikset muss version: 1 verwenden.');
   if (source.presentation !== undefined && source.presentation !== 'modern' && source.presentation !== 'retro') {
     invalid('presentation muss „modern“ oder „retro“ sein.');
@@ -202,6 +203,15 @@ export function parseSkinDefinition(value: unknown): SkinDefinition {
 
   if (source.atlas !== undefined) {
     skin.atlas = parseAtlas(source.atlas, 'atlas');
+  }
+
+  if (source.mobileAtlas !== undefined) {
+    const atlas = parseAtlas(source.mobileAtlas, 'mobileAtlas');
+    if (/\.svg$/i.test(atlas.image)) invalid('mobileAtlas muss ein Rasterbild verwenden.');
+    if (!skin.atlas || Object.keys(skin.atlas.frames).some((name) => !Object.hasOwn(atlas.frames, name))) {
+      invalid('mobileAtlas muss alle Frames des Hauptatlas enthalten.');
+    }
+    skin.mobileAtlas = atlas;
   }
 
   function reference(value: unknown, label: string): string {
@@ -288,6 +298,14 @@ export function parseSkinDefinition(value: unknown): SkinDefinition {
         if (directions[direction] !== undefined) output[direction] = reference(directions[direction], `${label}.${direction}`);
       }
       skin.directionalTurnPortraits[color] = output;
+    }
+  }
+  if (source.flagVictoryFrames !== undefined) {
+    const input = record(source.flagVictoryFrames, 'flagVictoryFrames');
+    keys(input, COLORS, 'flagVictoryFrames');
+    skin.flagVictoryFrames = {};
+    for (const color of COLORS) {
+      if (input[color] !== undefined) skin.flagVictoryFrames[color] = reference(input[color], `flagVictoryFrames.${color}`);
     }
   }
 
@@ -465,9 +483,24 @@ export async function loadSkin(entry: SkinEntry): Promise<LoadedSkin> {
   const checked = parseEntry(entry);
   const definition = parseSkinDefinition(await fetchJson(`/skins/${checked.file}`, `Das Grafikset „${checked.name}“`));
   if (!definition.atlas) return { id: checked.id, definition, image: null, imageUrl: null };
-  const loadedAtlas = await loadAtlas(definition.atlas, checked.id);
+  const mobile = mobileGraphics();
+  const compatibleAtlas = mobile && definition.atlas.fallbackImage
+    ? { ...definition.atlas, image: definition.atlas.fallbackImage, fallbackImage: definition.atlas.image }
+    : definition.atlas;
+  let loadedAtlas;
+  if (mobile && definition.mobileAtlas) {
+    try {
+      loadedAtlas = await loadAtlas(definition.mobileAtlas, checked.id);
+      definition.atlas = definition.mobileAtlas;
+    } catch {
+      // Keep a usable board when a custom server omits the optional mobile asset.
+      loadedAtlas = await loadAtlas(compatibleAtlas, checked.id);
+    }
+  } else {
+    loadedAtlas = await loadAtlas(compatibleAtlas, checked.id);
+  }
   const skin: LoadedSkin = { id: checked.id, definition, ...loadedAtlas };
-  if (definition.weaponAtlas) {
+  if (definition.weaponAtlas && !mobile) {
     try {
       const { image, imageUrl } = await loadAtlas(definition.weaponAtlas, checked.id);
       skin.weaponAtlas = { image, imageUrl };

@@ -6,6 +6,7 @@ import {
   type ActionResult, type FighterKind, type GameState,
 } from '../shared/game.js';
 import { SERVER_SHUTDOWN_MESSAGE, type ServerShutdown, type Snapshot } from '../shared/protocol.js';
+import { RoomChat } from './chat.js';
 
 const isRecord = (value: unknown): value is Record<string, unknown> =>
   typeof value === 'object' && value !== null && !Array.isArray(value);
@@ -26,6 +27,7 @@ export class RpsRoom extends Room {
   private game!: GameState;
   private reconnectSeconds = 120;
   private shuttingDown = false;
+  private readonly chat = new RoomChat();
 
   override onBeforeShutdown() {
     if (this.shuttingDown) return;
@@ -46,7 +48,11 @@ export class RpsRoom extends Room {
     this.reconnectSeconds = options.reconnectSeconds ?? 120;
     await this.setMatchmaking({ private: true, unlisted: true });
 
-    this.onMessage('sync', (client) => this.sendView(client));
+    this.onMessage('sync', (client) => {
+      this.sendView(client);
+      this.sendChat(client);
+    });
+    this.onMessage('chat_send', (client, data: unknown) => this.receiveChat(client, data));
     this.onMessage('shuffle', (client) => this.run(client, () => shuffleSetup(this.game, client.sessionId)));
     this.onMessage('ready', (client) => this.run(client, () => readyPlayer(this.game, client.sessionId)));
     this.onMessage('swap', (client, data: unknown) => {
@@ -95,6 +101,7 @@ export class RpsRoom extends Room {
     // never let a new person take over a departed player's secret army.
     if (this.game.players.length === 2) await this.lock();
     this.sendViews();
+    this.sendChat(client);
   }
 
   onDrop(client: Client) {
@@ -110,6 +117,7 @@ export class RpsRoom extends Room {
     if (this.shuttingDown) return;
     setConnected(this.game, client.sessionId, true);
     this.sendViews();
+    this.sendChat(client);
   }
 
   onLeave(client: Client) {
@@ -147,5 +155,25 @@ export class RpsRoom extends Room {
 
   private sendViews() {
     for (const client of this.clients) this.sendView(client);
+  }
+
+  private receiveChat(client: Client, data: unknown) {
+    if (this.shuttingDown) return;
+    const player = this.game.players.find((entry) => entry.id === client.sessionId && entry.connected);
+    if (!player || !this.clients.includes(client)) return;
+    const result = this.chat.accept(data, { playerId: player.id, playerName: player.name, seat: player.seat });
+    if (!result.ok) {
+      client.send('chat_problem', result.problem);
+    } else if (result.added) {
+      for (const recipient of this.clients) this.sendChat(recipient);
+    } else {
+      this.sendChat(client);
+    }
+  }
+
+  private sendChat(client: Client) {
+    if (this.shuttingDown) return;
+    if (!this.game.players.some((player) => player.id === client.sessionId && player.connected)) return;
+    client.send('chat', this.chat.state(this.roomId));
   }
 }

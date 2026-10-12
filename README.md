@@ -1,8 +1,8 @@
-# RPS Arena – Version 0.4.5
+# RPS Arena – Version 0.4.7
 
 Ein eigenständiges Browser-Remake des taktischen Stein-Papier-Schere-Prinzips:
 zwei Spieler, verdeckte Figuren, eine Flagge und eine Falle pro Seite. Der
-Spielserver läuft lokal, im LAN und als Container auf dem QNAP. Version 0.4.5
+Spielserver läuft lokal, im LAN und als Container auf dem QNAP. Version 0.4.7
 enthält gemeinsame Spielserien mit Punktestand und das vollständig vektorisierte
 Grafikset „ICQ Retro“. Figuren, Spielfeld, Logo, Schiedsrichter und einzelne
 Waffen stammen jetzt aus einer gemeinsamen SVG-Map. Beide Teams haben Vorder-
@@ -12,14 +12,60 @@ Der größere Schiedsrichter zeigt die feste Farbe des Zugspielers beziehungswei
 Siegers und weist je Browser auf dessen Spielfeldseite: eigene Seite unten,
 gegnerische Seite oben. Beide Retro-Fallen sind wieder goldgelb.
 Die Zielflaggen sind getauscht: bei der blauen Mannschaft rot, bei der roten blau.
-Die Waffenwahl erscheint mittig über dem Spielfeld. Kurze Kampfanimationen
-zeigen den Zusammenstoß und den Sieger; anschließend hüpft dessen Mannschaft.
+Die Waffenwahl erscheint mittig über dem Spielfeld. Kampfanimationen zeigen
+den Zusammenstoß und den Sieger; anschließend hüpft dessen Mannschaft.
+Bei einer Flaggeneroberung zeigt ICQ Retro einen lächelnden Fahnenträger in
+Vorderansicht, und die Gewinnerarmee springt viermal gemeinsam. Unter dem
+Spielfeld können sich die beiden Teilnehmer im Raumchat austauschen.
 
-## Neu in Version 0.4.5
+## Neu in Version 0.4.7
+
+- **Raumchat unter dem Spielfeld:** Nachrichten mit bis zu 300 Unicode-Zeichen
+  per Enter oder **Senden** abschicken. Spielernamen behalten ihre feste blaue
+  beziehungsweise rote Farbe. Der Raum behält die letzten 50 Nachrichten über
+  weitere Partien, Serien und Wiederverbindungen hinweg im Arbeitsspeicher.
+- **Entwürfe und Wiederverbindung:** Bei Sendefehlern bleibt die Eingabe erhalten.
+  Erneut übertragene, bereits bestätigte Nachrichten werden nicht doppelt
+  eingefügt. Der Chat ist vom Spielstand und den geheimen Duellwahlen getrennt.
+- **Eigene Retro-Posen für Flaggensieger:** Nur bei einer tatsächlichen
+  Flaggeneroberung erscheint der erfolgreiche Kämpfer lächelnd mit erhobener
+  eroberter Flagge. Beide Browser zeigen ihn von vorn. Wegen der bereits
+  getauschten Zielflaggen hält der blaue Sieger ein blaues Tuch, der rote ein rotes.
+- **Vier gemeinsame Sprünge beim Flaggensieg:** Der Fahnenträger jubelt mit der
+  gesamten verbliebenen Gewinnerarmee und bleibt anschließend in seiner Pose
+  auf dem Zielfeld stehen. Ohne Animationen oder bei reduzierter Bewegung
+  erscheint die Pose statisch. Normale Kampf- und Aufgabensiege behalten ihren
+  bisherigen kurzen Jubel.
+- **Mehr Zeit für den Kampf:** Die vier Phasen dauern nominell 600, 600, 700 und
+  1100 Millisekunden, zusammen 3 Sekunden. Zwischen bestätigter Waffenwahl und
+  Kampf liegen 600 Millisekunden. Ohne Bewegung bleibt das Ergebnis 350
+  Millisekunden statisch sichtbar.
+- **Leicht transparente gemeinsame Fläche:** Klassisch und Arcade verwenden
+  85 Prozent Deckkraft für den Overlaygrund, ICQ Retro weiterhin 92 Prozent.
+  Waffen, Texte und Bedienelemente bleiben vollständig deckend.
+- **43 gemeinsame Atlasmotive:** Zwei native SVG-Frontposen erweitern den
+  Retro-Atlas auf **2016 × 2016**. Die bisherigen 41 Ausschnittpositionen bleiben
+  erhalten; die PNG wird aus derselben SVG neu exportiert. Eigene Sets können
+  die optionalen Siegerbilder mit `flagVictoryFrames.blue/red` zuordnen.
+
+## Neu in Version 0.4.6
+
+- **Ein gemeinsamer Overlayhintergrund:** Waffenwahl und Gefecht liegen jeweils
+  auf einer zusammenhängenden, leicht transparenten Fläche. Im ICQ-Retro-Design
+  ist sie helloliv. Überschrift, Waffen, Spielernamen und Status werden dadurch
+  ruhig zusammengefasst; das Brett bleibt um das Panel herum sichtbar.
+- **Waffen und Texte bleiben deckend:** Nur die Hintergrundfarbe ist transparent.
+  Auch nach bestätigter Waffenwahl bleiben alle Symbole und Beschriftungen klar
+  sichtbar. Auswahl, Häkchen und Tastaturfokus kennzeichnen den Zustand.
+- **Für schmale Spielfelder angepasst:** Kleinere Innenabstände erhalten Platz
+  für die großen Waffenbilder. Die Kampffolge und der Mannschaftsjubel bleiben
+  erhalten; die statische Verliererwaffe wird mit Graustufen und Text markiert.
+
+## Seit Version 0.4.5
 
 - **Waffenwahl über dem Spielfeld:** Bei gleichen Waffen öffnet sich mittig
   das Overlay „Wähle deine Waffe“ mit drei deutlich größeren Waffensymbolen.
-  Der Hintergrund bleibt transparent, das Spielfeld sichtbar. Die Auswahl
+  Das Spielfeld bleibt rundum sichtbar. Die Auswahl
   bleibt geheim und nach dem Bestätigen gesperrt, bis beide gewählt haben.
   Bei erneutem Gleichstand erscheint die nächste Auswahlrunde am selben Ort.
 - **Animierte Kämpfe:** Bei jedem Aufeinandertreffen kommen die beiden
@@ -321,6 +367,8 @@ Das Terminalfenster bleibt während des Spielens geöffnet. **Strg+C** beendet i
   Zug nach jeder Partie. Eigene Figur und anschließend ein markiertes
   Zielfeld anklicken. Pfeiltasten und Enter/Leertaste sind ebenfalls möglich,
   wenn das Spielfeld fokussiert ist.
+- Unter dem Spielfeld eine Chatnachricht eingeben und mit Enter oder **Senden**
+  abschicken. Sie erscheint bei beiden Teilnehmern mit Name und Teamfarbe.
 
 ## Auf zwei Geräten im LAN spielen
 
@@ -348,6 +396,8 @@ Es ist keine Router-Portweiterleitung für eine reine LAN-Partie erforderlich.
 - Serverseitiges Spielende und freiwilliges Aufgeben; eine weitere Partie
   oder eine neue Serie startet erst nach Zustimmung beider Seiten.
 - Freie Serien, Best of 3 und Best of 5 mit Siegstand und separatem Remiszähler.
+- Raumchat mit serverseitig bestätigten Absendern, getrenntem Verlauf und
+  erhaltenen Entwürfen bei vorübergehenden Sendeproblemen.
 - Pause bei Verbindungsabbruch. Standardmäßig bleibt der Platz **120 Sekunden**
   für die bisherige Sitzung reserviert; Neuladen im selben Tab kann die Partie
   innerhalb dieses Fensters fortsetzen. Eine erneute erfolgreiche Verbindung
@@ -357,6 +407,22 @@ Es ist keine Router-Portweiterleitung für eine reine LAN-Partie erforderlich.
   Arcade-Vektoratlas mit PNG-Rückfall; alle Grafiken und Schriften werden
   lokal beziehungsweise über verfügbare Systemschriften dargestellt.
 - Regeltests und Integrationstests mit echten Colyseus-Clients.
+
+## Raumchat
+
+Der Chat erscheint im Raum unter dem Spielfeld. **Enter** oder **Senden** schickt
+die eingegebene Nachricht ab. Der Server bereinigt Steuerzeichen und Zeilenumbrüche,
+entfernt äußere Leerzeichen und akzeptiert bis zu **300 Unicode-Zeichen**. Leere
+oder zu lange Nachrichten werden mit einem Hinweis abgewiesen; der Entwurf
+bleibt erhalten. Zwischen neuen Nachrichten desselben Spielers liegen mindestens
+500 Millisekunden. Namen und feste Teamfarben stammen vom Server.
+
+Der Verlauf enthält die letzten **50 Nachrichten dieses Raums**. Er bleibt bei
+einer nächsten Partie, einer neuen Serie und bei der Wiederverbindung zur selben
+Sitzung erhalten. Während der Gegner kurz getrennt ist oder die Partie bereits
+beendet wurde, kann der verbundene Teilnehmer weiterhin schreiben. Ein neuer
+Raum beginnt mit leerem Verlauf. Chatnachrichten liegen nur im Arbeitsspeicher:
+Beim Ende des Raums oder einem Serverneustart geht dieser Verlauf verloren.
 
 ## Vorläufige Regeln
 
@@ -393,7 +459,8 @@ Punkte. Andere Darstellungen behalten ihre Aufdeckmarker.
 Vor allem Verhalten der Falle, dauerhafte Sichtbarkeit, Waffenverteilung,
 Startspieler und Regeln gegen Endlosschleifen sollen wir nach deinem Feedback
 mit der gewünschten Originalvariante abgleichen. Ein kompletter Serverneustart
-beendet aktuell alle laufenden Partien und Serien; Spielstände liegen nur im Speicher.
+beendet aktuell alle laufenden Partien und Serien; Spielstände und Chatverläufe
+liegen nur im Speicher.
 Nach dauerhaftem Verlassen wird eine Partie beendet. Ein neuer Spieler darf
 den alten Platz nicht übernehmen; für einen anderen Gegner einen neuen Raum
 erstellen. Räume und Sitzungen sind getrennt, benötigen derzeit kein Konto.
@@ -404,6 +471,8 @@ erstellen. Räume und Sitzungen sind getrennt, benötigen derzeit kein Konto.
 | --- | --- |
 | `client/main.ts` | Menüs, Spielphasen und Interaktion |
 | `client/series-ui.ts` / `client/series.css` | Serienstand, Bezeichnungen und Fortsetzungszustände |
+| `client/chat-ui.ts` / `client/chat-ui.css` | Raumchat, Entwurf, Nachrichtenliste und Eingabe |
+| `client/combat-ui.ts` / `client/combat-ui.css` | Waffenwahl und zentrale Kampfpräsentation |
 | `client/board.ts` | Phaser-Brett, Atlas-Sprites, Animationen, Markierungen und Bedienung |
 | `client/board-motion.ts` | Ereigniserkennung und Bildfolgen ohne Wiederholung nach Wiederverbindung |
 | `client/skins.ts` / `client/skin-types.ts` | Grafikset-Format, Laden, Validieren und Standardwerte |
@@ -413,24 +482,27 @@ erstellen. Räume und Sitzungen sind getrennt, benötigen derzeit kein Konto.
 | `client/retro.css` | Am ICQ-Spiel orientierte Oberfläche des Retro-Grafiksets |
 | `client/sound.ts` | Optionale, lokal erzeugte Spielsounds |
 | `public/skins/` | Mitgelieferte Designs, PNG-Atlas, SVG-Master und Konfiguration |
-| `public/skins/icq-retro/` | SVG-Atlas mit 41 Motiven auf 1728 × 2016, passende PNG-Rückfallgrafik und bearbeitbare Waffenquelle |
+| `public/skins/icq-retro/` | SVG-Atlas mit 43 Motiven auf 2016 × 2016, passende PNG-Rückfallgrafik und bearbeitbare Waffenquelle |
 | `scripts/build-retro-atlas.py` | Optionaler gemeinsamer Neubau von SVG, PNG und Grafikmanifest |
 | `scripts/retro_vectorize.py` | Pfadvektorisierung der Figuren mit Pillow und libpotrace |
 | `scripts/build-retro-weapons.mjs` | Kompatibler Aufruf des vollständigen Python-Grafikbuilds |
 | `scripts/compress-skin-svgs.mjs` | Ergänzt gzip-Dateien für die eingebauten SVGs im Produktionsbuild |
-| `design/icq-retro-source/` | PNG-Bearbeitungsvorlage aus 0.4.3, Ausschnittplan und neue Schiedsrichter als SVG |
+| `design/icq-retro-source/` | PNG-Bearbeitungsvorlage aus 0.4.3, Ausschnittplan sowie Schiedsrichter und Flaggensieger als native SVG-Quellen |
 | `design/` | Recherchequellen, Designentscheidungen und verwendete Bildprompts |
 | `skins/` | Eigene Grafiksets als austauschbare NAS-Dateien |
 | `client/network.ts` | Verbindung, Raumbeitritt, Sitzung und Wiederverbindung |
 | `client/styles.css` | Responsives Design |
 | `shared/game.ts` | Maßgebliche Spielregeln und Sicht pro Spieler |
 | `shared/protocol.ts` | Geteilte Nachrichtentypen |
+| `shared/chat.ts` | Zeichengrenze, Textbereinigung und gültige Nachrichtenkennungen |
 | `server/RpsRoom.ts` | Colyseus-Raum, validierte Aktionen und private Zustandsnachrichten |
+| `server/chat.ts` | Raumverlauf, serverseitige Absenderdaten, Mindestabstand und Wiederholschutz |
 | `server/app.ts` | HTTP-/WebSocket-Server, Spiel- und Grafikauslieferung, Health-Endpunkte |
 | `server/index.ts` | Serverstart und Netzwerkadressen |
 | `tests/game.test.ts` | Fachliche Regel- und Geheimhaltungstests |
 | `tests/network.test.ts` | Integration mit getrennten Clients und echten Verbindungen |
 | `tests/game-series.test.ts` / `tests/network-series.test.ts` | Wertung, Serienwechsel, Zustimmung und Wiederverbindung |
+| `tests/chat.test.ts` / `tests/network-chat.test.ts` | Chatvalidierung, Raumtrennung, Wiederholschutz und Verlauf über Wiederverbindung und Partiewechsel |
 
 Die vollständigen gegnerischen Figuren bleiben im `GameState` des Servers.
 `viewFor()` baut für jeden Spieler explizit ein eigenes, gefiltertes `GameView`.
@@ -452,6 +524,14 @@ Die Zustimmung zur Fortsetzung trägt Serien- und Partiekennung. So können
 beide Spieler gleichzeitig zustimmen, während alte Stimmen aus einer früheren
 Partie keine neue Partie auslösen.
 
+Der Raumchat verwendet getrennte Nachrichten: `chat_send` enthält Kennung und
+Text, `chat` den bestätigten Raumverlauf, `chat_problem` einen Eingabe- oder
+Sendehinweis. Spieler-ID, Name, Seat, Zeit und fortlaufende Nachrichten-ID setzt
+der Server aus der verbundenen Sitzung. Chat verändert weder `snapshot` noch
+Spielrevision oder `lastAction`. Eine Kennung darf aus 1 bis 64 ASCII-Buchstaben,
+Ziffern, Unterstrichen und Bindestrichen bestehen; gleiche Kennungen desselben
+Spielers werden innerhalb der letzten 50 Einträge nur einmal aufgenommen.
+
 ## Weiterentwickeln
 
 ```sh
@@ -461,7 +541,7 @@ npm run dev
 Startet den Server auf Port 2567 und Vite auf Port 5173. Spieloberfläche unter
 **http://localhost:5173** öffnen. Im Entwicklungsmodus verbindet sie sich mit
 demselben Host auf Port 2567. Änderungen am Server starten ihn neu und beenden
-damit die aktuellen Partien. Vite aktualisiert die Oberfläche während der
+damit die aktuellen Partien und Chatverläufe. Vite aktualisiert die Oberfläche während der
 Entwicklung. Bei einem anderen Serverport `VITE_SERVER_URL` passend setzen.
 
 ```sh
@@ -478,12 +558,12 @@ eigenen Server an einem automatisch gewählten freien Port.
 
 Der genaue Prüfstand dieser ZIP steht in [PRUEFBERICHT.md](PRUEFBERICHT.md).
 Automatisierte Tests prüfen Regeln, zwei echte Netzwerkclients, Wiederverbindung,
-Geheimhaltung der neuen Ereignisse, Grafikset-Fehlerfälle und NAS-Dateiauslieferung.
+Geheimhaltung der neuen Ereignisse, Raumchat, Grafikset-Fehlerfälle und NAS-Dateiauslieferung.
 TypeScript und Browser-/Serverbuild werden vor der Auslieferung geprüft.
 
 Der LAN-Betrieb auf dem QNAP TS-251D und die bestehende DNS-01-HTTPS-Einrichtung
 unter `https://flusensieb.dns.navy:8443` wurden bereits bestätigt. Die neue
-Version **0.4.5** wird als vollständige ZIP geliefert und anschließend von dir
+Version **0.4.7** wird als vollständige ZIP geliefert und anschließend von dir
 auf dem NAS installiert und mit der Onlineprüfung kontrolliert. Die bisherige
 Installation allein bestätigt noch nicht den Betrieb der neuen Version.
 Die Regeln bleiben die dokumentierten

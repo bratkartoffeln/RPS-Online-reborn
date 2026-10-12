@@ -96,7 +96,7 @@ export async function startServer(config: ServerConfig = {}) {
       app.use('/skins', (_request, response) => response.status(404).type('text').send('Grafikdatei nicht gefunden.'));
       if (hasStaticClient) {
         app.use(express.static(staticDirectory, { index: false }));
-        app.get('/', (_request, response) => response.sendFile(path.join(staticDirectory, 'index.html')));
+        app.get('/', (_request, response) => response.set('Cache-Control', 'no-store').sendFile(path.join(staticDirectory, 'index.html')));
       } else {
         app.get('/', (_request, response) => response.type('text').send('RPS-Spielserver läuft. Im Entwicklungsmodus öffne http://localhost:5173. Für den kompletten Server zuerst npm run build ausführen.'));
       }
