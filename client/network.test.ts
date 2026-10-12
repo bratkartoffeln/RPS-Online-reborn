@@ -3,6 +3,7 @@ import { afterEach, beforeEach, test } from 'node:test';
 import { CloseCode, ErrorCode, MatchMakeError, type Room } from '@colyseus/sdk';
 import { SERVER_SHUTDOWN_MESSAGE } from '../shared/protocol';
 import { RpsConnection, readSession, writeSession, type NetworkStatus, type SessionEnd } from './network';
+import type { SeriesMode } from '../shared/game';
 
 function signal<Args extends unknown[]>() {
   const listeners = new Set<(...args: Args) => void>();
@@ -72,6 +73,7 @@ function harness(room = new FakeRoom()) {
   const statuses: NetworkStatus[] = [];
   const ends: SessionEnd[] = [];
   const problems: string[] = [];
+  const creations: Array<{ roomName: string; options: { name: string; seriesMode: SeriesMode } }> = [];
   const connection = new RpsConnection({
     onStatus: (status) => { statuses.push(status); },
     onSnapshot() {},
@@ -79,13 +81,25 @@ function harness(room = new FakeRoom()) {
     onEnded: (end) => { ends.push(end); },
   });
   const client = {
-    create: async () => room.asRoom(),
+    create: async (roomName: string, options: { name: string; seriesMode: SeriesMode }) => {
+      creations.push({ roomName, options });
+      return room.asRoom();
+    },
     joinById: async () => room.asRoom(),
     reconnect: async () => room.asRoom(),
   };
   Object.defineProperty(connection, 'client', { value: client, writable: true });
-  return { connection, client, room, statuses, ends, problems };
+  return { connection, client, room, statuses, ends, problems, creations };
 }
+
+test('room creation sends the selected series mode and defaults to a free series', async () => {
+  for (const mode of [undefined, 'best-of-3', 'best-of-5'] as const) {
+    const h = harness();
+    await h.connection.create('Ada', mode);
+    assert.deepEqual(h.creations, [{ roomName: 'rps', options: { name: 'Ada', seriesMode: mode ?? 'free' } }]);
+    assert.equal(h.statuses.at(-1), 'connected');
+  }
+});
 
 test('server_shutdown ends the room, invalidates its token and closes the socket', async () => {
   const h = harness();

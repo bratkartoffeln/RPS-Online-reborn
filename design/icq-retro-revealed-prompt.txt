@@ -1,0 +1,22 @@
+Use case: precise-object-edit.
+Asset type: the actual transparent PNG sprite atlas for our existing ICQ-inspired RPS Arena browser game.
+Image 1 is the EDIT TARGET, the current complete 4-column by 4-row atlas. Preserve its existing 16 motifs and their visual appearance. The user asks to ADD the three missing REVEALED variants of the OWN BLUE fighters.
+
+Extend the existing atlas downward by ONE additional row. Keep the original four rows in their existing order and with the same per-cell size. The final layout is FOUR columns by FIVE rows on a genuinely transparent background. Desired canvas is 1254 pixels wide by about 1568 pixels high. If output sizing differs, maintain a strict uniform 4 by 5 layout. Do not squeeze five rows into the old four-row canvas. Do not redesign or replace any existing motif.
+
+Existing first four rows, preserve their order and artwork:
+Row 1: blue rear-view rock held secretly behind back; blue rear-view ivory paper scroll behind back; blue rear-view yellow-handled scissors behind back; blue rear-view flag.
+Row 2: golden rear-view trap dummy; blue rear-view empty hands; red front-view revealed rock; red front-view revealed paper.
+Row 3: red front-view revealed scissors; red front-view flag; golden front-view trap dummy; red front-view concealed fighter without visible weapon.
+Row 4: light green square tile; dark lime green square tile; RPS ARENA logo; yellow referee with red and blue flags.
+Preserve those tiles, logo, referee and 12 existing sprites in recognizable exact same style, colors and poses.
+
+NEW ROW 5, only these THREE new sprites, fourth cell EMPTY TRANSPARENT:
+Column 1: own BLUE ROCK fighter, seen FROM BEHIND exactly like row 1 column 1, but now his right arm is raised and ONE hand clearly holds the gray round rock HIGH beside and above his head. Other arm hangs relaxed. The rock is not behind his back or at waist level; it is conspicuously displayed overhead toward the enemy.
+Column 2: own BLUE PAPER fighter, BACK VIEW, right arm raised, ONE hand gripping the bottom end of an ivory rolled paper scroll held UPRIGHT high beside and above his head. The rolled paper remains recognizably the same object as in existing row 1. Other arm relaxed, no weapon behind the back.
+Column 3: own BLUE SCISSORS fighter, BACK VIEW, right arm raised, ONE hand gripping the yellow handles of scissors, LONG silver blades pointing UPWARD high beside and above his head. Other arm relaxed, no weapon behind the back.
+Column 4: completely empty transparent, no new objects.
+
+For all three additions: retain the same large cream head viewed from the rear, blue cap with top knob, small blue body, short legs, heavy dark contours, small ground shadow, early 2000s rounded cartoon ICQ-game style. The fighters continue facing AWAY from the viewer toward the enemy. Their heads and bodies must be the same size and consistent baseline as the existing blue fighters, with enough clear space for the raised object. The raised forearm should be anatomically readable as connected to the shoulder. No third hand or extra limbs. Each full sprite is isolated inside its cell with at least 12 pixels of padding from all edges. Tools do not overlap the neighboring cells. No words or labels anywhere except the existing RPS ARENA logo. No row/grid lines, no checkerboard transparency preview, no opaque background. Preserve actual alpha transparency.
+
+This is a static atlas edit, NOT an animation sheet. The three new poses are distinct revealed states while all previous concealed/base poses remain available.

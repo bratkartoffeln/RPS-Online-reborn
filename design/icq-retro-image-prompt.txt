@@ -1,0 +1,33 @@
+Use case: stylized-concept
+Asset type: production-ready static sprite atlas for a browser remake of the original ICQ RPS Online tactical board game.
+Primary request: Reconstruct the original visual style as closely as possible from the attached historical gameplay screenshots. Generate ONE genuinely transparent PNG sprite sheet, exactly 1024 x 1024 pixels, in a precise 4-column by 4-row grid of 256 x 256 cells. This is a usable graphics atlas, NOT a screenshot or a scene.
+
+Input images: Image 1 (640x480 gameplay) is the primary original-design reference for body proportions, colors, back-facing fighters, original logo and golden wooden trap. Image 2 (weapon selection) precisely shows the oval gray stone, ivory paper scroll, and long silver scissors with golden handles. Image 3 (blue-team trap placement) shows blue backs, red identical front-facing concealed opponents, green board and referee. Use these as visual references only. Re-create clean original-style artwork; do not paste the low-resolution screenshots.
+
+Style: early-2000s ICQ Flash cartoon sprites, clean dark charcoal outlines and simple flat cel shading. Very large round cream-colored head, tiny body and stubby legs, small round fabric cap with a little upright topknot/knob, sly narrow eyes when face is visible. Royal blue clothing/cap for own team, warm red clothing/cap for enemy team. No ninja face masks. NO photorealism, NO 3D rendering, NO pixel-art blocks, no modern mobile-game gloss. Each fighter must look like the characters in the screenshots rather than a generic armored ninja.
+
+Strict atlas layout, reading left to right:
+ROW 1, cell centers (128,128), (384,128), (640,128), (896,128):
+1 blue fighter viewed FROM BEHIND, holding one large smooth oval medium-gray stone behind his back, clearly visible;
+2 identical blue back-facing fighter holding a long ivory rolled sheet of paper, with the curved rolled top edge visible;
+3 identical blue back-facing fighter carrying oversized long silver scissors with TWO golden-yellow handle loops behind his back;
+4 blue back-facing fighter carrying a bright RED triangular pennant on a wooden pole, like the original flag target.
+ROW 2, centers (128,384), (384,384), (640,384), (896,384):
+5 a squat golden-yellow wooden training dummy shaped like the original fighter, entirely wood, cap knob on top, horizontal carved bands, small arms/feet, NO face, no weapon (secret trap);
+6 unarmed blue fighter FROM BEHIND, both hands hidden, NO question mark and no visible weapon;
+7 red fighter facing the viewer, same round cream face and tiny red outfit as the original, presenting one smooth oval gray stone at his side;
+8 matching front-facing red fighter holding a long ivory rolled sheet of paper at his side.
+ROW 3, centers (128,640), (384,640), (640,640), (896,640):
+9 matching front-facing red fighter holding silver scissors with two golden handle loops;
+10 red front-facing fighter holding a bright RED triangular flag on a wooden pole;
+11 the SAME golden wooden training dummy as cell 5, NO face, NO weapon;
+12 red CONCEALED opponent facing the viewer, both hands behind back, identical to the unarmed red opponents in the screenshots, NO weapon, NO question mark.
+ROW 4, centers (128,896), (384,896), (640,896), (896,896):
+13 one perfectly square FLAT solid light yellow-green board tile, color #c5df82, 208 x 208 pixels centered in its cell, no border/shadow/texture;
+14 one perfectly square FLAT solid lime-green board tile, color #a1c629, 208 x 208 pixels centered in its cell, no border/shadow/texture;
+15 a compact tall original-inspired logo: huge bold condensed letters “RPS”, lime-green at top fading to white at bottom, dark olive outline; the original-style black-haired topknot fighter peeking over the letters; smaller white word “ARENA” directly beneath. Like the historical RPS Online wordmark, with ARENA as the subtitle. Keep the entire logo within this cell.
+16 the original-style referee, front three-quarter view: oversized cream head, black hair tied into a round bun, yellow outfit, tiny legs, holding a small blue judging flag in one hand and a small red judging flag in the other. STATIC neutral pose.
+
+Composition: one subject centered in each exact 256px cell. Subjects 190-210px tall and at most 216px wide including weapons/flags. Maintain at least 20px of empty transparent margin on every side inside every cell. All subjects must be fully contained in their own cells, with no overlaps. Feet aligned consistently within cells. Subtle small translucent ground shadows for fighters only. No visible grid, no labels, no cell numbers, no title outside the logo, no duplicate subjects, no borders around sprite cells.
+Background: real alpha transparency everywhere between sprites, including the unused margins, NOT a white background and NOT a drawn checkerboard.
+Animation: STATIC reference poses only. No animation frames or motion effects.

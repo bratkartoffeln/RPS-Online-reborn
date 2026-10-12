@@ -9,6 +9,8 @@
  * promotion, diagonal movement, move repetition rule, or setup time limit.
  * No legal move is a loss; 300 completed turns is a draw. Disconnection pauses
  * moves and duels rather than changing the result of a match.
+ * A room keeps a free or best-of series. Draws count as completed games, not
+ * wins; the starting seat alternates across every game, including new series.
  *
  * Only viewFor() may cross the network boundary. Never serialize GameState.
  * Every DTO below is built explicitly so hidden kinds and private duel choices
@@ -19,13 +21,38 @@ export const BOARD_COLS = 7;
 export const BOARD_ROWS = 6;
 export const BOARD_SIZE = BOARD_COLS * BOARD_ROWS;
 export const MAX_TURNS = 300;
-const LOG_LIMIT = 20;
+const LOG_LIMIT = 100;
 
 export type FighterKind = 'rock' | 'paper' | 'scissors';
 export type PieceKind = FighterKind | 'flag' | 'trap';
 export type GamePhase = 'waiting' | 'setup' | 'playing' | 'duel' | 'finished';
 export type FinishReason = 'flag' | 'no_moves' | 'resign' | 'turn_limit';
 export type ActionResult = { ok: true } | { ok: false; error: string };
+export type SeriesMode = 'free' | 'best-of-3' | 'best-of-5';
+
+/** Stable across both concurrent votes; changes only on a new game/series. */
+export interface MatchIdentity { seriesId: string; matchId: string }
+
+export interface SeriesState {
+  id: string;
+  number: number;
+  mode: SeriesMode;
+  matchId: string;
+  /** One-based game number within this series; also advances after a draw. */
+  gameNumber: number;
+  completedGames: number;
+  draws: number;
+  winsByPlayer: Record<string, number>;
+  targetWins: 2 | 3 | null;
+  /** A best-of series winner; always null in free mode. */
+  winner: string | null;
+  startingSeat: 0 | 1;
+}
+
+export interface SeriesView extends SeriesState {
+  /** Null only if the player for the starting seat has not joined yet. */
+  startingPlayer: string | null;
+}
 
 export interface PlayerView {
   id: string;
@@ -34,6 +61,7 @@ export interface PlayerView {
   connected: boolean;
   ready: boolean;
   restartRequested: boolean;
+  newSeriesRequested: boolean;
 }
 
 export interface Piece {
@@ -50,6 +78,32 @@ export interface PieceView {
   kind: PieceKind | null;
   /** Whether the piece is publicly known, including after it moves again. */
   revealed: boolean;
+}
+
+export type GameActionOutcome = 'move' | 'attacker' | 'defender' | 'trap' | 'flag' | 'duel' | 'tie';
+
+/** A resolved, public visual event. Never contains an unsubmitted duel choice. */
+export interface GameActionView {
+  /** Revision that created this action; remains stable on sync/connection updates. */
+  id: number;
+  kind: 'move' | 'battle' | 'duel';
+  /** One-based turn being played, including all of its duel rounds. */
+  turnNumber: number;
+  from: number;
+  to: number;
+  attacker: PieceView;
+  defender: PieceView | null;
+  outcome: GameActionOutcome;
+  /** Piece ID, not a player ID. */
+  winnerId: string | null;
+  removedIds: string[];
+  duelRound: number | null;
+}
+
+/** Kept private; viewFor masks an unrevealed mover independently for each viewer. */
+interface GameAction extends Omit<GameActionView, 'attacker' | 'defender'> {
+  attacker: Piece;
+  defender: Piece | null;
 }
 
 export interface Duel {
@@ -77,6 +131,7 @@ export interface DuelView {
 
 export interface GameState {
   revision: number;
+  series: SeriesState;
   phase: GamePhase;
   players: PlayerView[];
   board: Array<Piece | null>;
@@ -86,11 +141,13 @@ export interface GameState {
   winner: string | null;
   finishReason: FinishReason | null;
   duel: Duel | null;
+  lastAction: GameAction | null;
   log: string[];
 }
 
 export interface GameView {
   revision: number;
+  series: SeriesView;
   phase: GamePhase;
   you: string;
   players: PlayerView[];
@@ -101,19 +158,22 @@ export interface GameView {
   winner: string | null;
   finishReason: FinishReason | null;
   duel: DuelView | null;
+  lastAction: GameActionView | null;
   /** Indexed by the source cell; only the viewing player's active moves. */
   legalMoves: Record<number, number[]>;
   log: string[];
 }
 
 export interface GameOptions {
+  /** Fixed for this room; an omitted mode keeps earlier create callers valid. */
+  seriesMode?: SeriesMode;
   /** For deterministic rule tests. Production defaults to Math.random. */
   random?: () => number;
   /** Must return unique, type-independent IDs. Defaults to randomUUID. */
   idGenerator?: () => string;
 }
 
-type Generators = Required<GameOptions>;
+type Generators = Required<Pick<GameOptions, 'random' | 'idGenerator'>>;
 const gameGenerators = new WeakMap<GameState, Generators>();
 const labels: Record<PieceKind, string> = {
   rock: 'Stein',
@@ -144,6 +204,23 @@ function log(game: GameState, entry: string): void {
   if (game.log.length > LOG_LIMIT) game.log.splice(0, game.log.length - LOG_LIMIT);
 }
 
+function recordAction(
+  game: GameState, kind: GameActionView['kind'], from: number, to: number,
+  attacker: Piece, defender: Piece | null, outcome: GameActionOutcome, duelRound: number | null = null,
+): void {
+  const attackerWins = outcome === 'attacker' || outcome === 'flag';
+  const defenderWins = outcome === 'defender' || outcome === 'trap';
+  // Copies are essential: a later secret choice must never mutate an old event.
+  const copy = (piece: Piece): Piece => ({ id: piece.id, owner: piece.owner, kind: piece.kind, revealed: piece.revealed });
+  game.lastAction = {
+    id: game.revision + 1, kind, turnNumber: game.turnNumber + 1, from, to,
+    attacker: copy(attacker), defender: defender ? copy(defender) : null, outcome,
+    winnerId: attackerWins ? attacker.id : defenderWins ? defender!.id : null,
+    removedIds: attackerWins ? [defender!.id] : defenderWins ? [attacker.id] : [],
+    duelRound,
+  };
+}
+
 function playerFor(game: GameState, id: string): PlayerView | undefined {
   return game.players.find((player) => player.id === id);
 }
@@ -154,6 +231,10 @@ function otherPlayer(game: GameState, id: string): PlayerView | undefined {
 
 function isFighter(kind: unknown): kind is FighterKind {
   return kind === 'rock' || kind === 'paper' || kind === 'scissors';
+}
+
+export function isSeriesMode(value: unknown): value is SeriesMode {
+  return value === 'free' || value === 'best-of-3' || value === 'best-of-5';
 }
 
 function validIndex(index: unknown): index is number {
@@ -228,11 +309,20 @@ function compare(first: FighterKind, second: FighterKind): -1 | 0 | 1 {
 }
 
 function finish(game: GameState, winner: string | null, reason: FinishReason): void {
+  // All endings pass through here. Repeated disconnect/leave/resign callbacks
+  // must never score the same game twice.
+  if (game.phase === 'finished') return;
   game.phase = 'finished';
   game.winner = winner;
   game.finishReason = reason;
   game.currentTurn = null;
   game.duel = null;
+  game.series.completedGames += 1;
+  if (winner !== null) game.series.winsByPlayer[winner] = (game.series.winsByPlayer[winner] ?? 0) + 1;
+  else game.series.draws += 1;
+  if (winner !== null && game.series.targetWins !== null && game.series.winsByPlayer[winner]! >= game.series.targetWins) {
+    game.series.winner = winner;
+  }
   if (winner) {
     const explanations: Record<Exclude<FinishReason, 'turn_limit'>, string> = {
       flag: 'Die gegnerische Fahne wurde erobert.',
@@ -243,14 +333,19 @@ function finish(game: GameState, winner: string | null, reason: FinishReason): v
   } else {
     log(game, `Unentschieden nach ${MAX_TURNS} abgeschlossenen Zügen.`);
   }
+  if (game.series.winner !== null) {
+    log(game, `${playerFor(game, game.series.winner)!.name} gewinnt Serie ${game.series.number} mit ${game.series.targetWins} Siegen.`);
+  }
 }
 
 function startIfReady(game: GameState): void {
-  if (game.players.length !== 2 || !game.players.every((player) => player.ready)) return;
+  if ((game.phase !== 'waiting' && game.phase !== 'setup') || game.players.length !== 2 ||
+      !game.players.every((player) => player.ready && player.connected)) return;
+  const starter = game.players.find((player) => player.seat === game.series.startingSeat)!;
   game.phase = 'playing';
-  game.currentTurn = game.players[0]!.id;
-  log(game, `Die Partie beginnt. ${game.players[0]!.name} ist am Zug.`);
-  if (!hasLegalMove(game, game.currentTurn)) finish(game, game.players[1]!.id, 'no_moves');
+  game.currentTurn = starter.id;
+  log(game, `Spiel ${game.series.gameNumber} beginnt. ${starter.name} ist am Zug.`);
+  if (!hasLegalMove(game, starter.id)) finish(game, otherPlayer(game, starter.id)!.id, 'no_moves');
 }
 
 function completeTurn(game: GameState, mover: string): void {
@@ -275,14 +370,23 @@ function setupPlayer(game: GameState, id: string): PlayerView | ActionResult {
 }
 
 export function createGame(options: GameOptions = {}): GameState {
-  const game: GameState = {
-    revision: 0, phase: 'waiting', players: [], board: Array(BOARD_SIZE).fill(null),
-    currentTurn: null, turnNumber: 0, winner: null, finishReason: null, duel: null, log: [],
-  };
-  gameGenerators.set(game, {
+  const mode = options.seriesMode === undefined ? 'free' : options.seriesMode;
+  if (!isSeriesMode(mode)) throw new Error('Wähle Freies Spiel, Best-of-3 oder Best-of-5.');
+  const source: Generators = {
     random: options.random ?? Math.random,
     idGenerator: options.idGenerator ?? (() => globalThis.crypto.randomUUID()),
-  });
+  };
+  const game: GameState = {
+    revision: 0, phase: 'waiting', players: [], board: Array(BOARD_SIZE).fill(null),
+    currentTurn: null, turnNumber: 0, winner: null, finishReason: null, duel: null, lastAction: null, log: [],
+    series: {
+      id: source.idGenerator(), number: 1, mode, matchId: source.idGenerator(), gameNumber: 1,
+      completedGames: 0, draws: 0, winsByPlayer: Object.create(null),
+      targetWins: mode === 'best-of-3' ? 2 : mode === 'best-of-5' ? 3 : null,
+      winner: null, startingSeat: 0,
+    },
+  };
+  gameGenerators.set(game, source);
   return game;
 }
 
@@ -296,9 +400,10 @@ export function addPlayer(game: GameState, id: string, name: string): ActionResu
   if (game.phase !== 'waiting') return fail('Die Partie hat bereits begonnen.');
   const player: PlayerView = {
     id, name: cleanName, seat: game.players.length as 0 | 1,
-    connected: true, ready: false, restartRequested: false,
+    connected: true, ready: false, restartRequested: false, newSeriesRequested: false,
   };
   game.players.push(player);
+  game.series.winsByPlayer[id] = 0;
   placeArmy(game, player);
   game.phase = game.players.length === 2 ? 'setup' : 'waiting';
   log(game, `${player.name} ist dem Raum beigetreten.`);
@@ -311,7 +416,13 @@ export function setConnected(game: GameState, id: string, connected: boolean): A
   if (typeof connected !== 'boolean') return fail('Ungültiger Verbindungsstatus.');
   if (player.connected === connected) return { ok: true };
   player.connected = connected;
+  if (!connected) {
+    // A vote is consent from a currently connected pair. Never carry it across
+    // a drop and silently start a new game when somebody later reconnects.
+    game.players.forEach((entry) => { entry.restartRequested = false; entry.newSeriesRequested = false; });
+  }
   log(game, connected ? `${player.name} ist wieder verbunden.` : `${player.name}: Verbindung unterbrochen.`);
+  if (connected) startIfReady(game);
   return ok(game);
 }
 
@@ -362,6 +473,7 @@ export function movePiece(game: GameState, id: string, fromIndex: number, toInde
 
   const name = playerFor(game, id)!.name;
   if (!defender) {
+    recordAction(game, 'move', fromIndex, toIndex, attacker, null, 'move');
     game.board[toIndex] = attacker;
     game.board[fromIndex] = null;
     log(game, `${name} zieht von ${cellName(fromIndex)} nach ${cellName(toIndex)}.`);
@@ -372,18 +484,21 @@ export function movePiece(game: GameState, id: string, fromIndex: number, toInde
   attacker.revealed = true;
   defender.revealed = true;
   if (defender.kind === 'flag') {
+    recordAction(game, 'battle', fromIndex, toIndex, attacker, defender, 'flag');
     game.board[toIndex] = attacker;
     game.board[fromIndex] = null;
     game.turnNumber += 1;
     log(game, `${name} erobert die Fahne auf ${cellName(toIndex)}.`);
     finish(game, id, 'flag');
   } else if (defender.kind === 'trap') {
+    recordAction(game, 'battle', fromIndex, toIndex, attacker, defender, 'trap');
     game.board[fromIndex] = null;
     log(game, `${name}s ${labels[attacker.kind]} trifft auf eine Falle auf ${cellName(toIndex)} und fällt.`);
     completeTurn(game, id);
   } else {
     const result = compare(attacker.kind, defender.kind);
     if (result === 0) {
+      recordAction(game, 'battle', fromIndex, toIndex, attacker, defender, 'duel', 1);
       game.phase = 'duel';
       game.duel = {
         id: generators(game).idGenerator(), attacker: id, defender: defender.owner,
@@ -391,6 +506,7 @@ export function movePiece(game: GameState, id: string, fromIndex: number, toInde
       };
       log(game, `${labels[attacker.kind]} gegen ${labels[defender.kind]} auf ${cellName(toIndex)}: Beide wählen im Duell neu.`);
     } else {
+      recordAction(game, 'battle', fromIndex, toIndex, attacker, defender, result === 1 ? 'attacker' : 'defender');
       log(game, `${labels[attacker.kind]} gegen ${labels[defender.kind]} auf ${cellName(toIndex)}: ${playerFor(game, result === 1 ? id : defender.owner)!.name} gewinnt den Kampf.`);
       game.board[fromIndex] = null;
       if (result === 1) game.board[toIndex] = attacker;
@@ -418,6 +534,8 @@ export function chooseDuel(game: GameState, id: string, kind: FighterKind): Acti
   attacker.kind = attackChoice;
   defender.kind = defenseChoice;
   const result = compare(attackChoice, defenseChoice);
+  recordAction(game, 'duel', duel.from, duel.to, attacker, defender,
+    result === 0 ? 'tie' : result === 1 ? 'attacker' : 'defender', duel.round);
   if (result === 0) {
     log(game, `Duellrunde ${duel.round}: Beide wählen ${labels[attackChoice]}. Erneut wählen.`);
     duel.round += 1;
@@ -441,36 +559,91 @@ export function resign(game: GameState, id: string): ActionResult {
   return ok(game);
 }
 
-export function restartVote(game: GameState, id: string): ActionResult {
+function resetMatch(game: GameState, newSeries: boolean): void {
+  const series = game.series;
+  const source = generators(game);
+  series.matchId = source.idGenerator();
+  series.startingSeat = series.startingSeat === 0 ? 1 : 0;
+  if (newSeries) {
+    series.id = source.idGenerator();
+    series.number += 1;
+    series.gameNumber = 1;
+    series.completedGames = 0;
+    series.draws = 0;
+    series.winner = null;
+    series.winsByPlayer = Object.fromEntries(game.players.map((player) => [player.id, 0]));
+  } else {
+    series.gameNumber += 1;
+  }
+  game.board = Array(BOARD_SIZE).fill(null);
+  game.phase = 'setup';
+  game.currentTurn = null;
+  game.turnNumber = 0;
+  game.winner = null;
+  game.finishReason = null;
+  game.duel = null;
+  game.lastAction = null;
+  game.log = [newSeries
+    ? `Neue Serie ${series.number}. Stellt eure Figuren für Spiel 1 auf.`
+    : `Spiel ${series.gameNumber} der Serie ${series.number}. Stellt eure Figuren auf.`];
+  game.players.forEach((player) => {
+    player.ready = false;
+    player.restartRequested = false;
+    player.newSeriesRequested = false;
+    placeArmy(game, player);
+  });
+}
+
+function continuationVote(game: GameState, id: string, identity: MatchIdentity, newSeries: boolean): ActionResult {
   const player = playerFor(game, id);
   if (!player) return fail('Du gehörst nicht zu dieser Partie.');
-  if (game.phase !== 'finished') return fail('Eine Revanche ist erst nach dem Ende der Partie möglich.');
-  if (!player.connected) return fail('Deine Verbindung ist unterbrochen.');
-  if (player.restartRequested) return { ok: true };
-  player.restartRequested = true;
-  if (game.players.length === 2 && game.players.every((entry) => entry.restartRequested)) {
-    game.board = Array(BOARD_SIZE).fill(null);
-    game.phase = 'setup';
-    game.currentTurn = null;
-    game.turnNumber = 0;
-    game.winner = null;
-    game.finishReason = null;
-    game.duel = null;
-    game.log = ['Neue Partie. Stellt eure Figuren auf.'];
-    game.players.forEach((entry) => {
-      entry.ready = false;
-      entry.restartRequested = false;
-      placeArmy(game, entry);
-    });
+  if (!identity || typeof identity !== 'object' || Array.isArray(identity) ||
+      identity.seriesId !== game.series.id || identity.matchId !== game.series.matchId) {
+    return fail('Diese Abstimmung gehört zu einem früheren Spiel oder einer früheren Serie. Bitte verwende den aktuellen Spielstand.');
+  }
+  if (game.phase !== 'finished') return fail('Die nächste Partie oder eine neue Serie ist erst nach dem Spielende möglich.');
+  if (game.players.length !== 2 || !game.players.every((entry) => entry.connected)) {
+    return fail('Für die nächste Partie müssen beide Spieler wieder verbunden sein.');
+  }
+  if (!newSeries && game.series.winner !== null) {
+    return fail('Diese Serie ist entschieden. Ihr könnt gemeinsam eine neue Serie starten.');
+  }
+  if (newSeries ? player.newSeriesRequested : player.restartRequested) return { ok: true };
+  // Each player can switch their choice, but cannot consent to both actions.
+  // Opposite votes never reset scores or advance the game.
+  player.restartRequested = !newSeries;
+  player.newSeriesRequested = newSeries;
+  if (game.players.every((entry) => newSeries ? entry.newSeriesRequested : entry.restartRequested)) {
+    resetMatch(game, newSeries);
   } else {
-    log(game, `${player.name} möchte eine Revanche.`);
+    log(game, newSeries ? `${player.name} möchte eine neue Serie mit zurückgesetzter Wertung.` : `${player.name} möchte die nächste Partie spielen.`);
   }
   return ok(game);
+}
+
+export function restartVote(game: GameState, id: string, identity: MatchIdentity): ActionResult {
+  return continuationVote(game, id, identity, false);
+}
+
+export function newSeriesVote(game: GameState, id: string, identity: MatchIdentity): ActionResult {
+  return continuationVote(game, id, identity, true);
 }
 
 export function viewFor(game: GameState, id: string): GameView {
   const isParticipant = Boolean(playerFor(game, id));
   const isPaused = paused(game);
+  const publicPiece = (piece: Piece): PieceView => ({
+    id: piece.id, owner: piece.owner,
+    kind: piece.revealed || (isParticipant && piece.owner === id) ? piece.kind : null,
+    revealed: piece.revealed,
+  });
+  const action = game.lastAction;
+  const actionView: GameActionView | null = action ? {
+    id: action.id, kind: action.kind, turnNumber: action.turnNumber,
+    from: action.from, to: action.to,
+    attacker: publicPiece(action.attacker), defender: action.defender ? publicPiece(action.defender) : null,
+    outcome: action.outcome, winnerId: action.winnerId, removedIds: [...action.removedIds], duelRound: action.duelRound,
+  } : null;
   let duelView: DuelView | null = null;
   if (game.duel) {
     const duel = game.duel;
@@ -483,17 +656,21 @@ export function viewFor(game: GameState, id: string): GameView {
   }
   return {
     revision: game.revision, phase: game.phase, you: id,
+    series: {
+      id: game.series.id, number: game.series.number, mode: game.series.mode,
+      matchId: game.series.matchId, gameNumber: game.series.gameNumber,
+      completedGames: game.series.completedGames, draws: game.series.draws,
+      winsByPlayer: Object.fromEntries(game.players.map((player) => [player.id, game.series.winsByPlayer[player.id] ?? 0])),
+      targetWins: game.series.targetWins, winner: game.series.winner, startingSeat: game.series.startingSeat,
+      startingPlayer: game.players.find((player) => player.seat === game.series.startingSeat)?.id ?? null,
+    },
     players: game.players.map((player) => ({
       id: player.id, name: player.name, seat: player.seat, connected: player.connected,
-      ready: player.ready, restartRequested: player.restartRequested,
+      ready: player.ready, restartRequested: player.restartRequested, newSeriesRequested: player.newSeriesRequested,
     })),
-    board: game.board.map((piece) => piece ? {
-      id: piece.id, owner: piece.owner,
-      kind: piece.revealed || (isParticipant && piece.owner === id) ? piece.kind : null,
-      revealed: piece.revealed,
-    } : null),
+    board: game.board.map((piece) => piece ? publicPiece(piece) : null),
     currentTurn: game.currentTurn, turnNumber: game.turnNumber, paused: isPaused,
-    winner: game.winner, finishReason: game.finishReason, duel: duelView,
+    winner: game.winner, finishReason: game.finishReason, duel: duelView, lastAction: actionView,
     legalMoves: isParticipant && game.phase === 'playing' && !isPaused && game.currentTurn === id ? legalMovesFor(game, id) : {},
     log: [...game.log],
   };

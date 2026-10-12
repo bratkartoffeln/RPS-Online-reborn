@@ -1,0 +1,24 @@
+# RPS Arena: HTTPS und WebSockets für die öffentliche Spieladresse.
+# Voraussetzung: DNS zeigt auf den Anschluss; die FRITZ!Box leitet extern
+# 80/TCP und 443/TCP an die in compose.yaml gewählten NAS-Ports weiter.
+# Caddy holt und erneuert das Zertifikat und leitet HTTP auf HTTPS um.
+{
+	# Diese Konfiguration benötigt nur TCP; HTTP/3 über UDP bleibt aus.
+	servers {
+		protocols h1 h2
+	}
+}
+
+{$RPS_DOMAIN:flusensieb.dns.navy} {
+	# Der Dienstname wird im gemeinsamen Compose-Netzwerk aufgelöst.
+	# Caddy übernimmt WebSocket-Upgrades und Weiterleitungs-Header selbst.
+	reverse_proxy rps:2567 {
+		# Bei einer Konfigurations-Neuladung bestehende WebSockets nicht
+		# sofort schließen. Ein Container-Neustart beendet sie weiterhin.
+		stream_close_delay 5m
+	}
+}
+
+# Nach Ersetzen dieser eingebundenen Datei Caddy neu erstellen:
+# docker compose -p rps-arena -f compose.yaml --profile https up -d --no-deps --force-recreate caddy
+# Die benannten Volumes caddy_data und caddy_config dabei beibehalten.

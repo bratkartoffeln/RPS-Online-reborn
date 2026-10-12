@@ -1,8 +1,9 @@
-# RPS Arena 0.2 – Onlinebetrieb mit Render
+# RPS Arena – alternative Bereitstellung mit Render
 
-Diese Version enthält die Konfiguration für einen einzelnen Docker-Webservice
-auf Render. **Es ist noch kein Internetserver bereitgestellt.** Die Dateien
-können weiterhin wie bisher lokal oder im LAN gestartet werden.
+Das Projekt enthält zusätzlich die Konfiguration für einen einzelnen Docker-
+Webservice auf Render. **Für das bestehende QNAP-Projekt gilt stattdessen
+[QNAP-UPDATE.md](QNAP-UPDATE.md).** Ein Render-Dienst wurde für dieses Projekt
+nicht eingerichtet. Die Dateien können weiterhin lokal oder im LAN laufen.
 
 ## Der erste Schritt bei dir
 
@@ -68,7 +69,7 @@ Partie bei einem Serverneustart oder Deployment.
    Abhängigkeiten, führt die automatisierten Tests aus und baut beide Teile
    der Anwendung. Der Container startet nur den gebauten Server.
 6. Die von Render tatsächlich ausgegebene **HTTPS-Adresse** öffnen. Dort
-   sollte RPS Arena 0.2.0 erscheinen. Diese Adresse für Einladungslinks verwenden.
+   sollte RPS Arena 0.4.5 erscheinen. Diese Adresse für Einladungslinks verwenden.
 
 `autoDeployTrigger: off` verhindert automatische Anwendungsdeploys bei jedem
 Commit. Änderungen an einem Blueprint können dennoch einen neuen Deploy

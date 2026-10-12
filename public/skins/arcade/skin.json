@@ -1,0 +1,1721 @@
+{
+  "version": 1,
+  "name": "Arcade",
+  "palette": {
+    "ui": {
+      "background": "#101d25",
+      "panel": "#192c35",
+      "border": "#34505b",
+      "text": "#eef9ef",
+      "muted": "#9db5b9",
+      "accent": "#d4f57b",
+      "accentText": "#203327",
+      "own": "#9bcaff",
+      "enemy": "#ffb5ad"
+    },
+    "board": {
+      "light": "#253b45",
+      "dark": "#1e303a",
+      "border": "#44616a",
+      "setupOwn": "#244a80",
+      "setupEnemy": "#6b3038",
+      "selected": "#4a6146",
+      "accent": "#d4f57b",
+      "duel": "#ffcf7e",
+      "coordinates": "#9bbdc3",
+      "shadow": "#0a1820",
+      "dots": "#9bbdc3",
+      "focus": "#ffffff",
+      "ownBase": "#205dc1",
+      "ownEdge": "#73b2ff",
+      "ownSymbol": "#ecf5ff",
+      "enemyBase": "#b9333e",
+      "enemyEdge": "#ff8b84",
+      "enemySymbol": "#fff1ed",
+      "revealed": "#d4f57b"
+    }
+  },
+  "atlas": {
+    "image": "master.svg",
+    "fallbackImage": "atlas.png",
+    "frames": {
+      "own-rock-idle-0": {
+        "x": 0,
+        "y": 0,
+        "width": 96,
+        "height": 96
+      },
+      "own-rock-idle-1": {
+        "x": 96,
+        "y": 0,
+        "width": 96,
+        "height": 96
+      },
+      "own-rock-selected-0": {
+        "x": 192,
+        "y": 0,
+        "width": 96,
+        "height": 96
+      },
+      "own-rock-selected-1": {
+        "x": 288,
+        "y": 0,
+        "width": 96,
+        "height": 96
+      },
+      "own-rock-selected-2": {
+        "x": 384,
+        "y": 0,
+        "width": 96,
+        "height": 96
+      },
+      "own-rock-move-0": {
+        "x": 480,
+        "y": 0,
+        "width": 96,
+        "height": 96
+      },
+      "own-rock-move-1": {
+        "x": 576,
+        "y": 0,
+        "width": 96,
+        "height": 96
+      },
+      "own-rock-duel-0": {
+        "x": 672,
+        "y": 0,
+        "width": 96,
+        "height": 96
+      },
+      "own-rock-duel-1": {
+        "x": 768,
+        "y": 0,
+        "width": 96,
+        "height": 96
+      },
+      "own-rock-attack-1": {
+        "x": 864,
+        "y": 0,
+        "width": 96,
+        "height": 96
+      },
+      "own-rock-win-1": {
+        "x": 960,
+        "y": 0,
+        "width": 96,
+        "height": 96
+      },
+      "own-rock-lose-1": {
+        "x": 1056,
+        "y": 0,
+        "width": 96,
+        "height": 96
+      },
+      "own-paper-idle-0": {
+        "x": 0,
+        "y": 96,
+        "width": 96,
+        "height": 96
+      },
+      "own-paper-idle-1": {
+        "x": 96,
+        "y": 96,
+        "width": 96,
+        "height": 96
+      },
+      "own-paper-selected-0": {
+        "x": 192,
+        "y": 96,
+        "width": 96,
+        "height": 96
+      },
+      "own-paper-selected-1": {
+        "x": 288,
+        "y": 96,
+        "width": 96,
+        "height": 96
+      },
+      "own-paper-selected-2": {
+        "x": 384,
+        "y": 96,
+        "width": 96,
+        "height": 96
+      },
+      "own-paper-move-0": {
+        "x": 480,
+        "y": 96,
+        "width": 96,
+        "height": 96
+      },
+      "own-paper-move-1": {
+        "x": 576,
+        "y": 96,
+        "width": 96,
+        "height": 96
+      },
+      "own-paper-duel-0": {
+        "x": 672,
+        "y": 96,
+        "width": 96,
+        "height": 96
+      },
+      "own-paper-duel-1": {
+        "x": 768,
+        "y": 96,
+        "width": 96,
+        "height": 96
+      },
+      "own-paper-attack-1": {
+        "x": 864,
+        "y": 96,
+        "width": 96,
+        "height": 96
+      },
+      "own-paper-win-1": {
+        "x": 960,
+        "y": 96,
+        "width": 96,
+        "height": 96
+      },
+      "own-paper-lose-1": {
+        "x": 1056,
+        "y": 96,
+        "width": 96,
+        "height": 96
+      },
+      "own-scissors-idle-0": {
+        "x": 0,
+        "y": 192,
+        "width": 96,
+        "height": 96
+      },
+      "own-scissors-idle-1": {
+        "x": 96,
+        "y": 192,
+        "width": 96,
+        "height": 96
+      },
+      "own-scissors-selected-0": {
+        "x": 192,
+        "y": 192,
+        "width": 96,
+        "height": 96
+      },
+      "own-scissors-selected-1": {
+        "x": 288,
+        "y": 192,
+        "width": 96,
+        "height": 96
+      },
+      "own-scissors-selected-2": {
+        "x": 384,
+        "y": 192,
+        "width": 96,
+        "height": 96
+      },
+      "own-scissors-move-0": {
+        "x": 480,
+        "y": 192,
+        "width": 96,
+        "height": 96
+      },
+      "own-scissors-move-1": {
+        "x": 576,
+        "y": 192,
+        "width": 96,
+        "height": 96
+      },
+      "own-scissors-duel-0": {
+        "x": 672,
+        "y": 192,
+        "width": 96,
+        "height": 96
+      },
+      "own-scissors-duel-1": {
+        "x": 768,
+        "y": 192,
+        "width": 96,
+        "height": 96
+      },
+      "own-scissors-attack-1": {
+        "x": 864,
+        "y": 192,
+        "width": 96,
+        "height": 96
+      },
+      "own-scissors-win-1": {
+        "x": 960,
+        "y": 192,
+        "width": 96,
+        "height": 96
+      },
+      "own-scissors-lose-1": {
+        "x": 1056,
+        "y": 192,
+        "width": 96,
+        "height": 96
+      },
+      "own-flag-idle-0": {
+        "x": 0,
+        "y": 288,
+        "width": 96,
+        "height": 96
+      },
+      "own-flag-idle-1": {
+        "x": 96,
+        "y": 288,
+        "width": 96,
+        "height": 96
+      },
+      "own-flag-selected-0": {
+        "x": 192,
+        "y": 288,
+        "width": 96,
+        "height": 96
+      },
+      "own-flag-selected-1": {
+        "x": 288,
+        "y": 288,
+        "width": 96,
+        "height": 96
+      },
+      "own-flag-selected-2": {
+        "x": 384,
+        "y": 288,
+        "width": 96,
+        "height": 96
+      },
+      "own-flag-move-0": {
+        "x": 480,
+        "y": 288,
+        "width": 96,
+        "height": 96
+      },
+      "own-flag-move-1": {
+        "x": 576,
+        "y": 288,
+        "width": 96,
+        "height": 96
+      },
+      "own-flag-duel-0": {
+        "x": 672,
+        "y": 288,
+        "width": 96,
+        "height": 96
+      },
+      "own-flag-duel-1": {
+        "x": 768,
+        "y": 288,
+        "width": 96,
+        "height": 96
+      },
+      "own-flag-attack-1": {
+        "x": 864,
+        "y": 288,
+        "width": 96,
+        "height": 96
+      },
+      "own-flag-win-1": {
+        "x": 960,
+        "y": 288,
+        "width": 96,
+        "height": 96
+      },
+      "own-flag-lose-1": {
+        "x": 1056,
+        "y": 288,
+        "width": 96,
+        "height": 96
+      },
+      "own-trap-idle-0": {
+        "x": 0,
+        "y": 384,
+        "width": 96,
+        "height": 96
+      },
+      "own-trap-idle-1": {
+        "x": 96,
+        "y": 384,
+        "width": 96,
+        "height": 96
+      },
+      "own-trap-selected-0": {
+        "x": 192,
+        "y": 384,
+        "width": 96,
+        "height": 96
+      },
+      "own-trap-selected-1": {
+        "x": 288,
+        "y": 384,
+        "width": 96,
+        "height": 96
+      },
+      "own-trap-selected-2": {
+        "x": 384,
+        "y": 384,
+        "width": 96,
+        "height": 96
+      },
+      "own-trap-move-0": {
+        "x": 480,
+        "y": 384,
+        "width": 96,
+        "height": 96
+      },
+      "own-trap-move-1": {
+        "x": 576,
+        "y": 384,
+        "width": 96,
+        "height": 96
+      },
+      "own-trap-duel-0": {
+        "x": 672,
+        "y": 384,
+        "width": 96,
+        "height": 96
+      },
+      "own-trap-duel-1": {
+        "x": 768,
+        "y": 384,
+        "width": 96,
+        "height": 96
+      },
+      "own-trap-attack-1": {
+        "x": 864,
+        "y": 384,
+        "width": 96,
+        "height": 96
+      },
+      "own-trap-win-1": {
+        "x": 960,
+        "y": 384,
+        "width": 96,
+        "height": 96
+      },
+      "own-trap-lose-1": {
+        "x": 1056,
+        "y": 384,
+        "width": 96,
+        "height": 96
+      },
+      "own-unknown-idle-0": {
+        "x": 0,
+        "y": 480,
+        "width": 96,
+        "height": 96
+      },
+      "own-unknown-idle-1": {
+        "x": 96,
+        "y": 480,
+        "width": 96,
+        "height": 96
+      },
+      "own-unknown-selected-0": {
+        "x": 192,
+        "y": 480,
+        "width": 96,
+        "height": 96
+      },
+      "own-unknown-selected-1": {
+        "x": 288,
+        "y": 480,
+        "width": 96,
+        "height": 96
+      },
+      "own-unknown-selected-2": {
+        "x": 384,
+        "y": 480,
+        "width": 96,
+        "height": 96
+      },
+      "own-unknown-move-0": {
+        "x": 480,
+        "y": 480,
+        "width": 96,
+        "height": 96
+      },
+      "own-unknown-move-1": {
+        "x": 576,
+        "y": 480,
+        "width": 96,
+        "height": 96
+      },
+      "own-unknown-duel-0": {
+        "x": 672,
+        "y": 480,
+        "width": 96,
+        "height": 96
+      },
+      "own-unknown-duel-1": {
+        "x": 768,
+        "y": 480,
+        "width": 96,
+        "height": 96
+      },
+      "own-unknown-attack-1": {
+        "x": 864,
+        "y": 480,
+        "width": 96,
+        "height": 96
+      },
+      "own-unknown-win-1": {
+        "x": 960,
+        "y": 480,
+        "width": 96,
+        "height": 96
+      },
+      "own-unknown-lose-1": {
+        "x": 1056,
+        "y": 480,
+        "width": 96,
+        "height": 96
+      },
+      "enemy-rock-idle-0": {
+        "x": 0,
+        "y": 576,
+        "width": 96,
+        "height": 96
+      },
+      "enemy-rock-idle-1": {
+        "x": 96,
+        "y": 576,
+        "width": 96,
+        "height": 96
+      },
+      "enemy-rock-selected-0": {
+        "x": 192,
+        "y": 576,
+        "width": 96,
+        "height": 96
+      },
+      "enemy-rock-selected-1": {
+        "x": 288,
+        "y": 576,
+        "width": 96,
+        "height": 96
+      },
+      "enemy-rock-selected-2": {
+        "x": 384,
+        "y": 576,
+        "width": 96,
+        "height": 96
+      },
+      "enemy-rock-move-0": {
+        "x": 480,
+        "y": 576,
+        "width": 96,
+        "height": 96
+      },
+      "enemy-rock-move-1": {
+        "x": 576,
+        "y": 576,
+        "width": 96,
+        "height": 96
+      },
+      "enemy-rock-duel-0": {
+        "x": 672,
+        "y": 576,
+        "width": 96,
+        "height": 96
+      },
+      "enemy-rock-duel-1": {
+        "x": 768,
+        "y": 576,
+        "width": 96,
+        "height": 96
+      },
+      "enemy-rock-attack-1": {
+        "x": 864,
+        "y": 576,
+        "width": 96,
+        "height": 96
+      },
+      "enemy-rock-win-1": {
+        "x": 960,
+        "y": 576,
+        "width": 96,
+        "height": 96
+      },
+      "enemy-rock-lose-1": {
+        "x": 1056,
+        "y": 576,
+        "width": 96,
+        "height": 96
+      },
+      "enemy-paper-idle-0": {
+        "x": 0,
+        "y": 672,
+        "width": 96,
+        "height": 96
+      },
+      "enemy-paper-idle-1": {
+        "x": 96,
+        "y": 672,
+        "width": 96,
+        "height": 96
+      },
+      "enemy-paper-selected-0": {
+        "x": 192,
+        "y": 672,
+        "width": 96,
+        "height": 96
+      },
+      "enemy-paper-selected-1": {
+        "x": 288,
+        "y": 672,
+        "width": 96,
+        "height": 96
+      },
+      "enemy-paper-selected-2": {
+        "x": 384,
+        "y": 672,
+        "width": 96,
+        "height": 96
+      },
+      "enemy-paper-move-0": {
+        "x": 480,
+        "y": 672,
+        "width": 96,
+        "height": 96
+      },
+      "enemy-paper-move-1": {
+        "x": 576,
+        "y": 672,
+        "width": 96,
+        "height": 96
+      },
+      "enemy-paper-duel-0": {
+        "x": 672,
+        "y": 672,
+        "width": 96,
+        "height": 96
+      },
+      "enemy-paper-duel-1": {
+        "x": 768,
+        "y": 672,
+        "width": 96,
+        "height": 96
+      },
+      "enemy-paper-attack-1": {
+        "x": 864,
+        "y": 672,
+        "width": 96,
+        "height": 96
+      },
+      "enemy-paper-win-1": {
+        "x": 960,
+        "y": 672,
+        "width": 96,
+        "height": 96
+      },
+      "enemy-paper-lose-1": {
+        "x": 1056,
+        "y": 672,
+        "width": 96,
+        "height": 96
+      },
+      "enemy-scissors-idle-0": {
+        "x": 0,
+        "y": 768,
+        "width": 96,
+        "height": 96
+      },
+      "enemy-scissors-idle-1": {
+        "x": 96,
+        "y": 768,
+        "width": 96,
+        "height": 96
+      },
+      "enemy-scissors-selected-0": {
+        "x": 192,
+        "y": 768,
+        "width": 96,
+        "height": 96
+      },
+      "enemy-scissors-selected-1": {
+        "x": 288,
+        "y": 768,
+        "width": 96,
+        "height": 96
+      },
+      "enemy-scissors-selected-2": {
+        "x": 384,
+        "y": 768,
+        "width": 96,
+        "height": 96
+      },
+      "enemy-scissors-move-0": {
+        "x": 480,
+        "y": 768,
+        "width": 96,
+        "height": 96
+      },
+      "enemy-scissors-move-1": {
+        "x": 576,
+        "y": 768,
+        "width": 96,
+        "height": 96
+      },
+      "enemy-scissors-duel-0": {
+        "x": 672,
+        "y": 768,
+        "width": 96,
+        "height": 96
+      },
+      "enemy-scissors-duel-1": {
+        "x": 768,
+        "y": 768,
+        "width": 96,
+        "height": 96
+      },
+      "enemy-scissors-attack-1": {
+        "x": 864,
+        "y": 768,
+        "width": 96,
+        "height": 96
+      },
+      "enemy-scissors-win-1": {
+        "x": 960,
+        "y": 768,
+        "width": 96,
+        "height": 96
+      },
+      "enemy-scissors-lose-1": {
+        "x": 1056,
+        "y": 768,
+        "width": 96,
+        "height": 96
+      },
+      "enemy-flag-idle-0": {
+        "x": 0,
+        "y": 864,
+        "width": 96,
+        "height": 96
+      },
+      "enemy-flag-idle-1": {
+        "x": 96,
+        "y": 864,
+        "width": 96,
+        "height": 96
+      },
+      "enemy-flag-selected-0": {
+        "x": 192,
+        "y": 864,
+        "width": 96,
+        "height": 96
+      },
+      "enemy-flag-selected-1": {
+        "x": 288,
+        "y": 864,
+        "width": 96,
+        "height": 96
+      },
+      "enemy-flag-selected-2": {
+        "x": 384,
+        "y": 864,
+        "width": 96,
+        "height": 96
+      },
+      "enemy-flag-move-0": {
+        "x": 480,
+        "y": 864,
+        "width": 96,
+        "height": 96
+      },
+      "enemy-flag-move-1": {
+        "x": 576,
+        "y": 864,
+        "width": 96,
+        "height": 96
+      },
+      "enemy-flag-duel-0": {
+        "x": 672,
+        "y": 864,
+        "width": 96,
+        "height": 96
+      },
+      "enemy-flag-duel-1": {
+        "x": 768,
+        "y": 864,
+        "width": 96,
+        "height": 96
+      },
+      "enemy-flag-attack-1": {
+        "x": 864,
+        "y": 864,
+        "width": 96,
+        "height": 96
+      },
+      "enemy-flag-win-1": {
+        "x": 960,
+        "y": 864,
+        "width": 96,
+        "height": 96
+      },
+      "enemy-flag-lose-1": {
+        "x": 1056,
+        "y": 864,
+        "width": 96,
+        "height": 96
+      },
+      "enemy-trap-idle-0": {
+        "x": 0,
+        "y": 960,
+        "width": 96,
+        "height": 96
+      },
+      "enemy-trap-idle-1": {
+        "x": 96,
+        "y": 960,
+        "width": 96,
+        "height": 96
+      },
+      "enemy-trap-selected-0": {
+        "x": 192,
+        "y": 960,
+        "width": 96,
+        "height": 96
+      },
+      "enemy-trap-selected-1": {
+        "x": 288,
+        "y": 960,
+        "width": 96,
+        "height": 96
+      },
+      "enemy-trap-selected-2": {
+        "x": 384,
+        "y": 960,
+        "width": 96,
+        "height": 96
+      },
+      "enemy-trap-move-0": {
+        "x": 480,
+        "y": 960,
+        "width": 96,
+        "height": 96
+      },
+      "enemy-trap-move-1": {
+        "x": 576,
+        "y": 960,
+        "width": 96,
+        "height": 96
+      },
+      "enemy-trap-duel-0": {
+        "x": 672,
+        "y": 960,
+        "width": 96,
+        "height": 96
+      },
+      "enemy-trap-duel-1": {
+        "x": 768,
+        "y": 960,
+        "width": 96,
+        "height": 96
+      },
+      "enemy-trap-attack-1": {
+        "x": 864,
+        "y": 960,
+        "width": 96,
+        "height": 96
+      },
+      "enemy-trap-win-1": {
+        "x": 960,
+        "y": 960,
+        "width": 96,
+        "height": 96
+      },
+      "enemy-trap-lose-1": {
+        "x": 1056,
+        "y": 960,
+        "width": 96,
+        "height": 96
+      },
+      "enemy-unknown-idle-0": {
+        "x": 0,
+        "y": 1056,
+        "width": 96,
+        "height": 96
+      },
+      "enemy-unknown-idle-1": {
+        "x": 96,
+        "y": 1056,
+        "width": 96,
+        "height": 96
+      },
+      "enemy-unknown-selected-0": {
+        "x": 192,
+        "y": 1056,
+        "width": 96,
+        "height": 96
+      },
+      "enemy-unknown-selected-1": {
+        "x": 288,
+        "y": 1056,
+        "width": 96,
+        "height": 96
+      },
+      "enemy-unknown-selected-2": {
+        "x": 384,
+        "y": 1056,
+        "width": 96,
+        "height": 96
+      },
+      "enemy-unknown-move-0": {
+        "x": 480,
+        "y": 1056,
+        "width": 96,
+        "height": 96
+      },
+      "enemy-unknown-move-1": {
+        "x": 576,
+        "y": 1056,
+        "width": 96,
+        "height": 96
+      },
+      "enemy-unknown-duel-0": {
+        "x": 672,
+        "y": 1056,
+        "width": 96,
+        "height": 96
+      },
+      "enemy-unknown-duel-1": {
+        "x": 768,
+        "y": 1056,
+        "width": 96,
+        "height": 96
+      },
+      "enemy-unknown-attack-1": {
+        "x": 864,
+        "y": 1056,
+        "width": 96,
+        "height": 96
+      },
+      "enemy-unknown-win-1": {
+        "x": 960,
+        "y": 1056,
+        "width": 96,
+        "height": 96
+      },
+      "enemy-unknown-lose-1": {
+        "x": 1056,
+        "y": 1056,
+        "width": 96,
+        "height": 96
+      },
+      "board-light": {
+        "x": 0,
+        "y": 1152,
+        "width": 96,
+        "height": 96
+      },
+      "board-dark": {
+        "x": 96,
+        "y": 1152,
+        "width": 96,
+        "height": 96
+      },
+      "logo": {
+        "x": 192,
+        "y": 1152,
+        "width": 96,
+        "height": 96
+      }
+    }
+  },
+  "board": {
+    "light": "board-light",
+    "dark": "board-dark"
+  },
+  "logo": "logo",
+  "pieces": {
+    "own": {
+      "rock": {
+        "frame": "own-rock-idle-0",
+        "animations": {
+          "idle": {
+            "frames": [
+              "own-rock-idle-0",
+              "own-rock-idle-1",
+              "own-rock-idle-0",
+              "own-rock-idle-0"
+            ],
+            "fps": 2
+          },
+          "selected": {
+            "frames": [
+              "own-rock-selected-0",
+              "own-rock-selected-1",
+              "own-rock-selected-2"
+            ],
+            "fps": 6
+          },
+          "move": {
+            "frames": [
+              "own-rock-move-0",
+              "own-rock-move-1",
+              "own-rock-idle-0"
+            ],
+            "fps": 14
+          },
+          "duel": {
+            "frames": [
+              "own-rock-duel-0",
+              "own-rock-duel-1"
+            ],
+            "fps": 5
+          },
+          "attack": {
+            "frames": [
+              "own-rock-idle-0",
+              "own-rock-attack-1",
+              "own-rock-attack-1",
+              "own-rock-idle-0"
+            ],
+            "fps": 12
+          },
+          "win": {
+            "frames": [
+              "own-rock-selected-0",
+              "own-rock-selected-1",
+              "own-rock-win-1",
+              "own-rock-win-1",
+              "own-rock-idle-0"
+            ],
+            "fps": 10
+          },
+          "lose": {
+            "frames": [
+              "own-rock-idle-0",
+              "own-rock-duel-1",
+              "own-rock-lose-1",
+              "own-rock-lose-1"
+            ],
+            "fps": 8
+          }
+        }
+      },
+      "paper": {
+        "frame": "own-paper-idle-0",
+        "animations": {
+          "idle": {
+            "frames": [
+              "own-paper-idle-0",
+              "own-paper-idle-1",
+              "own-paper-idle-0",
+              "own-paper-idle-0"
+            ],
+            "fps": 2
+          },
+          "selected": {
+            "frames": [
+              "own-paper-selected-0",
+              "own-paper-selected-1",
+              "own-paper-selected-2"
+            ],
+            "fps": 6
+          },
+          "move": {
+            "frames": [
+              "own-paper-move-0",
+              "own-paper-move-1",
+              "own-paper-idle-0"
+            ],
+            "fps": 14
+          },
+          "duel": {
+            "frames": [
+              "own-paper-duel-0",
+              "own-paper-duel-1"
+            ],
+            "fps": 5
+          },
+          "attack": {
+            "frames": [
+              "own-paper-idle-0",
+              "own-paper-attack-1",
+              "own-paper-attack-1",
+              "own-paper-idle-0"
+            ],
+            "fps": 12
+          },
+          "win": {
+            "frames": [
+              "own-paper-selected-0",
+              "own-paper-selected-1",
+              "own-paper-win-1",
+              "own-paper-win-1",
+              "own-paper-idle-0"
+            ],
+            "fps": 10
+          },
+          "lose": {
+            "frames": [
+              "own-paper-idle-0",
+              "own-paper-duel-1",
+              "own-paper-lose-1",
+              "own-paper-lose-1"
+            ],
+            "fps": 8
+          }
+        }
+      },
+      "scissors": {
+        "frame": "own-scissors-idle-0",
+        "animations": {
+          "idle": {
+            "frames": [
+              "own-scissors-idle-0",
+              "own-scissors-idle-1",
+              "own-scissors-idle-0",
+              "own-scissors-idle-0"
+            ],
+            "fps": 2
+          },
+          "selected": {
+            "frames": [
+              "own-scissors-selected-0",
+              "own-scissors-selected-1",
+              "own-scissors-selected-2"
+            ],
+            "fps": 6
+          },
+          "move": {
+            "frames": [
+              "own-scissors-move-0",
+              "own-scissors-move-1",
+              "own-scissors-idle-0"
+            ],
+            "fps": 14
+          },
+          "duel": {
+            "frames": [
+              "own-scissors-duel-0",
+              "own-scissors-duel-1"
+            ],
+            "fps": 5
+          },
+          "attack": {
+            "frames": [
+              "own-scissors-idle-0",
+              "own-scissors-attack-1",
+              "own-scissors-attack-1",
+              "own-scissors-idle-0"
+            ],
+            "fps": 12
+          },
+          "win": {
+            "frames": [
+              "own-scissors-selected-0",
+              "own-scissors-selected-1",
+              "own-scissors-win-1",
+              "own-scissors-win-1",
+              "own-scissors-idle-0"
+            ],
+            "fps": 10
+          },
+          "lose": {
+            "frames": [
+              "own-scissors-idle-0",
+              "own-scissors-duel-1",
+              "own-scissors-lose-1",
+              "own-scissors-lose-1"
+            ],
+            "fps": 8
+          }
+        }
+      },
+      "flag": {
+        "frame": "own-flag-idle-0",
+        "animations": {
+          "idle": {
+            "frames": [
+              "own-flag-idle-0",
+              "own-flag-idle-1",
+              "own-flag-idle-0",
+              "own-flag-idle-0"
+            ],
+            "fps": 2
+          },
+          "selected": {
+            "frames": [
+              "own-flag-selected-0",
+              "own-flag-selected-1",
+              "own-flag-selected-2"
+            ],
+            "fps": 6
+          },
+          "move": {
+            "frames": [
+              "own-flag-move-0",
+              "own-flag-move-1",
+              "own-flag-idle-0"
+            ],
+            "fps": 14
+          },
+          "duel": {
+            "frames": [
+              "own-flag-duel-0",
+              "own-flag-duel-1"
+            ],
+            "fps": 5
+          },
+          "attack": {
+            "frames": [
+              "own-flag-idle-0",
+              "own-flag-attack-1",
+              "own-flag-attack-1",
+              "own-flag-idle-0"
+            ],
+            "fps": 12
+          },
+          "win": {
+            "frames": [
+              "own-flag-selected-0",
+              "own-flag-selected-1",
+              "own-flag-win-1",
+              "own-flag-win-1",
+              "own-flag-idle-0"
+            ],
+            "fps": 10
+          },
+          "lose": {
+            "frames": [
+              "own-flag-idle-0",
+              "own-flag-duel-1",
+              "own-flag-lose-1",
+              "own-flag-lose-1"
+            ],
+            "fps": 8
+          }
+        }
+      },
+      "trap": {
+        "frame": "own-trap-idle-0",
+        "animations": {
+          "idle": {
+            "frames": [
+              "own-trap-idle-0",
+              "own-trap-idle-1",
+              "own-trap-idle-0",
+              "own-trap-idle-0"
+            ],
+            "fps": 2
+          },
+          "selected": {
+            "frames": [
+              "own-trap-selected-0",
+              "own-trap-selected-1",
+              "own-trap-selected-2"
+            ],
+            "fps": 6
+          },
+          "move": {
+            "frames": [
+              "own-trap-move-0",
+              "own-trap-move-1",
+              "own-trap-idle-0"
+            ],
+            "fps": 14
+          },
+          "duel": {
+            "frames": [
+              "own-trap-duel-0",
+              "own-trap-duel-1"
+            ],
+            "fps": 5
+          },
+          "attack": {
+            "frames": [
+              "own-trap-idle-0",
+              "own-trap-attack-1",
+              "own-trap-attack-1",
+              "own-trap-idle-0"
+            ],
+            "fps": 12
+          },
+          "win": {
+            "frames": [
+              "own-trap-selected-0",
+              "own-trap-selected-1",
+              "own-trap-win-1",
+              "own-trap-win-1",
+              "own-trap-idle-0"
+            ],
+            "fps": 10
+          },
+          "lose": {
+            "frames": [
+              "own-trap-idle-0",
+              "own-trap-duel-1",
+              "own-trap-lose-1",
+              "own-trap-lose-1"
+            ],
+            "fps": 8
+          }
+        }
+      },
+      "unknown": {
+        "frame": "own-unknown-idle-0",
+        "animations": {
+          "idle": {
+            "frames": [
+              "own-unknown-idle-0",
+              "own-unknown-idle-1",
+              "own-unknown-idle-0",
+              "own-unknown-idle-0"
+            ],
+            "fps": 2
+          },
+          "selected": {
+            "frames": [
+              "own-unknown-selected-0",
+              "own-unknown-selected-1",
+              "own-unknown-selected-2"
+            ],
+            "fps": 6
+          },
+          "move": {
+            "frames": [
+              "own-unknown-move-0",
+              "own-unknown-move-1",
+              "own-unknown-idle-0"
+            ],
+            "fps": 14
+          },
+          "duel": {
+            "frames": [
+              "own-unknown-duel-0",
+              "own-unknown-duel-1"
+            ],
+            "fps": 5
+          },
+          "attack": {
+            "frames": [
+              "own-unknown-idle-0",
+              "own-unknown-attack-1",
+              "own-unknown-attack-1",
+              "own-unknown-idle-0"
+            ],
+            "fps": 12
+          },
+          "win": {
+            "frames": [
+              "own-unknown-selected-0",
+              "own-unknown-selected-1",
+              "own-unknown-win-1",
+              "own-unknown-win-1",
+              "own-unknown-idle-0"
+            ],
+            "fps": 10
+          },
+          "lose": {
+            "frames": [
+              "own-unknown-idle-0",
+              "own-unknown-duel-1",
+              "own-unknown-lose-1",
+              "own-unknown-lose-1"
+            ],
+            "fps": 8
+          }
+        }
+      }
+    },
+    "enemy": {
+      "rock": {
+        "frame": "enemy-rock-idle-0",
+        "animations": {
+          "idle": {
+            "frames": [
+              "enemy-rock-idle-0",
+              "enemy-rock-idle-1",
+              "enemy-rock-idle-0",
+              "enemy-rock-idle-0"
+            ],
+            "fps": 2
+          },
+          "selected": {
+            "frames": [
+              "enemy-rock-selected-0",
+              "enemy-rock-selected-1",
+              "enemy-rock-selected-2"
+            ],
+            "fps": 6
+          },
+          "move": {
+            "frames": [
+              "enemy-rock-move-0",
+              "enemy-rock-move-1",
+              "enemy-rock-idle-0"
+            ],
+            "fps": 14
+          },
+          "duel": {
+            "frames": [
+              "enemy-rock-duel-0",
+              "enemy-rock-duel-1"
+            ],
+            "fps": 5
+          },
+          "attack": {
+            "frames": [
+              "enemy-rock-idle-0",
+              "enemy-rock-attack-1",
+              "enemy-rock-attack-1",
+              "enemy-rock-idle-0"
+            ],
+            "fps": 12
+          },
+          "win": {
+            "frames": [
+              "enemy-rock-selected-0",
+              "enemy-rock-selected-1",
+              "enemy-rock-win-1",
+              "enemy-rock-win-1",
+              "enemy-rock-idle-0"
+            ],
+            "fps": 10
+          },
+          "lose": {
+            "frames": [
+              "enemy-rock-idle-0",
+              "enemy-rock-duel-1",
+              "enemy-rock-lose-1",
+              "enemy-rock-lose-1"
+            ],
+            "fps": 8
+          }
+        }
+      },
+      "paper": {
+        "frame": "enemy-paper-idle-0",
+        "animations": {
+          "idle": {
+            "frames": [
+              "enemy-paper-idle-0",
+              "enemy-paper-idle-1",
+              "enemy-paper-idle-0",
+              "enemy-paper-idle-0"
+            ],
+            "fps": 2
+          },
+          "selected": {
+            "frames": [
+              "enemy-paper-selected-0",
+              "enemy-paper-selected-1",
+              "enemy-paper-selected-2"
+            ],
+            "fps": 6
+          },
+          "move": {
+            "frames": [
+              "enemy-paper-move-0",
+              "enemy-paper-move-1",
+              "enemy-paper-idle-0"
+            ],
+            "fps": 14
+          },
+          "duel": {
+            "frames": [
+              "enemy-paper-duel-0",
+              "enemy-paper-duel-1"
+            ],
+            "fps": 5
+          },
+          "attack": {
+            "frames": [
+              "enemy-paper-idle-0",
+              "enemy-paper-attack-1",
+              "enemy-paper-attack-1",
+              "enemy-paper-idle-0"
+            ],
+            "fps": 12
+          },
+          "win": {
+            "frames": [
+              "enemy-paper-selected-0",
+              "enemy-paper-selected-1",
+              "enemy-paper-win-1",
+              "enemy-paper-win-1",
+              "enemy-paper-idle-0"
+            ],
+            "fps": 10
+          },
+          "lose": {
+            "frames": [
+              "enemy-paper-idle-0",
+              "enemy-paper-duel-1",
+              "enemy-paper-lose-1",
+              "enemy-paper-lose-1"
+            ],
+            "fps": 8
+          }
+        }
+      },
+      "scissors": {
+        "frame": "enemy-scissors-idle-0",
+        "animations": {
+          "idle": {
+            "frames": [
+              "enemy-scissors-idle-0",
+              "enemy-scissors-idle-1",
+              "enemy-scissors-idle-0",
+              "enemy-scissors-idle-0"
+            ],
+            "fps": 2
+          },
+          "selected": {
+            "frames": [
+              "enemy-scissors-selected-0",
+              "enemy-scissors-selected-1",
+              "enemy-scissors-selected-2"
+            ],
+            "fps": 6
+          },
+          "move": {
+            "frames": [
+              "enemy-scissors-move-0",
+              "enemy-scissors-move-1",
+              "enemy-scissors-idle-0"
+            ],
+            "fps": 14
+          },
+          "duel": {
+            "frames": [
+              "enemy-scissors-duel-0",
+              "enemy-scissors-duel-1"
+            ],
+            "fps": 5
+          },
+          "attack": {
+            "frames": [
+              "enemy-scissors-idle-0",
+              "enemy-scissors-attack-1",
+              "enemy-scissors-attack-1",
+              "enemy-scissors-idle-0"
+            ],
+            "fps": 12
+          },
+          "win": {
+            "frames": [
+              "enemy-scissors-selected-0",
+              "enemy-scissors-selected-1",
+              "enemy-scissors-win-1",
+              "enemy-scissors-win-1",
+              "enemy-scissors-idle-0"
+            ],
+            "fps": 10
+          },
+          "lose": {
+            "frames": [
+              "enemy-scissors-idle-0",
+              "enemy-scissors-duel-1",
+              "enemy-scissors-lose-1",
+              "enemy-scissors-lose-1"
+            ],
+            "fps": 8
+          }
+        }
+      },
+      "flag": {
+        "frame": "enemy-flag-idle-0",
+        "animations": {
+          "idle": {
+            "frames": [
+              "enemy-flag-idle-0",
+              "enemy-flag-idle-1",
+              "enemy-flag-idle-0",
+              "enemy-flag-idle-0"
+            ],
+            "fps": 2
+          },
+          "selected": {
+            "frames": [
+              "enemy-flag-selected-0",
+              "enemy-flag-selected-1",
+              "enemy-flag-selected-2"
+            ],
+            "fps": 6
+          },
+          "move": {
+            "frames": [
+              "enemy-flag-move-0",
+              "enemy-flag-move-1",
+              "enemy-flag-idle-0"
+            ],
+            "fps": 14
+          },
+          "duel": {
+            "frames": [
+              "enemy-flag-duel-0",
+              "enemy-flag-duel-1"
+            ],
+            "fps": 5
+          },
+          "attack": {
+            "frames": [
+              "enemy-flag-idle-0",
+              "enemy-flag-attack-1",
+              "enemy-flag-attack-1",
+              "enemy-flag-idle-0"
+            ],
+            "fps": 12
+          },
+          "win": {
+            "frames": [
+              "enemy-flag-selected-0",
+              "enemy-flag-selected-1",
+              "enemy-flag-win-1",
+              "enemy-flag-win-1",
+              "enemy-flag-idle-0"
+            ],
+            "fps": 10
+          },
+          "lose": {
+            "frames": [
+              "enemy-flag-idle-0",
+              "enemy-flag-duel-1",
+              "enemy-flag-lose-1",
+              "enemy-flag-lose-1"
+            ],
+            "fps": 8
+          }
+        }
+      },
+      "trap": {
+        "frame": "enemy-trap-idle-0",
+        "animations": {
+          "idle": {
+            "frames": [
+              "enemy-trap-idle-0",
+              "enemy-trap-idle-1",
+              "enemy-trap-idle-0",
+              "enemy-trap-idle-0"
+            ],
+            "fps": 2
+          },
+          "selected": {
+            "frames": [
+              "enemy-trap-selected-0",
+              "enemy-trap-selected-1",
+              "enemy-trap-selected-2"
+            ],
+            "fps": 6
+          },
+          "move": {
+            "frames": [
+              "enemy-trap-move-0",
+              "enemy-trap-move-1",
+              "enemy-trap-idle-0"
+            ],
+            "fps": 14
+          },
+          "duel": {
+            "frames": [
+              "enemy-trap-duel-0",
+              "enemy-trap-duel-1"
+            ],
+            "fps": 5
+          },
+          "attack": {
+            "frames": [
+              "enemy-trap-idle-0",
+              "enemy-trap-attack-1",
+              "enemy-trap-attack-1",
+              "enemy-trap-idle-0"
+            ],
+            "fps": 12
+          },
+          "win": {
+            "frames": [
+              "enemy-trap-selected-0",
+              "enemy-trap-selected-1",
+              "enemy-trap-win-1",
+              "enemy-trap-win-1",
+              "enemy-trap-idle-0"
+            ],
+            "fps": 10
+          },
+          "lose": {
+            "frames": [
+              "enemy-trap-idle-0",
+              "enemy-trap-duel-1",
+              "enemy-trap-lose-1",
+              "enemy-trap-lose-1"
+            ],
+            "fps": 8
+          }
+        }
+      },
+      "unknown": {
+        "frame": "enemy-unknown-idle-0",
+        "animations": {
+          "idle": {
+            "frames": [
+              "enemy-unknown-idle-0",
+              "enemy-unknown-idle-1",
+              "enemy-unknown-idle-0",
+              "enemy-unknown-idle-0"
+            ],
+            "fps": 2
+          },
+          "selected": {
+            "frames": [
+              "enemy-unknown-selected-0",
+              "enemy-unknown-selected-1",
+              "enemy-unknown-selected-2"
+            ],
+            "fps": 6
+          },
+          "move": {
+            "frames": [
+              "enemy-unknown-move-0",
+              "enemy-unknown-move-1",
+              "enemy-unknown-idle-0"
+            ],
+            "fps": 14
+          },
+          "duel": {
+            "frames": [
+              "enemy-unknown-duel-0",
+              "enemy-unknown-duel-1"
+            ],
+            "fps": 5
+          },
+          "attack": {
+            "frames": [
+              "enemy-unknown-idle-0",
+              "enemy-unknown-attack-1",
+              "enemy-unknown-attack-1",
+              "enemy-unknown-idle-0"
+            ],
+            "fps": 12
+          },
+          "win": {
+            "frames": [
+              "enemy-unknown-selected-0",
+              "enemy-unknown-selected-1",
+              "enemy-unknown-win-1",
+              "enemy-unknown-win-1",
+              "enemy-unknown-idle-0"
+            ],
+            "fps": 10
+          },
+          "lose": {
+            "frames": [
+              "enemy-unknown-idle-0",
+              "enemy-unknown-duel-1",
+              "enemy-unknown-lose-1",
+              "enemy-unknown-lose-1"
+            ],
+            "fps": 8
+          }
+        }
+      }
+    }
+  },
+  "motion": {
+    "moveMs": 240,
+    "battleMs": 1000
+  }
+}

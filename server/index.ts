@@ -12,6 +12,7 @@ const running = await startServer({
   host: process.env.HOST || '0.0.0.0',
   reconnectSeconds,
   allowedOrigins: process.env.ALLOWED_ORIGINS?.split(',').map((value) => value.trim()).filter(Boolean),
+  skinsDirectory: process.env.SKINS_DIR || undefined,
 });
 let stopping = false;
 async function stop() {

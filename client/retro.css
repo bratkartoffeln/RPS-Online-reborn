@@ -1,0 +1,135 @@
+/* The historical ICQ game used a lime window, a joined board and a narrow
+   information column. This treatment is opt-in through the skin manifest. */
+:root[data-presentation="retro"] {
+  font-family: Tahoma, Verdana, Arial, sans-serif;
+  -webkit-font-smoothing: auto;
+}
+:root[data-presentation="retro"] body { background: var(--bg); }
+:root[data-presentation="retro"] .app-shell {
+  width: min(1160px, calc(100% - 32px));
+  margin: 18px auto;
+  padding: 0 20px;
+  background: var(--panel);
+  border: 2px solid var(--line);
+  border-radius: 3px;
+  box-shadow: inset 0 0 0 2px #e7f9aa70, 0 3px 12px #3e540d28;
+}
+:root[data-presentation="retro"] .app-header { min-height: 64px; border-bottom: 2px solid var(--line); }
+:root[data-presentation="retro"] .brand { gap: 9px; }
+:root[data-presentation="retro"] .brand-emblem { display: none; }
+:root[data-presentation="retro"] .brand-title { color: var(--text); font-family: Impact, "Arial Narrow", Tahoma, sans-serif; font-size: 25px; letter-spacing: .015em; }
+:root[data-presentation="retro"] .brand-tagline { font-size: 10px; letter-spacing: 0; margin-top: 3px; }
+:root[data-presentation="retro"] .header-note { font-size: 10px; letter-spacing: .035em; }
+:root[data-presentation="retro"] .status-dot { background: var(--blue); }
+:root[data-presentation="retro"] .status-dot.offline { background: var(--orange); }
+:root[data-presentation="retro"] .version { border: 1px solid var(--line); border-radius: 2px; background: var(--accent-soft); }
+:root[data-presentation="retro"] .intro-row { margin: 18px 0 16px; }
+:root[data-presentation="retro"] .page-title { font-size: 25px; letter-spacing: -.5px; font-weight: 700; }
+:root[data-presentation="retro"] .page-subtitle { font-size: 12px; }
+:root[data-presentation="retro"] .eyebrow { font-size: 10px; letter-spacing: .045em; }
+:root[data-presentation="retro"] .arena-grid { grid-template-columns: minmax(0, 1fr) 280px; gap: 14px; }
+:root[data-presentation="retro"] .play-panel,
+:root[data-presentation="retro"] .card,
+:root[data-presentation="retro"] .retro-masthead {
+  border: 2px solid var(--line);
+  border-radius: 2px;
+  background: var(--panel);
+  box-shadow: inset 0 0 0 1px #e7f9aa55;
+}
+:root[data-presentation="retro"] .board-topbar { min-height: 65px; padding: 13px 18px; border-bottom: 2px solid var(--line); }
+:root[data-presentation="retro"] .board-topbar h2 { font-size: 15px; font-weight: 700; }
+:root[data-presentation="retro"] .board-region { padding: 0; background: var(--panel); }
+:root[data-presentation="retro"] .canvas-wrap { border-radius: 0; }
+:root[data-presentation="retro"] .preview-banner { left: 24px; right: 24px; padding: 14px 8px; color: var(--text); border-color: var(--line); background: #d9edaaee; backdrop-filter: none; }
+:root[data-presentation="retro"] .board-footer { padding: 9px 18px 15px; }
+:root[data-presentation="retro"] .team-square { border: 1px solid #24390c66; }
+:root[data-presentation="retro"] .side-column { gap: 12px; }
+:root[data-presentation="retro"] .retro-masthead { display: flex; flex-direction: column; align-items: center; justify-content: center; min-height: 160px; padding: 8px; gap: 2px; }
+:root[data-presentation="retro"] .retro-masthead > span:last-child { color: var(--muted); font-size: 10px; }
+:root[data-presentation="retro"] .retro-masthead-art { display: flex; align-items: center; justify-content: center; gap: 8px; max-width: 100%; }
+:root[data-presentation="retro"] .card { padding: 18px; }
+:root[data-presentation="retro"] .lobby-title { font-size: 23px; font-weight: 700; letter-spacing: -.5px; margin-top: 9px; }
+:root[data-presentation="retro"] .body-copy { font-size: 12px; line-height: 1.6; }
+:root[data-presentation="retro"] .card-heading h2 { font-size: 13px; font-weight: 700; }
+:root[data-presentation="retro"] .field { margin-top: 18px; }
+:root[data-presentation="retro"] .field > span { font-size: 12px; }
+:root[data-presentation="retro"] .field input,
+:root[data-presentation="retro"] select { background: #f4fadf; color: #273414; border: 1px solid var(--surface-border); border-radius: 2px; }
+/* Native menus need an explicit foreground/background pair for every state;
+   otherwise some browsers combine white selection text with the pale menu. */
+:root[data-presentation="retro"] select { color-scheme: light; accent-color: #40591c; }
+:root[data-presentation="retro"] select option { background-color: #f4fadf; color: #273414; }
+:root[data-presentation="retro"] select option:checked,
+:root[data-presentation="retro"] select option:hover,
+:root[data-presentation="retro"] select option:focus { background-color: #40591c; color: #f4fadf; }
+:root[data-presentation="retro"] select:focus-visible { outline-color: #40591c; }
+:root[data-presentation="retro"] .primary-button,
+:root[data-presentation="retro"] .secondary-button,
+:root[data-presentation="retro"] .subtle-button { border-radius: 3px; min-height: 42px; font-size: 12px; }
+:root[data-presentation="retro"] .primary-button { border: 1px solid #536e1d; box-shadow: inset 0 1px 0 #ffffff60, 0 1px 0 #607c2760; }
+:root[data-presentation="retro"] .secondary-button { box-shadow: inset 0 1px 0 #f4ffcd; }
+:root[data-presentation="retro"] .subtle-button { border-color: var(--surface-border); }
+:root[data-presentation="retro"] .pill,
+:root[data-presentation="retro"] .appearance-menu > summary,
+:root[data-presentation="retro"] .appearance-panel,
+:root[data-presentation="retro"] .notice,
+:root[data-presentation="retro"] .modal,
+:root[data-presentation="retro"] .toast,
+:root[data-presentation="retro"] .duel-choice { border-radius: 3px; }
+:root[data-presentation="retro"] .pill { font-size: 10px; }
+:root[data-presentation="retro"] .phase-card { background: var(--accent-soft); }
+:root[data-presentation="retro"] .phase-card h2 { font-weight: 700; }
+:root[data-presentation="retro"] .phase-referee,
+:root[data-presentation="retro"] .phase-referee-turn {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  min-height: 135px;
+  margin: 12px 0;
+  line-height: 0;
+}
+:root[data-presentation="retro"] .phase-referee .referee-portrait,
+:root[data-presentation="retro"] .phase-referee-turn .referee-portrait { display: flex; align-items: center; justify-content: center; max-width: 100%; }
+:root[data-presentation="retro"] .phase-label { letter-spacing: .06em; font-weight: 700; }
+:root[data-presentation="retro"] .phase-card[data-team-color]:not(.paused) { background: var(--team-soft); border-color: var(--team-border); }
+:root[data-presentation="retro"] .move-log li,
+:root[data-presentation="retro"] .rules-details,
+:root[data-presentation="retro"] .rules-details p,
+:root[data-presentation="retro"] .rule-description { font-size: 11px; }
+:root[data-presentation="retro"] .rule-piece { font-size: 11px; }
+:root[data-presentation="retro"] .rule-piece span { font-size: 10px; }
+:root[data-presentation="retro"] .rule-piece > .atlas-icon { margin-top: 3px; margin-bottom: 9px; image-rendering: auto; }
+:root[data-presentation="retro"] .duel-choice > .atlas-icon { margin: 2px 0; image-rendering: auto; }
+:root[data-presentation="retro"] .action-recap { background: #c5df8260; padding: 12px 18px; }
+:root[data-presentation="retro"] .footer { margin: 18px 0; font-size: 10px; color: var(--muted); }
+:root[data-presentation="retro"] .series-scoreboard { border-bottom: 2px solid var(--line); background: #c5df8270; }
+@media (max-width: 1000px) {
+  :root[data-presentation="retro"] .app-shell { width: calc(100% - 20px); padding: 0 14px; }
+  :root[data-presentation="retro"] .arena-grid { grid-template-columns: minmax(0, 1fr) 260px; gap: 12px; }
+  :root[data-presentation="retro"] .card { padding: 16px; }
+}
+@media (max-width: 850px) {
+  :root[data-presentation="retro"] .app-shell { max-width: 740px; }
+  :root[data-presentation="retro"] .arena-grid { grid-template-columns: minmax(0, 1fr); }
+  :root[data-presentation="retro"] .retro-masthead { grid-column: 1 / -1; min-height: 0; flex-direction: row; gap: 16px; }
+  :root[data-presentation="retro"] .retro-masthead-art { margin: -28px -35px; transform: scale(.62); }
+  :root[data-presentation="retro"] .lobby-card { grid-column: 1 / -1; }
+}
+@media (max-width: 540px) {
+  :root[data-presentation="retro"] .app-shell { width: calc(100% - 12px); padding: 0 8px; margin: 6px auto; }
+  :root[data-presentation="retro"] .app-header { min-height: 65px; gap: 7px; }
+  :root[data-presentation="retro"] .header-right { gap: 7px; }
+  :root[data-presentation="retro"] .brand-title { font-size: 23px; }
+  :root[data-presentation="retro"] .brand-tagline { font-size: 9px; }
+  :root[data-presentation="retro"] .intro-row { gap: 10px; margin: 15px 0; }
+  :root[data-presentation="retro"] .page-title { font-size: 21px; }
+  :root[data-presentation="retro"] .page-subtitle { max-width: 116px; font-size: 10px; }
+  :root[data-presentation="retro"] .board-topbar { padding: 11px; min-height: 60px; }
+  :root[data-presentation="retro"] .board-topbar h2 { font-size: 13px; }
+  :root[data-presentation="retro"] .board-subtitle { font-size: 9px; }
+  :root[data-presentation="retro"] .board-footer { padding: 6px 10px 12px; }
+  :root[data-presentation="retro"] .card { padding: 17px; }
+  :root[data-presentation="retro"] .preview-banner { left: 15px; right: 15px; font-size: 10px; padding: 10px 5px; }
+  :root[data-presentation="retro"] .game-mode .retro-masthead { grid-row: 3; }
+  :root[data-presentation="retro"] .footer { line-height: 1.5; font-size: 9px; }
+}

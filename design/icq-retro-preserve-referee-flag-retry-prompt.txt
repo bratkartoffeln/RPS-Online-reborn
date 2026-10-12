@@ -1,0 +1,5 @@
+Use case: precise-object-edit.
+Preserve this transparent sprite atlas. Add a tiny RED fabric corner behind the back of ONE character: the SMALL referee in the UPPER HALF of the bottom-right cell, at the very bottom of the sheet, who holds the BLUE flag to the right. That small referee needs a visible red triangle peeking out behind his left-side elbow. Its other red flag is mostly concealed behind his body.
+Do not add any flag or red marks to the larger neutral referee above him.
+Make no other change. All three blue figures along the bottom, their same low arm poses, and the layering of arms in front of rock, paper and scissors must be preserved.
+Retain the clean, completely empty transparent background from this source. Empty areas must have alpha exactly zero, with only a narrow antialiased border at sprite edges. No gray haze, no translucent background, no glow. Preserve the original canvas and sprite positions.

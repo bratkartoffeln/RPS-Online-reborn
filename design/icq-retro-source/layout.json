@@ -1,0 +1,150 @@
+{
+  "width": 1121,
+  "height": 1787,
+  "frames": {
+    "own-rock": {
+      "x": 26,
+      "y": 29,
+      "width": 198,
+      "height": 279
+    },
+    "own-paper": {
+      "x": 273,
+      "y": 29,
+      "width": 200,
+      "height": 279
+    },
+    "own-scissors": {
+      "x": 546,
+      "y": 29,
+      "width": 205,
+      "height": 281
+    },
+    "own-flag": {
+      "x": 844,
+      "y": 28,
+      "width": 213,
+      "height": 282
+    },
+    "own-trap": {
+      "x": 28,
+      "y": 316,
+      "width": 199,
+      "height": 267
+    },
+    "own-unknown": {
+      "x": 302,
+      "y": 315,
+      "width": 205,
+      "height": 268
+    },
+    "enemy-rock": {
+      "x": 557,
+      "y": 314,
+      "width": 232,
+      "height": 270
+    },
+    "enemy-paper": {
+      "x": 846,
+      "y": 314,
+      "width": 235,
+      "height": 271
+    },
+    "enemy-scissors": {
+      "x": 22,
+      "y": 586,
+      "width": 248,
+      "height": 271
+    },
+    "enemy-flag": {
+      "x": 297,
+      "y": 586,
+      "width": 260,
+      "height": 271
+    },
+    "enemy-trap": {
+      "x": 572,
+      "y": 586,
+      "width": 204,
+      "height": 271
+    },
+    "enemy-unknown": {
+      "x": 845,
+      "y": 586,
+      "width": 214,
+      "height": 271
+    },
+    "board-light": {
+      "x": 42,
+      "y": 878,
+      "width": 202,
+      "height": 202
+    },
+    "board-dark": {
+      "x": 308,
+      "y": 878,
+      "width": 202,
+      "height": 202
+    },
+    "logo": {
+      "x": 537,
+      "y": 864,
+      "width": 207,
+      "height": 238
+    },
+    "referee": {
+      "x": 769,
+      "y": 879,
+      "width": 308,
+      "height": 200
+    },
+    "own-rock-revealed": {
+      "x": 29,
+      "y": 1135,
+      "width": 245,
+      "height": 257
+    },
+    "own-paper-revealed": {
+      "x": 305,
+      "y": 1134,
+      "width": 220,
+      "height": 259
+    },
+    "own-scissors-revealed": {
+      "x": 549,
+      "y": 1134,
+      "width": 257,
+      "height": 259
+    },
+    "referee-own-turn": {
+      "x": 880,
+      "y": 1096,
+      "width": 215,
+      "height": 148
+    },
+    "referee-enemy-turn": {
+      "x": 831,
+      "y": 1245,
+      "width": 201,
+      "height": 148
+    },
+    "weapon-rock": {
+      "x": 32,
+      "y": 1435,
+      "width": 320,
+      "height": 320
+    },
+    "weapon-paper": {
+      "x": 400,
+      "y": 1435,
+      "width": 320,
+      "height": 320
+    },
+    "weapon-scissors": {
+      "x": 768,
+      "y": 1435,
+      "width": 320,
+      "height": 320
+    }
+  }
+}

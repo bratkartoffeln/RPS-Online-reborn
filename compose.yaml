@@ -8,5 +8,42 @@ services:
       HOST: 0.0.0.0
       PORT: "2567"
       RECONNECT_SECONDS: "120"
+      SKINS_DIR: /app/skins
+      # Leer lassen, damit Browserzugriffe im LAN weiterhin funktionieren.
+      ALLOWED_ORIGINS: "${ALLOWED_ORIGINS:-}"
+    volumes:
+      - "./skins:/app/skins:ro"
     ports:
       - "${RPS_PORT:-2567}:2567"
+
+  # Optional: im bestehenden Projekt mit --profile https starten.
+  caddy:
+    image: caddy:2.11.7-alpine
+    profiles: ["https"]
+    restart: unless-stopped
+    depends_on:
+      rps:
+        condition: service_healthy
+    environment:
+      RPS_DOMAIN: "${RPS_DOMAIN:-flusensieb.dns.navy}"
+    ports:
+      # FRITZ!Box: extern 80/TCP -> NAS 18080 und extern 443/TCP -> NAS 18443.
+      # Die NAS-Verwaltung auf den eigenen Ports 80/443 bleibt davon unabhängig.
+      - "${RPS_HTTP_PORT:-18080}:80/tcp"
+      - "${RPS_HTTPS_PORT:-18443}:443/tcp"
+    volumes:
+      - type: bind
+        source: ./Caddyfile
+        target: /etc/caddy/Caddyfile
+        read_only: true
+        bind:
+          # Ein fehlendes Caddyfile soll einen Fehler statt eines Ordners erzeugen.
+          create_host_path: false
+      - caddy_data:/data
+      - caddy_config:/config
+
+# Zertifikate bleiben bei Container- und ZIP-Updates erhalten.
+# Projektnamen rps-arena beibehalten; die Volumes beim Update nicht löschen.
+volumes:
+  caddy_data:
+  caddy_config:

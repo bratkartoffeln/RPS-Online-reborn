@@ -1,0 +1,21 @@
+Use case: precise-object-edit.
+Asset type: final static RGBA game sprite atlas for RPS Arena.
+Image 1 is the EDIT TARGET: our current four-column, five-row transparent atlas. This is a narrowly targeted correction and addition. Keep the canvas size, all existing cell positions, and ALL artwork in rows 1–4 unchanged. Keep the three blue sprites in row 5 at the same head/body size and baseline. Preserve genuine transparency.
+
+CORRECTION A — the raised arm on EACH of the three blue fighters in row 5 columns 1, 2 and 3:
+The current raised arms wrongly appear to emerge from the SIDE OF THE HEAD. Correct this anatomy very clearly. Each fighter has EXACTLY TWO arms. His left arm hangs down as before. His only right arm MUST connect visibly to the RIGHT SHOULDER ON THE BLUE TORSO, BELOW THE HEAD and below the neck/cream head silhouette. From that shoulder, draw a SHORT BLUE UPPER ARM extending diagonally OUTWARD to the RIGHT, below ear level. Then place a clearly visible BENT ELBOW outside the width of the head, and a blue forearm extending UPWARD to the hand holding the tool.
+There must be a CLEAR TRANSPARENT GAP between the raised forearm and the right side of the head. The shoulder-to-elbow connection must be visible below the head; the upper arm must not be concealed entirely by the head. Remove the old extra short downward right arm, so the raised arm is the same arm attached to the torso, not a third arm. Do not attach a sleeve, arm or hand to the ear, cap or skull.
+The shoulder-elbow-wrist path should read as a bent L shape outside the head: shoulder low next to chest, elbow outward lower than the ear, forearm up. Keep it a small stylized cartoon arm, not a realistic muscular limb.
+Column 1 still holds ONE gray round rock high in ONE hand.
+Column 2 still holds ONE ivory rolled paper scroll upright high in ONE hand.
+Column 3 still holds ONE yellow-handled pair of scissors with silver blades pointing UP in ONE hand.
+All are BACK VIEWS wearing BLUE with large cream heads and small bodies, unchanged character design.
+
+ADDITION B — in the currently EMPTY BOTTOM-RIGHT CELL ONLY, row 5 column 4:
+Place TWO small isolated variants of the yellow referee from row 4 column 4, arranged VERTICALLY one above the other within this single cell. These are two complete separate static sprites, not one two-headed character. Each may be smaller than the original referee so both fit with clear transparent space between them.
+
+Upper referee variant: BLUE PLAYER'S TURN. Same yellow-clothed black-haired ninja/referee, slightly facing LEFT toward the game board. The arm on the LEFT side of the image extends clearly LEFT out from his yellow shoulder, pointing toward the left edge of the atlas cell. That hand holds a short wooden flagpole with a BLUE FLAG extending toward the LEFT, clearly away from the body toward the board. His other arm is folded BEHIND HIS BACK, holding the RED FLAG hidden behind the body, with only a SMALL red corner peeking on his right side if needed to show it is behind him. Do not show the red flag held out sideways or in front.
+Lower referee variant: RED PLAYER'S TURN. The same pose and character: extend the RED FLAG toward the LEFT toward the game board; the BLUE FLAG is held BEHIND HIS BACK with at most a small blue corner visible behind his right side.
+For both referees, arms visibly attach to the yellow torso shoulders BELOW the head, not the head or cheeks. Active flag is conspicuous, inactive flag mostly hidden. Flags are solid blue or solid red matching the original palette. Same face, black hair buns, yellow costume, dark outlines, small floor shadow as original referee.
+
+Keep transparent padding around every sprite, at least 10 pixels to neighboring cells. No overlap between the two added referees and the blue scissors fighter. No cell lines, labels, captions, checkerboard, new background or text. Preserve the existing RPS ARENA logo exactly. Do not add animation frames or any other characters.

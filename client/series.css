@@ -1,0 +1,53 @@
+.series-scoreboard {
+  padding: 15px 24px 16px;
+  border-bottom: 1px solid var(--line);
+  background: var(--surface-deep);
+}
+
+.series-heading,
+.series-meta {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 7px 14px;
+}
+
+.series-heading { margin-bottom: 12px; }
+.series-heading h3 { font-size: 11px; font-weight: 650; color: var(--soft-text); }
+.series-heading > span { color: var(--muted); font-size: 10px; }
+.series-scores { display: grid; grid-template-columns: minmax(0, 1fr) auto minmax(0, 1fr); align-items: center; gap: 16px; }
+.series-player { display: grid; grid-template-columns: minmax(0, 1fr) auto; align-items: center; gap: 10px; min-width: 0; color: var(--team-color, var(--soft-text)); }
+.series-player.enemy { grid-template-columns: auto minmax(0, 1fr); text-align: right; }
+.series-player-name { font-size: 13px; font-weight: 600; overflow-wrap: anywhere; line-height: 1.35; }
+.series-player-name small { display: block; margin-top: 3px; color: var(--muted); font-size: 9px; font-weight: 400; }
+.series-player-score { font-variant-numeric: tabular-nums; font-size: 31px; font-weight: 750; line-height: 1.15; }
+.series-score-divider { color: var(--dim-text); font-size: 21px; line-height: 1; }
+.series-meta { margin-top: 12px; color: var(--muted); font-size: 10px; line-height: 1.5; }
+.series-starting-player { min-width: 0; overflow-wrap: anywhere; color: var(--team-color, var(--muted)); }
+.series-winner { margin-top: 12px; padding: 9px 11px; color: var(--team-color, var(--green)); border: 1px solid var(--team-border, var(--accent-border)); background: var(--team-soft, var(--accent-soft)); border-radius: 6px; font-size: 12px; font-weight: 600; line-height: 1.5; overflow-wrap: anywhere; }
+
+.lobby-card .series-mode-field { margin-top: 17px; }
+.series-mode-field select { width: 100%; min-height: 44px; padding: 10px 12px; color: var(--text); background: var(--surface-deep); border: 1px solid var(--surface-border); border-radius: 7px; font-size: 12px; }
+.series-mode-field select:disabled { opacity: .6; }
+.series-mode-field .input-hint { margin-top: 7px; color: var(--muted); }
+.series-controls { display: flex; flex-direction: column; gap: 9px; margin-top: 17px; }
+.series-controls > button { width: 100%; min-height: 44px; white-space: normal; line-height: 1.5; text-align: center; }
+.series-vote-status { margin-top: 11px; font-size: 11px; color: var(--soft-text); line-height: 1.65; overflow-wrap: anywhere; }
+.series-control-hint { margin-top: 8px; color: var(--muted); font-size: 10px; line-height: 1.65; }
+
+@media (max-width: 1080px) {
+  .series-scoreboard { padding: 14px 19px; }
+}
+
+@media (max-width: 540px) {
+  .series-scoreboard { padding: 12px 14px 14px; }
+  .series-scores { gap: 10px; }
+  .series-player { gap: 7px; }
+  .series-player-name { font-size: 11px; }
+  .series-player-score { font-size: 27px; }
+  .series-heading { margin-bottom: 10px; }
+  .series-heading h3, .series-meta { font-size: 9px; }
+  .series-heading > span { font-size: 9px; }
+  .series-winner { font-size: 11px; }
+}

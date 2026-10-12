@@ -1,22 +1,280 @@
-# RPS Arena – Prototyp v0.2
+# RPS Arena – Version 0.4.5
 
 Ein eigenständiges Browser-Remake des taktischen Stein-Papier-Schere-Prinzips:
-zwei Spieler, verdeckte Figuren, eine Flagge und eine Falle pro Seite. Diese
-Version funktioniert lokal und im LAN und enthält nun die Vorbereitung für
-den Onlinebetrieb. **Eine Internetadresse wurde noch nicht bereitgestellt.**
+zwei Spieler, verdeckte Figuren, eine Flagge und eine Falle pro Seite. Der
+Spielserver läuft lokal, im LAN und als Container auf dem QNAP. Version 0.4.5
+enthält gemeinsame Spielserien mit Punktestand und das vollständig vektorisierte
+Grafikset „ICQ Retro“. Figuren, Spielfeld, Logo, Schiedsrichter und einzelne
+Waffen stammen jetzt aus einer gemeinsamen SVG-Map. Beide Teams haben Vorder-
+und Rückenansichten sowie eigene Aufdeckposen. Der Raumersteller bleibt blau,
+der zweite Spieler rot; die eigene Armee steht in beiden Browsern unten.
+Der größere Schiedsrichter zeigt die feste Farbe des Zugspielers beziehungsweise
+Siegers und weist je Browser auf dessen Spielfeldseite: eigene Seite unten,
+gegnerische Seite oben. Beide Retro-Fallen sind wieder goldgelb.
+Die Zielflaggen sind getauscht: bei der blauen Mannschaft rot, bei der roten blau.
+Die Waffenwahl erscheint mittig über dem Spielfeld. Kurze Kampfanimationen
+zeigen den Zusammenstoß und den Sieger; anschließend hüpft dessen Mannschaft.
 
-## Neu in Version 0.2
+## Neu in Version 0.4.5
 
-- Render-Blueprint für eine einzelne Docker-Webinstanz in Frankfurt.
-- Geprüfte Bereitschafts- und Versionsantwort für den Hostingdienst.
-- Verständliche Beendigung bei Serverneustart oder abgelaufenem Raum;
-  vorübergehende Netzwerkstörungen bleiben wiederaufnehmbar.
-- Automatische Prüfung einer lokalen oder bereitgestellten Version mit zwei
-  Spielverbindungen: `npm run check:online -- https://DEIN-DIENST.onrender.com`.
-- Containerprüfung und GitHub-Workflow einschließlich Produktionsstart.
+- **Waffenwahl über dem Spielfeld:** Bei gleichen Waffen öffnet sich mittig
+  das Overlay „Wähle deine Waffe“ mit drei deutlich größeren Waffensymbolen.
+  Der Hintergrund bleibt transparent, das Spielfeld sichtbar. Die Auswahl
+  bleibt geheim und nach dem Bestätigen gesperrt, bis beide gewählt haben.
+  Bei erneutem Gleichstand erscheint die nächste Auswahlrunde am selben Ort.
+- **Animierte Kämpfe:** Bei jedem Aufeinandertreffen kommen die beiden
+  aufgedeckten Waffen in der Mitte zusammen. Eine kurze Kampfwolke erscheint,
+  die Verliererwaffe zerbricht und der Sieger wird hervorgehoben. Farbe, Name
+  und Beschriftung machen das Ergebnis auf beiden Seiten eindeutig. Auch
+  Fallen und Flaggen werden passend zum tatsächlichen Ergebnis dargestellt.
+- **Gemeinsamer Jubel:** Nach einem Kampfgewinn hüpfen kurz alle verbliebenen
+  Figuren der siegreichen Mannschaft. Auch ein neu bestätigter Partiensieg
+  ohne Kampf, beispielsweise nach einer Aufgabe, löst den Teamjubel aus.
+  Die festen Spielerfarben gelten dabei in beiden Browsern.
+- **Bewegungseinstellung bleibt wirksam:** Ohne Animationen oder bei aktivierter
+  reduzierter Bewegung erscheint der Kampf als kurze statische Ergebnisanzeige.
+  Die Waffenwahl bleibt bedienbar. Wiederholte Spielstandsübertragungen und
+  Wiederverbindungen spielen vergangene Kämpfe oder Siege nicht erneut ab.
+- **Gelbe Retro-Fallen:** Beide Spieler verwenden wieder die ursprüngliche
+  goldgelbe Falle, jeweils in passender Vorder- oder Rückenansicht. SVG und die
+  daraus erzeugte PNG zeigen dieselben Farben; die Kämpfer behalten ihre Teamfarbe.
+- **Getauschte Zielflaggen:** Die blaue Mannschaft hat ein rotes Flaggentuch,
+  die rote ein blaues. Körper, Sockel und Besitzerzuordnung bleiben in der
+  jeweiligen Teamfarbe. Diese Zuordnung gilt auf dem Brett und bei einer
+  Flaggeneroberung, auch in Klassisch, Arcade und im PNG-Rückfall. Die
+  Schiedsrichterflaggen zeigen weiterhin die tatsächliche Zug- oder Siegerfarbe.
+- **Schiedsrichter mit Farbe und Richtung:** Vier Zug-/Siegerposen decken Blau
+  oben, Blau unten, Rot oben und Rot unten ab. Die neutrale Pose mit beiden
+  Flaggen bleibt für Aufstellung, gleiche Waffen und Remis erhalten. Die
+  Besitzerfarbe bleibt fest, die angezeigte Richtung folgt der jeweiligen
+  Browserperspektive.
+- **Größerer Schiedsrichter:** In der Spiel-Statuskarte steigt das Bild von
+  136 × 102 auf 180 × 135 Pixel. Die sichtbare textliche Zugüberschrift wird
+  weiterhin durch den Schiedsrichter ersetzt.
+- **41 gemeinsame Atlasmotive:** Zwei zusätzliche native SVG-Posen belegen
+  bislang freie Plätze. Die 39 bisherigen Ausschnittkoordinaten und die
+  Atlasgröße 1728 × 2016 bleiben erhalten. Die PNG wird gemeinsam neu exportiert.
+- **Erweitertes Grafikformat:** Das optionale `directionalTurnPortraits` wählt
+  für jede Farbe `top` und `bottom`. Bestehende `colorTurnPortraits` und
+  `turnPortraits` bleiben als Rückfall für eigene Grafiksets unterstützt.
 
-**Der vollständige Weg zur Onlineadresse steht in [ONLINE-START.md](ONLINE-START.md).**
-Die Spielregeln und das grundlegende Layout bleiben gegenüber v0.1 gleich.
+## Neu in Version 0.4.4
+
+- **Der gesamte Retro-Atlas als SVG:** 39 Motive auf **1728 × 2016** Einheiten:
+  24 Basisfiguren für beide Farben und Blickrichtungen, sechs Aufdeckposen,
+  zwei Brettkacheln, Logo, drei Schiedsrichterposen und drei einzelne Waffen.
+  Die Oberfläche verwendet die SVG direkt; das Brett rendert sie passend zur
+  benötigten Auflösung.
+- **Feste Teamfarben:** Seat 0, der Raumersteller, ist blau; Seat 1 ist rot.
+  Figuren, Namen, Punktestand, Zug- und Siegeranzeigen bleiben in beiden
+  Browsern gleich zugeordnet. Eigene Figuren stehen weiterhin unten in der
+  Rückenansicht; Gegner stehen oben in der Vorderansicht. Auch Fallen und
+  Flaggen tragen ihre Teamfarbe. Klassisch und Arcade verwenden ebenfalls Blau/Rot.
+- **Drei überarbeitete Schiedsrichterposen:** Nach den neuen Bildvorlagen zeigt
+  die blaue Pose die Flagge vorn unten, die rote vorn oben. Die neutrale Pose
+  streckt beide Flaggen seitlich aus und gilt unter anderem im Duell und bei Remis.
+- **Echte Vektormotive:** Die Figurenkonturen wurden aus der bisherigen Vorlage
+  in Pfade übertragen und ihre Schattierungen angenähert. Brettkacheln, Logo und
+  Schiedsrichter verwenden auch native Vektorverläufe; die gezeichneten Waffen
+  werden direkt übernommen. Der Atlas enthält keine eingebetteten Rasterbilder.
+- **Passender PNG-Rückfall:** `atlas.png` wird aus dem vollständigen `atlas.svg`
+  neu exportiert. Beide Dateien haben dieselben Maße, Motive und 39 Ausschnitte.
+  Falls die SVG nicht verwendet werden kann, lädt das Set diese PNG automatisch
+  über `atlas.fallbackImage`. Die PNG aus 0.4.3 liegt nur noch als Bearbeitungsquelle
+  unter `design/icq-retro-source/original.png`.
+- **Arcade ebenfalls mit SVG:** `master.svg` ist das primäre Bild, `atlas.png`
+  die passende Rückfallgrafik. Die 147 Frames und vorhandenen Animationsclips bleiben erhalten.
+- **Kleinere SVG-Übertragung:** Der Produktionsbuild ergänzt komprimierte
+  SVG-Dateien für die Auslieferung. Browser mit gzip-Unterstützung übertragen
+  den Retro-Atlas dadurch mit etwa 2,13 MB statt 9,9 MB. Die Adresse `atlas.svg`
+  und die bearbeitbare Originaldatei bleiben erhalten; eigene NAS-Grafiken
+  haben weiterhin Vorrang.
+- **Bestehende Bedienung erhalten:** Die einzelnen Waffen in Regeln und Duell,
+  die Schiedsrichter-Statuskarte und die lesbaren Auswahllisten bleiben erhalten.
+  Im Retro-Design erscheinen weiterhin keine zusätzlichen gelben Aufdeckpunkte.
+
+Der normale Build verwendet die mitgelieferten SVG-/PNG-Dateien. Die optionalen
+Grafikwerkzeuge brauchst du nur, wenn du den Atlas selbst neu erzeugen möchtest.
+Format und Bearbeitung stehen in [GRAFIKSETS.md](GRAFIKSETS.md).
+
+## Neu in Version 0.4.3
+
+- **Waffen einzeln dargestellt:** Ein grauer rundlicher Stein, eine helle
+  Papierrolle und eine silberne Schere mit gelben Griffen passen zur Retro-Optik.
+  Sie erscheinen in der Regelerklärung und bei jeder geheimen Waffenwahl im Duell,
+  auch nach wiederholtem Gleichstand.
+- **Echte Vektoren für die kleinen Symbole:** `weapon-atlas.svg` enthält die
+  drei neu gezeichneten Motive als Vektorformen. Die Darstellung kann damit
+  in verschiedenen Größen und bei höherer Bildschirmdichte sauber skalieren.
+  Die Regelbilder sind 44 Pixel groß, die Bilder der Waffenwahl 56 Pixel.
+- **Waffen auch in der Retro-Map:** Der Hauptatlas umfasst jetzt
+  **1121 × 1787 Pixel mit 24 statischen Ausschnitten**. Die drei neuen
+  Waffenbilder liegen in einer zusätzlichen Reihe; die bisher vorhandenen
+  21 Motive und ihre Koordinaten bleiben erhalten. Sie dienen außerdem als
+  Rückfall, falls der optionale Vektoratlas nicht geladen werden kann.
+- **Schärferes Brett:** Der Zeichenpuffer berücksichtigt beim Start die
+  Bildschirmdichte bis Faktor 2. So nutzt das logisch 680 × 616 große Brett
+  bei DPR 2 und höher einen Puffer von 1360 × 1232 Pixeln.
+- **Grafikset erweiterbar:** `weapons` ordnet die Einzelwaffen zu;
+  `weaponAtlas` ergänzt bei Bedarf eine separate SVG-, PNG-, WebP- oder
+  JPEG-Datei. Das bestehende Hauptbild für Brett und Figuren bleibt ein Rasteratlas.
+  Format und Bearbeitung sind in [GRAFIKSETS.md](GRAFIKSETS.md) beschrieben.
+- **Schiedsrichter als Zuganzeige:** In der Retro-Spielansicht erscheint er
+  direkt in der Statuskarte an der Stelle der bisherigen textlichen Zuganzeige.
+  Seine Flaggen zeigen den Spieler am Zug und nach Spielende den Sieger.
+- **Lesbare Designauswahl:** Die aktive Option erhält im Retro-Menü einen
+  dunkelolivgrünen Hintergrund und helle Schrift; die übrigen Optionen stehen
+  dunkel auf hellem Hintergrund.
+- **Aufdeckposen ohne gelbe Punkte:** Die zusätzlichen Aufdeckmarker entfallen
+  im Retro-Design. Der Aufdeckstatus und die Figurenposen bleiben erhalten.
+
+Für diese Änderung ist keine Anpassung der vorhandenen Caddy-Konfiguration nötig.
+
+## Neu in Version 0.4.2
+
+- **Einheitliche Aufdeckfiguren:** Die blaue Steinfigur unten links in der
+  Grafik-Map dient als gemeinsame Figurenvorlage für Papier und Schere daneben.
+  Nur das Werkzeug wird ausgetauscht; Kopf, Körper, Armhaltung, Ärmel und Hand
+  folgen derselben Vorlage.
+- **Passende Verdeckung:** Derselbe blaue Ärmel und dieselbe Hand liegen vor
+  dem Werkzeug und verdecken dessen Rand.
+
+## Neu in Version 0.4.1
+
+- **Aufgedeckte eigene Kämpfer:** Blaue Stein-, Papier- und Scherenfiguren
+  erhalten eine zusätzliche Pose mit dem Werkzeug vorn oder seitlich in einer
+  Hand. Papier und Schere übernehmen die tiefe, natürliche Armhaltung der
+  blauen Steinfigur; Kopf, Körper oder Hand dürfen einen Teil des Werkzeugs
+  verdecken. Die Darstellung wechselt, sobald die Figur laut bestätigtem
+  Spielstand öffentlich aufgedeckt ist.
+- **Schiedsrichter zeigt den Zug:** Er hebt den Arm mit der aktiven Flagge;
+  die andere hält er hinter dem Rücken. Rot bleibt in seiner anatomisch rechten
+  Hand, Blau in seiner linken. In der neutralen Frontalansicht ist Rot daher
+  links im Bild und Blau rechts. Blau bedeutet im jeweiligen Browser „du bist
+  am Zug“, Rot „der Gegner ist am Zug“.
+- **Sieger und Gleichstand:** Nach einem Sieg zeigt die Flagge die Farbe des
+  Gewinners; die Beschriftung nennt den Sieger. Bei einem Remis zeigt der
+  Schiedsrichter beide Arme mit den Flaggen ausgestreckt. Diese neutrale Pose
+  gilt ebenfalls in Lobby, Wartephase, Aufstellung und im Duell, auch bei
+  wiederholter gleicher Waffenwahl.
+  Bei einer Verbindungspause während eines Zugs bleibt dessen Flaggenfarbe erhalten.
+- **Erweiterte Bild-Map:** 21 statische Ausschnitte auf **1121 × 1403 Pixeln**,
+  darunter drei zusätzliche aufgedeckte Figuren und zwei zusätzliche
+  Schiedsrichterposen. Die neuen Darstellungen funktionieren auch bei
+  ausgeschalteten Animationen.
+- **Erweiterbares Grafikformat:** Eigene Sets können `revealed`-Varianten für
+  Figuren und `turnPortraits` für den Schiedsrichter definieren. Ohne diese
+  optionalen Angaben werden die bisherigen Figuren und das neutrale Porträt verwendet.
+
+Die neue Version enthält keine neuen Figurenanimationsclips. Die vorhandenen
+Zug- und Kampfdarstellungen bleiben nutzbar.
+
+## Neu in Version 0.4.0
+
+- **Serienmodus beim Erstellen:** Freie Serie, Best of 3 oder Best of 5.
+  Eine freie Serie zählt die Siege beliebig vieler Partien weiter; Best of 3
+  endet bei zwei, Best of 5 bei drei Siegen. Remis werden separat gezählt.
+- **Gemeinsamer Punktestand:** Beide Namen, Siege, Remis, Serien- und
+  Partienummer sowie der Startspieler stehen direkt über dem Brett.
+- **Abwechselnder erster Zug:** Der Raumersteller beginnt die erste Partie;
+  danach wechselt der Startspieler nach jeder Partie, auch nach einem Remis
+  und beim Übergang in eine neue Serie.
+- **Gemeinsame Fortsetzung:** Nach einer Partie wählen beide „Nächste Partie“
+  oder „Neue Serie (0 : 0)“. Erst zwei übereinstimmende Stimmen starten neu.
+  Nach dem entscheidenden Sieg einer Best-of-Serie steht nur die neue Serie
+  zur Verfügung. Sie behält Modus, Spieler und Plätze bei.
+- **Wiederbeitritt:** Eine rechtzeitige Wiederverbindung erhält die
+  Spieleridentität, die laufende Partie und den Serienstand. Ausstehende
+  Zustimmungen zur Fortsetzung werden bei einem Abbruch gelöscht.
+- **ICQ Retro:** Zusammenhängendes grünes Schachbrett, blaue und rote
+  Cartoon-Figuren, Stein, Papierrolle, Schere, Flagge, Falle, neues Logo und
+  statischer Schiedsrichter aus einer echten PNG-Bild-Map.
+- **Austauschbare Grafikdateien:** Der neue Atlas liegt zusammen mit seiner
+  Konfiguration unter `public/skins/icq-retro/`. Die erste Retro-Map in 0.4.0
+  enthielt 16 statische Bildausschnitte auf 1254 × 1254 Pixeln. Das Format lässt
+  spätere Animationsclips zu; vorhandene Bewegungseffekte bleiben nutzbar.
+- **Erweiterte Onlineprüfung:** Kontrolliert zusätzlich den ausgelieferten
+  Retro-Atlas, Serienwertung, wechselnden Startspieler, Wiederbeitritt mit
+  vorhandenem Siegstand und das gemeinsame Zurücksetzen.
+
+„ICQ Retro“ ist die Vorgabe für Browser ohne gespeicherte Designauswahl.
+Eine bestehende Auswahl bleibt erhalten; bei Bedarf im Menü **Design → ICQ Retro**
+wechseln. „Klassisch“, „Arcade“ und eigene Grafiksets bleiben verfügbar.
+
+**Bestehende QNAP-Installation aktualisieren:** [QNAP-UPDATE.md](QNAP-UPDATE.md)  
+**Grafikset und eigene Bild-Maps:** [GRAFIKSETS.md](GRAFIKSETS.md)  
+**Originalrecherche und Entstehung des Designs:** [design/ICQ-RETRO.md](design/ICQ-RETRO.md)
+
+## Neu in Version 0.3.3
+
+- **Token-Eingabe auf dem QNAP korrigiert:** Das Einrichtungsskript verwendet
+  die verdeckte Eingabe `read -s` der NAS-Shell. Dafür ist kein `stty` erforderlich.
+- **Klare Fehlerursachen:** Ein fehlendes Terminal und fehlende Möglichkeiten
+  zur verdeckten Eingabe erhalten unterschiedliche Meldungen.
+- **Geprüfter Abbruch:** Ein vorhandener Token bleibt bei Abbruch, leerer oder
+  ungültiger Eingabe erhalten. Die normale Terminalanzeige wird wiederhergestellt.
+
+## Neu in Version 0.3.2
+
+- **DNS-Prüfung für Zertifikate:** ergänzende Caddy-Konfiguration für dynv6;
+  Ausstellung und Erneuerung benötigen keine öffentlichen Ports 80 oder 443.
+- **Bestehende Spieladresse:** `https://flusensieb.dns.navy:8443`, mit der
+  FRITZ!Box-Weiterleitung **TCP 8443 → NAS 18443 → Caddy 443**.
+- **Vorabtest:** eine eigene Caddy-Instanz prüft die echte DNS-Zertifikatsausstellung
+  in der Let's-Encrypt-Testumgebung, bevor die laufenden Container umgestellt werden.
+- **Token lokal erfassen:** unsichtbare Eingabe auf dem NAS, eigene Secret-Datei;
+  kein Token in Compose, Projekt-ZIP oder Container-Image.
+- **Bestehende Zertifikate erhalten:** derselbe Caddy-Dienst und dieselben Volumes.
+  Die bisherigen Grafiksets, Animationen und Spielfunktionen sind vollständig enthalten.
+
+**Einrichten und aktualisieren:** [QNAP-HTTPS.md](QNAP-HTTPS.md).
+Für den DNS-Betrieb immer `-f compose.yaml -f compose.dns.yaml --profile https`
+verwenden. Die ursprüngliche Variante für öffentliche Standardports steht in
+[QNAP-HTTPS-STANDARD.md](QNAP-HTTPS-STANDARD.md).
+
+## Neu in Version 0.3.1
+
+- Optionaler **Caddy-Container** für HTTPS und sichere WebSocket-Verbindungen.
+- Vorbereitet für `flusensieb.dns.navy` und die FRITZ!Box 6660 Cable:
+  extern TCP 80/443, auf dem QNAP standardmäßig TCP 18080/18443.
+- Caddy 2.11.7 mit automatisch erneuerten Zertifikaten in persistenten Volumes.
+- Bestehendes Compose-Projekt `rps-arena`; Aktivierung über das Profil `https`.
+- Online-Funktionsprüfung jetzt auch direkt im Spielcontainer verfügbar.
+
+Die damalige Standardport-Konfiguration verwendet IPv4. Ein vorhandener
+AAAA-Eintrag braucht einen gesondert funktionierenden IPv6-Zugang.
+
+## Neu in Version 0.3
+
+- **Designs wechseln:** Seit Version 0.3 im Menü „Design“ zwischen „Klassisch“, „Arcade“ und
+  eigenen Grafiksets wechseln; Auswahl pro Browser speichern.
+- **Eigene Bild-Map:** Ein PNG-/WebP-/JPEG-Atlas und eine JSON-Datei ersetzen
+  Figuren, verdeckte Rückseiten, Spielfeldkacheln und Logosymbol. Die
+  Spielfeld- und Oberflächenfarben lassen sich separat einstellen.
+- **Animationen:** Bewegungen, Angriff im Bogen, Aufdecken, Entfernen des
+  Verlierers und zwei Siegerpulse. Auch Duellbeginn, Gleichstand und
+  aufgelöste Duellrunden erhalten eine sichtbare Darstellung. Eigene
+  Bildfolgen für `idle`, `selected`, `move`, `duel`, `attack`, `win`, `lose`.
+- **Letzter Zug:** Start, Ziel und Richtung bleiben markiert. Eine
+  Ergebnisleiste nennt Beteiligte, Sieger und entfernte Figur.
+- **Mehr Verlauf:** Die letzten 100 Ereignisse sind in der aufklappbaren
+  Spielchronik lesbar.
+- **Aufstellung per Ziehen:** Zwei eigene Figuren per Drag-and-drop tauschen;
+  Anklicken und Tastatursteuerung funktionieren weiterhin.
+- **Optionale Retro-Töne:** Kurze, lokal erzeugte Zugsignale und Kampftöne;
+  zunächst ausgeschaltet. Animationen sind ebenfalls abschaltbar und
+  beachten reduzierte Bewegung in den Systemeinstellungen.
+- **NAS-Grafiken ohne Neubau:** Nach dem einmaligen Versionswechsel eigene
+  Bild- und JSON-Dateien unter `skins/` bearbeiten und die Seite neu laden.
+- **Fehlerfeste Darstellung:** Ungültige Grafiksets fallen auf das eingebaute
+  klassische Design zurück. Wiederverbindungen spielen alte Ereignisse
+  nicht erneut ab.
+
+Die komplette ZIP enthält Quellcode, Grafikvorlagen, Tests, Docker-Konfiguration
+und den aktuellen Produktionsbuild unter `dist/`.
+
+**QNAP aktualisieren:** [QNAP-UPDATE.md](QNAP-UPDATE.md)  
+**Eigene Grafiken erstellen:** [GRAFIKSETS.md](GRAFIKSETS.md)
 
 ## Schnellstart unter Windows, Linux oder macOS
 
@@ -50,16 +308,17 @@ Das Terminalfenster bleibt während des Spielens geöffnet. **Strg+C** beendet i
 
 ## Erste Partie auf einem Rechner testen
 
-- Name eingeben und einen Raum erstellen.
+- Name eingeben, den Serienmodus wählen und einen Raum erstellen.
 - Einen **neuen** Browser-Tab öffnen und dort den Einladungslink einfügen.
   Einen vorhandenen Tab nicht per „Tab duplizieren“ kopieren: Browser können
   dabei den Sitzungsspeicher mitkopieren. Zwei unterschiedliche Browser oder
   ein normales und ein privates Fenster funktionieren ebenfalls.
 - Zweiten Namen eingeben und dem Raum beitreten. Groß-/Kleinschreibung des
   Raumcodes ist relevant.
-- Eigene Figuren durch Anklicken zweier eigener Felder tauschen oder
+- Eigene Figuren durch Anklicken zweier eigener Felder oder Ziehen tauschen oder
   „Mischen“ verwenden. Danach auf beiden Seiten „Ich bin bereit“ wählen.
-- Der Raumersteller beginnt. Eigene Figur und anschließend ein markiertes
+- In der ersten Partie beginnt der Raumersteller. Danach wechselt der erste
+  Zug nach jeder Partie. Eigene Figur und anschließend ein markiertes
   Zielfeld anklicken. Pfeiltasten und Enter/Leertaste sind ebenfalls möglich,
   wenn das Spielfeld fokussiert ist.
 
@@ -86,12 +345,17 @@ Es ist keine Router-Portweiterleitung für eine reine LAN-Partie erforderlich.
   übertragen. Auch die geheime Duellauswahl bleibt bis zur Auflösung privat.
 - Geheime neue Waffenwahl bei gleichartigen Kämpfern, inklusive wiederholter
   Gleichstände und gleichzeitiger Eingaben beider Spieler.
-- Spielende, Aufgeben und Revanche nur bei Zustimmung beider Seiten.
+- Serverseitiges Spielende und freiwilliges Aufgeben; eine weitere Partie
+  oder eine neue Serie startet erst nach Zustimmung beider Seiten.
+- Freie Serien, Best of 3 und Best of 5 mit Siegstand und separatem Remiszähler.
 - Pause bei Verbindungsabbruch. Standardmäßig bleibt der Platz **120 Sekunden**
   für die bisherige Sitzung reserviert; Neuladen im selben Tab kann die Partie
   innerhalb dieses Fensters fortsetzen. Eine erneute erfolgreiche Verbindung
   erzeugt einen neuen Rückkehrtoken.
-- Selbst gezeichnete Vektorsymbole; keine externen Grafik- oder Font-CDNs.
+- Vollständig vektorisierter Retro-Atlas mit erhaltener PNG-Vorlage,
+  frisch exportiertem PNG-Rückfall, eingebaute Vektorsymbole und der animierte
+  Arcade-Vektoratlas mit PNG-Rückfall; alle Grafiken und Schriften werden
+  lokal beziehungsweise über verfügbare Systemschriften dargestellt.
 - Regeltests und Integrationstests mit echten Colyseus-Clients.
 
 ## Vorläufige Regeln
@@ -104,6 +368,7 @@ bewusst konkret festgelegt und stehen zentral in `shared/game.ts`:
 | --- | --- |
 | Brett | 7 Spalten × 6 Reihen |
 | Armee | Je 4 Stein, 4 Papier, 4 Schere, 1 Flagge, 1 Falle |
+| Teamfarbe und Ansicht | Raumersteller / Seat 0 blau, zweiter Spieler / Seat 1 rot; eigene Figuren unten, Gegner oben; im Retro-Set als Rücken- beziehungsweise Vorderansicht |
 | Aufstellung | Je zwei eigene Startreihen; zwei mittlere Reihen bleiben frei |
 | Aufbau | Zufällige Startaufstellung, freies Tauschen/Mischen bis „Bereit“ |
 | Zug | Ein beweglicher Kämpfer ein Feld waagerecht oder senkrecht |
@@ -116,11 +381,19 @@ bewusst konkret festgelegt und stehen zentral in `shared/game.ts`:
 | Sieg | Gegnerische Flagge erobern, Gegner hat keinen legalen Zug oder gibt auf |
 | Zuglimit | Nach 300 abgeschlossenen Zügen unentschieden, sofern zuvor kein Sieg eintritt |
 | Zugzeit | Kein Zeitlimit für einen einzelnen Zug oder eine Duellauswahl |
+| Serien | Frei ohne Siegziel; Best of 3 bis zwei Siege; Best of 5 bis drei Siege |
+| Remis | Erhöht den Remiszähler, vergibt keinen Sieg und zählt nicht zum Siegziel |
+| Startspieler | Wechselt nach jeder Partie, auch über eine Seriengrenze hinweg |
+| Fortsetzung | Beide stimmen für dieselbe Option: nächste Partie oder neue Serie |
+
+Die Aufdeckung bleibt ein Spielzustand. ICQ Retro verwendet dafür die
+vorgesehenen Figuren- und Aufdeckposen und zeigt keine zusätzlichen gelben
+Punkte. Andere Darstellungen behalten ihre Aufdeckmarker.
 
 Vor allem Verhalten der Falle, dauerhafte Sichtbarkeit, Waffenverteilung,
 Startspieler und Regeln gegen Endlosschleifen sollen wir nach deinem Feedback
 mit der gewünschten Originalvariante abgleichen. Ein kompletter Serverneustart
-beendet aktuell alle laufenden Partien; Spielstände liegen nur im Speicher.
+beendet aktuell alle laufenden Partien und Serien; Spielstände liegen nur im Speicher.
 Nach dauerhaftem Verlassen wird eine Partie beendet. Ein neuer Spieler darf
 den alten Platz nicht übernehmen; für einen anderen Gegner einen neuen Raum
 erstellen. Räume und Sitzungen sind getrennt, benötigen derzeit kein Konto.
@@ -130,19 +403,42 @@ erstellen. Räume und Sitzungen sind getrennt, benötigen derzeit kein Konto.
 | Pfad | Aufgabe |
 | --- | --- |
 | `client/main.ts` | Menüs, Spielphasen und Interaktion |
-| `client/board.ts` | Phaser-Brett, eigene Symbole, Markierungen und Tastatursteuerung |
+| `client/series-ui.ts` / `client/series.css` | Serienstand, Bezeichnungen und Fortsetzungszustände |
+| `client/board.ts` | Phaser-Brett, Atlas-Sprites, Animationen, Markierungen und Bedienung |
+| `client/board-motion.ts` | Ereigniserkennung und Bildfolgen ohne Wiederholung nach Wiederverbindung |
+| `client/skins.ts` / `client/skin-types.ts` | Grafikset-Format, Laden, Validieren und Standardwerte |
+| `client/skin-ui.ts` | Logo, Figuren- und Waffensymbole, Atlas-Ausschnitte und Oberflächenfarben |
+| `client/referee-ui.ts` | Statische Schiedsrichterpose für die feste Farbe des Zugspielers oder Siegers |
+| `client/team-ui.ts` | Feste Zuordnung von Spieler-Seat zu Blau/Rot, unabhängig vom Betrachter |
+| `client/retro.css` | Am ICQ-Spiel orientierte Oberfläche des Retro-Grafiksets |
+| `client/sound.ts` | Optionale, lokal erzeugte Spielsounds |
+| `public/skins/` | Mitgelieferte Designs, PNG-Atlas, SVG-Master und Konfiguration |
+| `public/skins/icq-retro/` | SVG-Atlas mit 41 Motiven auf 1728 × 2016, passende PNG-Rückfallgrafik und bearbeitbare Waffenquelle |
+| `scripts/build-retro-atlas.py` | Optionaler gemeinsamer Neubau von SVG, PNG und Grafikmanifest |
+| `scripts/retro_vectorize.py` | Pfadvektorisierung der Figuren mit Pillow und libpotrace |
+| `scripts/build-retro-weapons.mjs` | Kompatibler Aufruf des vollständigen Python-Grafikbuilds |
+| `scripts/compress-skin-svgs.mjs` | Ergänzt gzip-Dateien für die eingebauten SVGs im Produktionsbuild |
+| `design/icq-retro-source/` | PNG-Bearbeitungsvorlage aus 0.4.3, Ausschnittplan und neue Schiedsrichter als SVG |
+| `design/` | Recherchequellen, Designentscheidungen und verwendete Bildprompts |
+| `skins/` | Eigene Grafiksets als austauschbare NAS-Dateien |
 | `client/network.ts` | Verbindung, Raumbeitritt, Sitzung und Wiederverbindung |
 | `client/styles.css` | Responsives Design |
 | `shared/game.ts` | Maßgebliche Spielregeln und Sicht pro Spieler |
 | `shared/protocol.ts` | Geteilte Nachrichtentypen |
 | `server/RpsRoom.ts` | Colyseus-Raum, validierte Aktionen und private Zustandsnachrichten |
-| `server/app.ts` | HTTP-/WebSocket-Server, Spielauslieferung, Health-Endpunkt |
+| `server/app.ts` | HTTP-/WebSocket-Server, Spiel- und Grafikauslieferung, Health-Endpunkte |
 | `server/index.ts` | Serverstart und Netzwerkadressen |
 | `tests/game.test.ts` | Fachliche Regel- und Geheimhaltungstests |
 | `tests/network.test.ts` | Integration mit getrennten Clients und echten Verbindungen |
+| `tests/game-series.test.ts` / `tests/network-series.test.ts` | Wertung, Serienwechsel, Zustimmung und Wiederverbindung |
 
 Die vollständigen gegnerischen Figuren bleiben im `GameState` des Servers.
 `viewFor()` baut für jeden Spieler explizit ein eigenes, gefiltertes `GameView`.
+Öffentliche Aktionen werden zusätzlich als `lastAction` übertragen. Sie enthalten
+nur die für diesen Betrachter sichtbaren Figuren. Ein besiegter Kämpfer wird
+für seine kurze Darstellung aus dem bestätigten Kampfereignis gelesen. Bei
+der ersten geheimen Duellwahl wird kein neues öffentliches Ereignis erzeugt.
+
 Der private Zustand wird **nicht** dem automatisch synchronisierten
 `Room.state` zugewiesen. Für das kleine Brett werden nach Aktionen komplette,
 gefilterte Ansichten als `snapshot` gesendet. Colyseus übernimmt Räume, Plätze,
@@ -152,6 +448,9 @@ Züge tragen eine Spielstandsrevision. Dadurch werden doppelte oder veraltete
 Zugbefehle verworfen. Duellwahlen tragen eine Duell-ID und Rundennummer; eine
 globale Revisionsprüfung wäre hier falsch, weil beide Spieler gleichzeitig
 wählen dürfen. Eine bereits bestätigte Wahl kann nicht geändert werden.
+Die Zustimmung zur Fortsetzung trägt Serien- und Partiekennung. So können
+beide Spieler gleichzeitig zustimmen, während alte Stimmen aus einer früheren
+Partie keine neue Partie auslösen.
 
 ## Weiterentwickeln
 
@@ -177,26 +476,26 @@ eigenen Server an einem automatisch gewählten freien Port.
 
 ### Prüfstand dieser Lieferung
 
-- 36 automatisierte Tests bestanden: Spielregeln und Netzwerkabläufe mit
-  getrennten Clients, einschließlich Geheimhaltung der Figuren, gleichzeitiger
-  Duelleingaben, Wiederbeitritt, Serverneustart und abgelaufenen Sitzungen.
-- TypeScript-Prüfung und Produktionsbuild erfolgreich.
-- `render.yaml` gegen das offizielle Render-JSON-Schema validiert.
-- Den gebauten Server in einer frischen Laufzeit mit `npm ci --omit=dev`
-  gestartet: Version, `/ready`, Browserdateien, zwei Spielverbindungen, Zug und
-  Wiederbeitritt erfolgreich geprüft. Geordnetes Beenden per `SIGTERM` endet
-  mit Exitcode 0. Dafür waren keine TypeScript-Quelldateien nötig.
-- Version 0.1 wurde vom Nutzer erfolgreich im Browser und mit zwei physischen
-  LAN-Geräten gespielt. Die neuen Statusanzeigen von v0.2 wurden automatisiert,
-  noch nicht in einem echten Browser geprüft.
-- Die Docker-Engine und ein Render-Zugang stehen in dieser Arbeitsumgebung
-  nicht bereit. Der tatsächliche Containerbau und der öffentliche HTTPS-/WSS-
-  Test müssen deshalb noch über die mitgelieferten Prüfungen ausgeführt werden.
+Der genaue Prüfstand dieser ZIP steht in [PRUEFBERICHT.md](PRUEFBERICHT.md).
+Automatisierte Tests prüfen Regeln, zwei echte Netzwerkclients, Wiederverbindung,
+Geheimhaltung der neuen Ereignisse, Grafikset-Fehlerfälle und NAS-Dateiauslieferung.
+TypeScript und Browser-/Serverbuild werden vor der Auslieferung geprüft.
+
+Der LAN-Betrieb auf dem QNAP TS-251D und die bestehende DNS-01-HTTPS-Einrichtung
+unter `https://flusensieb.dns.navy:8443` wurden bereits bestätigt. Die neue
+Version **0.4.5** wird als vollständige ZIP geliefert und anschließend von dir
+auf dem NAS installiert und mit der Onlineprüfung kontrolliert. Die bisherige
+Installation allein bestätigt noch nicht den Betrieb der neuen Version.
+Die Regeln bleiben die dokumentierten
+Prototypregeln; die genaue historische ICQ-Variante ist noch nicht vollständig
+verifiziert.
 
 ## Konfiguration
 
 Der Server liest Umgebungsvariablen des Prozesses; `.env.example` dokumentiert
-die Werte. Eine Datei `.env` wird nicht automatisch geladen.
+die Werte. Beim direkten Start mit Node wird `.env` nicht automatisch geladen.
+Docker Compose liest sie für die Variablen seiner Konfiguration; Vite liest
+seine eigenen `.env`-Dateien für den Browserbuild.
 
 | Variable | Standard | Bedeutung |
 | --- | --- | --- |
@@ -204,7 +503,17 @@ die Werte. Eine Datei `.env` wird nicht automatisch geladen.
 | `HOST` | `0.0.0.0` | Für das LAN erreichbar; `127.0.0.1` beschränkt auf denselben Rechner |
 | `RECONNECT_SECONDS` | `120` | Rückkehrfenster, 1 bis 600 Sekunden |
 | `ALLOWED_ORIGINS` | leer | Optional: zugelassene Browser-Ursprünge für WebSocket, kommasepariert |
+| `SKINS_DIR` | leer | Optionaler Ordner für Grafik-Overrides; in Compose `/app/skins` aus `./skins` |
 | `VITE_SERVER_URL` | automatisch | Optionaler Server-Ursprung für die Client-Entwicklung; Vite liest seine `.env`-Dateien |
+
+Für Docker Compose kommen `RPS_DOMAIN` (`flusensieb.dns.navy`), `RPS_PORT`
+(`2567`), `RPS_HTTP_PORT` (`18080`) und `RPS_HTTPS_PORT` (`18443`) hinzu.
+`ALLOWED_ORIGINS` bleibt standardmäßig leer, sodass LAN und HTTPS nutzbar
+sind. Wer die Liste einschränkt, muss auch die gewünschten LAN-Ursprünge
+einschließlich Protokoll und Port aufnehmen. Für die öffentliche Spieladresse
+gehört dabei `:8443` ausdrücklich zum Ursprung. Im DNS-Modus wird
+`RPS_HTTP_PORT` nicht veröffentlicht; der HTTP-Token liegt separat in
+`secrets/dynv6_api_token`.
 
 Beispiel für PowerShell:
 
@@ -214,6 +523,11 @@ npm start
 ```
 
 ## Internetbetrieb
+
+Für das vorhandene QNAP und die FRITZ!Box gilt [QNAP-HTTPS.md](QNAP-HTTPS.md).
+Das optionale Compose-Profil `https` ergänzt den bestehenden Spielcontainer
+um Caddy. Für den Betrieb über dynv6-DNS zusätzlich `compose.dns.yaml` laden. Browser und Spielverbindung verwenden denselben öffentlichen
+Ursprung; eine eigene WebSocket-Adresse im Client ist nicht erforderlich.
 
 Dieselben Dateien können auf einen Host mit einem dauerhaft laufenden
 Node.js-Prozess umziehen. Browserdateien und Multiplayer laufen auf derselben
@@ -227,11 +541,11 @@ docker build -t rps-arena .
 docker run --rm -p 2567:2567 rps-arena
 ```
 
+Als alternative Bereitstellung bleibt die bisherige Vorbereitung enthalten.
 `render.yaml` konfiguriert die Bereitstellung; `ONLINE-START.md` beschreibt
 GitHub, Render, Kosten, Prüfung und spätere Updates. Der Dockerbau wurde in
-dieser Umgebung nicht ausgeführt. Es gibt noch keinen bereitgestellten Internetserver,
-keine Konten, öffentliche Spielersuche, Rangliste, KI oder dauerhafte
-Spielstanddatenbank. Diese Funktionen sind getrennte Ausbauschritte.
+dieser Umgebung nicht ausgeführt. Konten, öffentliche Spielersuche, Rangliste,
+KI und eine dauerhafte Spielstanddatenbank sind weitere Ausbauschritte.
 
 ## Technische Referenzen
 
@@ -240,5 +554,4 @@ Spielstanddatenbank. Diese Funktionen sind getrennte Ausbauschritte.
 - Wiederverbindung: https://docs.colyseus.io/room/reconnection
 - Bereitstellung: https://docs.colyseus.io/deployment
 
-Die eingesetzten Paketstände stehen fest in `package.json` und
-`package-lock.json`; `npm ci` installiert genau den geprüften Abhängigkeitsbaum.
+Der geprüfte Abhängigkeitsbaum steht in `package-lock.json`; `npm ci` installiert genau den geprüften Abhängigkeitsbaum.

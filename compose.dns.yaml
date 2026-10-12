@@ -1,0 +1,29 @@
+# DNS-01 ergänzt das bestehende Projekt; beide Dateien in dieser Reihenfolge nutzen:
+# docker compose -p rps-arena -f compose.yaml -f compose.dns.yaml --profile https ...
+# Voraussetzung: Docker Compose ab 2.24.4; auf dem QNAP ist 2.29.1 vorhanden.
+services:
+  caddy:
+    image: rps-arena-caddy-dynv6:0.4.2
+    build:
+      # Nur Builddateien hineinnehmen; der Token gehört nicht ins Image.
+      context: ./deploy/caddy-dynv6
+      dockerfile: Dockerfile
+    # Vollständig ersetzen: DNS-01 benötigt keine Freigabe für HTTP-Port 80.
+    ports: !override
+      - "${RPS_HTTPS_PORT:-18443}:443/tcp"
+    volumes:
+      # Gleiches Container-Ziel ersetzt den bisherigen Caddyfile-Mount.
+      # caddy_data und caddy_config werden unverändert aus compose.yaml übernommen.
+      - type: bind
+        source: ./Caddyfile.dns
+        target: /etc/caddy/Caddyfile
+        read_only: true
+        bind:
+          create_host_path: false
+    secrets:
+      - dynv6_api_token
+
+# Der Inhalt wird erst beim Containerstart gelesen, nicht als Compose-Variable.
+secrets:
+  dynv6_api_token:
+    file: ./secrets/dynv6_api_token

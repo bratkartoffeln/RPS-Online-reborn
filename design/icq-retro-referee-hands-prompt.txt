@@ -1,0 +1,28 @@
+Use case: precise-object-edit.
+Edit ONLY the referee poses and the attachment of the three newly revealed blue fighters' right arms in this existing RPS Arena sprite atlas. Preserve the 4-column by 5-row layout, canvas, all other sprites, green tiles, logo, style and true RGBA transparency.
+
+REFEREE HAND ASSIGNMENT — applies to ALL THREE yellow referees:
+The user means the CHARACTER'S ANATOMICAL RIGHT and LEFT. The RED flag belongs permanently in HIS RIGHT HAND. The BLUE flag belongs permanently in HIS LEFT HAND.
+For the front-facing character, that means RED on the VIEWER'S LEFT and BLUE on the VIEWER'S RIGHT. Never swap the flag between hands to make a turn pose.
+
+1. Row 4, column 4: original neutral yellow ninja/referee with BOTH arms extended, RED flag in his anatomical RIGHT hand (left of the image), BLUE flag in his anatomical LEFT hand (right of the image). Preserve the original face, black hair buns, yellow costume, small feet, dark outlines and ground shadow. Both flags fully visible. This is the draw/duel pose.
+
+2. Upper small referee in the bottom-right cell: BLUE turn. Raise HIS LEFT ARM, which starts at the shoulder on the VIEWER'S RIGHT. The BLUE flag is held high in that left hand, on the viewer's right of the body. Show the shoulder and bent elbow correctly below the head; it must be clearly the right-side arm in the image. The short pole can tilt toward the upper-left and the blue cloth can extend toward the board on the left, but DO NOT move the hand to the opposite shoulder. HIS RIGHT ARM stays folded behind his back holding the RED flag, with at most a tiny red corner peeking from behind his viewer-left side.
+
+3. Lower small referee in the bottom-right cell: RED turn. Raise HIS RIGHT ARM, beginning at the shoulder on the VIEWER'S LEFT. Hold the RED flag high in that hand, on the viewer-left of the body and toward the game board. HIS LEFT ARM stays behind his back holding the BLUE flag, with at most a small blue corner peeking behind his viewer-right side.
+
+All arms connect to the yellow torso, not to the head. Each referee has exactly TWO arms and TWO hands. The raised arm must differ between the blue and red variants. Keep all three referee figures complete, within their existing cells and separated by transparency.
+
+BLUE FIGHTER CORRECTION — BOTTOM ROW, first THREE columns:
+The user explicitly asks you to COPY THE CORRECT ARM PLACEMENT FROM THE EXISTING RED FIGHTERS in this same image:
+- RED rock reference: row 2, column 3.
+- RED paper reference: row 2, column 4.
+- RED scissors reference: row 3, column 1.
+
+Use those RED figures' BODY, SHOULDER, ELBOW and HAND placements as the anatomical template for the corresponding BLUE bottom-row fighter. The red fighters visibly hold each tool at the SIDE OF THEIR BODY in one hand BELOW their large head. That is exactly the correct relationship. Match that relationship in the blue fighters.
+Keep the blue fighters seen FROM BEHIND, with their blue cap and back of the cream head; do not give them faces. Retain their blue clothes and small bodies. But completely replace their current faulty raised arms. ERASE the entire horizontal arm beside the head and erase the spare right-arm loop, then rebuild the right arm connected to the blue jacket using the corresponding RED fighter's arm position.
+Their tool-holding hand belongs BESIDE THE TORSO at chest/waist height, BELOW THE HEAD, just like the red figures' hands. The tool itself points upward from the hand, next to the head. No overhead salute, no arm rising from an ear, no sleeve attached to cream skin, no extra arm. It is okay for the hand to be LOW: the upright TOOL is being displayed, the hand does not need to be raised to head level.
+Exactly TWO arms: left arm relaxed, right arm from the jacket shoulder to a visible elbow beside the torso to the tool-holding hand. Keep a clear gap between the tool and the head. The arms must unmistakably be part of the BODY, following the RED template.
+Column 1 holds one round gray rock beside the blue torso. Column 2 holds the ivory scroll upright from a hand beside the blue torso. Column 3 holds the GOLD HANDLE LOOPS of the scissors in a hand beside the blue torso, with the SILVER BLADES pointing UP. The old inverted scissors with handles at the top must be corrected.
+
+No other changes. No labels, grid, extra text or background.
