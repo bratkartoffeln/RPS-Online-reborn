@@ -1,0 +1,27 @@
+
+name: QNAP Deployment anfordern
+
+run-name: QNAP Deployment durch ${{ github.actor }}
+
+on:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: rps-manual-deployment
+  cancel-in-progress: false
+
+jobs:
+  request:
+    if: github.ref == 'refs/heads/main'
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Deploymentanforderung registrieren
+        run: |
+          echo "QNAP Deployment angefordert"
+          echo "Branch: $GITHUB_REF_NAME"
+          echo "Commit: $GITHUB_SHA"
+          echo "Angefordert durch: $GITHUB_ACTOR"
