@@ -1,0 +1,25 @@
+# RPS Arena: automatische Zertifikate über die dynv6-DNS-API.
+# Der freigegebene HTTPS-Port führt auf NAS 18443/TCP -> Caddy 443/TCP.
+# Der Token kommt ausschließlich über das Container-Secret in die Laufzeitumgebung.
+{
+	# Kein HTTP-Listener für Weiterleitungen und keine Abhängigkeit von Port 80.
+	auto_https disable_redirects
+	servers {
+		protocols h1 h2
+	}
+}
+
+{$RPS_DOMAIN:flusensieb.dns.navy} {
+	tls {
+		# Laufzeit-Placeholder: der geheime Wert steht nicht in dieser Datei.
+		dns dynv6 {env.DYNV6_API_TOKEN}
+		resolvers 1.1.1.1 8.8.8.8
+		propagation_timeout 5m
+	}
+
+	# Standard-ACME-Aussteller und /data bleiben erhalten, sodass ein bereits
+	# gültiges Let's-Encrypt-Zertifikat weiterverwendet werden kann.
+	reverse_proxy rps:2567 {
+		stream_close_delay 5m
+	}
+}

@@ -1,0 +1,26 @@
+Edit the supplied sprite atlas. This is an anatomical correction, not a new design.
+
+Image 1 is the current atlas to edit. Image 2 is the original atlas, provided ONLY to restore its neutral referee.
+
+CHANGE ONLY the three blue fighters in the BOTTOM ROW, columns 1, 2 and 3, plus restoration of the neutral referee in row 4 column 4. Everything else must stay in the same position, size and appearance.
+
+The bottom three raised arms are STILL WRONG: they are attached at ear level and each body still has an extra unused right arm. ERASE AND REDRAW the entire right arm of EACH bottom blue fighter. It must be ONE continuous arm visibly attached to the BLUE JACKET ON THE TORSO, not to the cream head. Remove the extra blue loop currently at the body's right side.
+
+Use this much clearer pose for all three:
+- Keep the BACK VIEW, blue cap, cream round head and small blue torso.
+- Their left arm hangs down as before.
+- The RIGHT SHOULDER starts on the right edge of the BLUE TORSO, visibly BELOW the bottom of the cream head.
+- The blue UPPER ARM extends OUTWARD almost horizontally from that low shoulder.
+- A bent ELBOW is clearly visible to the RIGHT of the torso, at CHEST/WAIST HEIGHT, below the head.
+- A SHORT blue FOREARM turns UP from that elbow to ONE cream hand.
+- The HAND is only around lower-head/SHOULDER HEIGHT, not above the head. Keep the rock or paper or scissors raised upright IN THAT HAND beside the fighter.
+- Leave a generous TRANSPARENT GAP between the upright tool/forearm and the head. Tool and forearm must be far enough to the right that the viewer can follow the whole shoulder -> outward upper arm -> low elbow -> upward forearm -> hand path without any part merging into the head.
+- The hand need NOT reach above the head. This is a low bent-elbow weapon-display pose, not an overhead salute.
+- Exactly TWO arms per fighter. Do not leave a spare right arm at the waist.
+- Column 1 holds ONE round gray rock; column 2 ONE ivory scroll standing upright; column 3 ONE pair of gold-handled silver scissors with the silver blades pointing UP.
+- Maintain the same head/body size and foot baseline as the current sprites; each full pose must remain within its cell.
+
+RESTORE the neutral yellow referee in row 4 column 4 to the version shown in Image 2: both arms out, BLUE flag on the LEFT and RED flag on the RIGHT. This one is the neutral pose and MUST show BOTH flags.
+KEEP the two smaller turn-indicator referees in the bottom-right cell just as they are now: upper has active blue flag pointing left and red held behind back, lower active red flag pointing left and blue behind back.
+
+Preserve canvas dimensions and transparent RGBA background. Preserve all other figures, green tiles and RPS ARENA logo. No labels, no grid lines, no extra objects.

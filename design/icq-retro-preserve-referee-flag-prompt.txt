@@ -1,0 +1,6 @@
+Use case: precise-object-edit
+The attached transparent sprite atlas is the edit target.
+Make ONE TINY LOCAL CORRECTION ONLY:
+On the SMALL UPPER referee in the bottom-right cell (the one actively holding a BLUE flag to IMAGE RIGHT), restore the INACTIVE RED FLAG behind his back on IMAGE LEFT. Show just a small red triangular corner with a black outline peeking out from behind his left image-side elbow/torso, approximately around x=902..923, y=1176..1210 on this 1121x1403 image. The inactive flag is mostly hidden by his body because his other hand holds it behind his back. Do not move the active blue flag.
+Everything else must remain exactly as it is, especially ALL THREE BLUE FIGHTERS IN THE BOTTOM ROW: their body shapes, heads, short blue forearms, hand positions, stone/paper/scissors and correct arm-over-tool layering are approved and must not be redrawn or shifted.
+Preserve the two other referees, logo, both tiles and all first three rows. Same canvas dimensions and actual RGBA transparency. No extra motifs. This is just restoring the missing small red flag corner behind one referee.

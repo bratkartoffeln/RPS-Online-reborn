@@ -1,0 +1,21 @@
+Use case: precise-object-edit
+Asset type: transparent PNG game sprite atlas.
+The attached image is the exact user-selected edit target. Use this image as the source and keep the existing style and all 21 motifs.
+
+Make ONLY these two corrections:
+
+1. Correct the foreground layering on the BLUE PAPER and BLUE SCISSORS figures in the bottom row, columns 2 and 3.
+Use the BLUE ROCK figure at bottom left as the exact reference for the arm and hand.
+These blue characters are viewed FROM BEHIND: the short BLUE SLEEVE and beige HAND must be IN FRONT OF THE TOOL, overlapping and hiding part of the tool edge. Keep the tool partly behind the blue arm, just like the stone is partly covered by the blue rock figure's arm.
+For the PAPER figure, visibly draw its short blue forearm/sleeve across the near edge of the white paper roll, ending in the beige gripping hand. The paper continues behind that arm.
+For the SCISSORS figure, visibly draw its short blue forearm/sleeve across the near edge of the scissors, ending in the beige gripping hand. The scissors continue behind that arm.
+Maintain the same LOW hand/arm positions as the rock figure, beside the waist and below the head. Preserve the existing tool orientations and sizes. The blue sleeve starts on the TORSO. No raised arms, no long curved arm, no extra arm, no attachment to head or ear.
+Preserve the approved BLUE ROCK figure without changes.
+
+2. Increase the transparent space between the RPS ARENA logo and the LARGE NEUTRAL REFEREE with both flags.
+Keep the logo at its current location (row 4 col 3).
+Move and proportionally reduce ONLY the large neutral referee so its entire silhouette, including both flags, fits approximately within x=790..1105 and y=880..1085 on the 1121 x 1403 canvas. There must be a clear transparent gap of at least 35 pixels between the logo's right edge and the referee's red flag. Restore the complete red flag where it previously overlapped the logo.
+Preserve the neutral referee's exact pose and CORRECT colors: RED flag at IMAGE LEFT, BLUE flag at IMAGE RIGHT. Do not mirror or recolor it.
+
+Preserve all first three rows, both green tiles, exact RPS ARENA lettering, and the two small referees at bottom-right. Upper small referee: BLUE active on IMAGE RIGHT, red behind back. Lower small referee: RED active on IMAGE LEFT, blue behind back.
+Preserve the existing canvas dimensions, portrait layout, separated sprites, thick outlines and genuine transparent RGBA background. No extra motifs or labels.

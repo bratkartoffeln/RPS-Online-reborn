@@ -1,0 +1,22 @@
+Use case: precise-object-edit
+Asset type: transparent PNG sprite atlas for an existing 2D RPS game.
+
+Image 1 is the EDIT TARGET. Image 2 is only a reference for the original RPS ARENA logo.
+
+Please make a highly localized revision to Image 1:
+1) The BLUE ROCK figure at the BOTTOM LEFT is approved. Preserve it exactly. Use this exact figure's relaxed low arm pose as the template for the next TWO blue figures: PAPER and SCISSORS in the bottom row, columns 2 and 3. They must have the same shoulders, same short arms attached to the TORSO, and the same LOW hand positions as the approved blue rock figure. Replace only the stone held by the low side hand with the appropriate tool.
+   - PAPER: a white rolled paper in front of / beside the torso, held by the low hand at belt/hip height. Tilt and overlap it naturally as with the red paper figure. It may be partly occluded by the blue head, torso and hand.
+   - SCISSORS: yellow handled scissors with silver blades held by the same LOW hand position. Place them in front of / beside the torso as with the red scissors figure. They may overlap and be partly hidden by the head, body and hand.
+   - The hand holding paper or scissors must be at approximately the same vertical height as the rock hand, WELL BELOW the bottom of the head. Both arms are down alongside the torso, just like the approved rock figure.
+   - Remove the existing raised long curved arms completely. No raised arms, no overhead tools, no elbow loop extending toward the head, no arm attached to an ear or neck. Do NOT draw an additional arm. One short relaxed blue arm and one small beige hand on each side.
+   - Keep the tool/hand on the same side as in the blue rock reference (viewer right). Keep blue face blank as in the current back-facing figures.
+2) Restore the RPS ARENA logo from Image 2 to the EMPTY fourth-row third-column cell in Image 1. Preserve its exact wording: RPS above ARENA, black ninja peeking over green-to-white letters. Fit inside its own cell, clear of tiles and referee.
+
+Preserve all other existing artwork of Image 1. In particular:
+- Preserve the approved BLUE ROCK bottom-left figure.
+- Preserve all first three rows of blue/red game pieces.
+- Preserve both green square board tiles.
+- Preserve all THREE yellow referee characters and their CORRECT flag hand assignments in Image 1: large neutral referee RED at IMAGE LEFT, BLUE at IMAGE RIGHT; small upper blue-active referee BLUE on IMAGE RIGHT, RED behind back on IMAGE LEFT; small lower red-active referee RED on IMAGE LEFT, BLUE behind back on IMAGE RIGHT. Do not recolor or mirror any referee. If needed to fit the restored logo, position the large neutral referee within row 4 column 4, keeping its pose/colors.
+- Layout: 4 columns, 5 rows; the last cell (row 5 col 4) contains the two small turn referees stacked vertically.
+- Retain all 21 motifs, each separated with transparent gutters, fully within canvas. Same overall portrait aspect ratio and clean thick outlines.
+- True transparent RGBA background, no labels, no additional objects.

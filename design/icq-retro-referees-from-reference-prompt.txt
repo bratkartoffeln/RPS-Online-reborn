@@ -1,0 +1,12 @@
+Use case: compositing.
+Image 1 is the TARGET sprite atlas. Its three bottom-row blue fighters now have the intended common low arm pose, with the sleeve and hand in front of the tools. Preserve those fighters.
+Image 2 is a REFERENCE for the THREE yellow referee sprites ONLY.
+
+Replace the three yellow referee sprites in Image 1 with the corresponding COMPLETE referee sprites from Image 2, matching their present locations:
+- Large neutral referee in row 4, rightmost cell: both flags, RED on image left, BLUE on image right.
+- Upper small referee in row 5, rightmost cell: BLUE flag active on image right, small RED flag visible behind his back on image left.
+- Lower small referee in row 5, rightmost cell: RED flag active on image left, BLUE flag held behind his back on image right.
+Copy the visible poses and flag silhouettes from Image 2. Do not invent additional flags.
+
+Preserve all other artwork of Image 1, including the EXACT three bottom blue figures, all first three rows, both board tiles, the logo and the spacing between logo and neutral referee. Preserve each ground shadow.
+Keep the same 1121 x 1403 canvas. Preserve true clean transparency: all empty background remains alpha zero, no translucent gray haze or color field. No stylistic changes.

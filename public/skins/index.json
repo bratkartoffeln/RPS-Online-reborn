@@ -1,0 +1,21 @@
+{
+  "version": 1,
+  "default": "icq-retro",
+  "skins": [
+    {
+      "id": "icq-retro",
+      "name": "ICQ Retro",
+      "file": "icq-retro/skin.json"
+    },
+    {
+      "id": "classic",
+      "name": "Klassisch",
+      "file": "classic/skin.json"
+    },
+    {
+      "id": "arcade",
+      "name": "Arcade",
+      "file": "arcade/skin.json"
+    }
+  ]
+}

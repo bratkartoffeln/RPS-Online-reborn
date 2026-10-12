@@ -149,10 +149,11 @@ test('real two-client sessions keep secrets, validate commands and recover seats
       a.room.send('resign');
       await Promise.all([a.wait((view) => view.phase === 'finished'), b.wait((view) => view.phase === 'finished')]);
       assert.equal(a.snapshot!.winner, b.room.sessionId);
-      a.room.send('restart');
+      const identity = { seriesId: a.snapshot!.series.id, matchId: a.snapshot!.series.matchId };
+      a.room.send('restart', identity);
       await a.wait((view) => view.players.find((player) => player.id === a.room.sessionId)!.restartRequested);
       assert.equal(a.snapshot!.phase, 'finished');
-      b.room.send('restart');
+      b.room.send('restart', identity);
       await Promise.all([a.wait((view) => view.phase === 'setup'), b.wait((view) => view.phase === 'setup')]);
       assert.equal(a.snapshot!.turnNumber, 0);
       assert.ok(a.snapshot!.players.every((player) => !player.ready));

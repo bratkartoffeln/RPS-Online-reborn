@@ -1,8 +1,10 @@
 import assert from 'node:assert/strict';
 import { readFileSync } from 'node:fs';
 import test from 'node:test';
+import { matchMaker } from '@colyseus/core';
 import { Client, CloseCode, type Room } from '@colyseus/sdk';
 import { startServer } from '../server/app.js';
+import type { GameState } from '../shared/game.js';
 import { SERVER_SHUTDOWN_MESSAGE, type ServerShutdown, type Snapshot } from '../shared/protocol.js';
 
 async function until(predicate: () => boolean): Promise<void> {
@@ -64,6 +66,11 @@ test('online server reports readiness and terminates matches explicitly on shutd
     await until(() => a.snapshot?.phase === 'playing' && b.snapshot?.phase === 'playing');
 
     await context.test('readiness changes before drain; both players receive shutdown before close', async () => {
+      // Retain the actual state in this server-only test: the last public
+      // snapshot alone could miss a mistaken score after sockets have closed.
+      const localRoom = matchMaker.getLocalRoomById(a.room.roomId) as unknown as { game: GameState };
+      const authoritative = localRoom.game;
+      const initialSeries = structuredClone(authoritative.series);
       // Keep the normal public shutdown hook pending briefly so its readiness
       // response can be observed deterministically, without timing assumptions.
       running.gameServer.onBeforeShutdown(() => new Promise<void>((resolve) => { releaseShutdown = resolve; }));
@@ -77,6 +84,9 @@ test('online server reports readiness and terminates matches explicitly on shutd
       releaseShutdown!();
       await closing;
       await until(() => a.leaveCode !== undefined && b.leaveCode !== undefined);
+      assert.deepEqual(structuredClone(authoritative.series), initialSeries, 'shutdown callbacks cannot mutate the authoritative series');
+      assert.equal(authoritative.phase, 'playing');
+      assert.equal(authoritative.winner, null);
 
       for (const observer of [a, b]) {
         assert.deepEqual(observer.shutdown, { message: SERVER_SHUTDOWN_MESSAGE });
@@ -86,6 +96,8 @@ test('online server reports readiness and terminates matches explicitly on shutd
         assert.equal(observer.drops, 0, 'a server restart must not start SDK reconnection');
         assert.equal(observer.snapshot?.phase, 'playing', 'shutdown must not fabricate a resignation winner');
         assert.equal(observer.snapshot?.winner, null);
+        assert.equal(observer.snapshot?.series.completedGames, 0, 'shutdown must not award a game or series point');
+        assert.ok(Object.values(observer.snapshot!.series.winsByPlayer).every((wins) => wins === 0));
       }
     });
   } finally {

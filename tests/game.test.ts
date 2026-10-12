@@ -350,21 +350,22 @@ test('connection loss pauses moves and duel choices without losing private choic
 
 test('resignation ends a duel and a two-player rematch resets all match secrets', () => {
   const game = battle('rock', 'rock');
+  const identity = { seriesId: game.series.id, matchId: game.series.matchId };
   success(movePiece(game, 'a', 24, 17));
   success(chooseDuel(game, 'a', 'scissors'));
-  rejected(game, () => restartVote(game, 'a'));
+  rejected(game, () => restartVote(game, 'a', identity));
   success(resign(game, 'b'));
   assert.equal(game.winner, 'a');
   assert.equal(game.finishReason, 'resign');
   assert.equal(game.duel, null);
   const oldIds = new Set(game.board.flatMap((piece) => piece ? [piece.id] : []));
   const revision = game.revision;
-  success(restartVote(game, 'a'));
+  success(restartVote(game, 'a', identity));
   assert.equal(game.phase, 'finished');
   assert.equal(game.players[0]!.restartRequested, true);
-  success(restartVote(game, 'a'));
+  success(restartVote(game, 'a', identity));
   assert.equal(game.revision, revision + 1);
-  success(restartVote(game, 'b'));
+  success(restartVote(game, 'b', identity));
   assert.equal(game.revision, revision + 2);
   assert.equal(game.phase, 'setup');
   assert.equal(game.turnNumber, 0);
@@ -378,9 +379,9 @@ test('resignation ends a duel and a two-player rematch resets all match secrets'
   assert.ok(viewFor(game, 'a').board.filter((piece) => piece?.owner === 'b').every((piece) => piece?.kind === null));
 });
 
-test('public log is capped at 20 entries', () => {
+test('public log is capped at 100 entries', () => {
   const game = startedGame();
-  for (let index = 0; index < 60; index += 1) success(setConnected(game, 'a', index % 2 === 1));
-  assert.equal(game.log.length, 20);
-  assert.equal(viewFor(game, 'a').log.length, 20);
+  for (let index = 0; index < 150; index += 1) success(setConnected(game, 'a', index % 2 === 1));
+  assert.equal(game.log.length, 100);
+  assert.equal(viewFor(game, 'a').log.length, 100);
 });

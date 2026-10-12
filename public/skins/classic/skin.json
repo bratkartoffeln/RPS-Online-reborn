@@ -1,0 +1,9 @@
+{
+  "version": 1,
+  "name": "Klassisch",
+  "palette": {},
+  "motion": {
+    "moveMs": 220,
+    "battleMs": 900
+  }
+}

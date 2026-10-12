@@ -1,9 +1,9 @@
 import { CloseCode, Room, type Client } from '@colyseus/core';
 import { randomInt } from 'node:crypto';
 import {
-  addPlayer, chooseDuel, createGame, movePiece, readyPlayer, resign,
+  addPlayer, chooseDuel, createGame, isSeriesMode, movePiece, newSeriesVote, readyPlayer, resign,
   restartVote, setConnected, shuffleSetup, swapSetup, viewFor,
-  type ActionResult, type FighterKind,
+  type ActionResult, type FighterKind, type GameState,
 } from '../shared/game.js';
 import { SERVER_SHUTDOWN_MESSAGE, type ServerShutdown, type Snapshot } from '../shared/protocol.js';
 
@@ -23,7 +23,7 @@ export class RpsRoom extends Room {
   maxClients = 2;
   maxMessagesPerSecond = 40;
   patchRate = null;
-  private game = createGame({ random: () => randomInt(0, 0x100000000) / 0x100000000 });
+  private game!: GameState;
   private reconnectSeconds = 120;
   private shuttingDown = false;
 
@@ -39,7 +39,10 @@ export class RpsRoom extends Room {
     });
   }
 
-  async onCreate(options: { reconnectSeconds?: number }) {
+  async onCreate(options: { reconnectSeconds?: number; seriesMode?: unknown }) {
+    const seriesMode = options.seriesMode === undefined ? 'free' : options.seriesMode;
+    if (!isSeriesMode(seriesMode)) throw new Error('Wähle Freies Spiel, Best-of-3 oder Best-of-5.');
+    this.game = createGame({ seriesMode, random: () => randomInt(0, 0x100000000) / 0x100000000 });
     this.reconnectSeconds = options.reconnectSeconds ?? 120;
     await this.setMatchmaking({ private: true, unlisted: true });
 
@@ -69,7 +72,15 @@ export class RpsRoom extends Room {
       this.run(client, () => chooseDuel(this.game, client.sessionId, kind));
     });
     this.onMessage('resign', (client) => this.run(client, () => resign(this.game, client.sessionId)));
-    this.onMessage('restart', (client) => this.run(client, () => restartVote(this.game, client.sessionId)));
+    for (const [message, action] of [['restart', restartVote], ['new_series', newSeriesVote]] as const) {
+      this.onMessage(message, (client, data: unknown) => {
+        if (!isRecord(data) || typeof data.seriesId !== 'string' || typeof data.matchId !== 'string') {
+          return this.problem(client, 'Für diese Abstimmung fehlen die aktuelle Spiel- und Serienkennung. Bitte lade die Seite neu.');
+        }
+        const identity = { seriesId: data.seriesId, matchId: data.matchId };
+        this.run(client, () => action(this.game, client.sessionId, identity));
+      });
+    }
     this.onMessage('*', (client) => this.problem(client, 'Unbekannte Aktion.'));
   }
 

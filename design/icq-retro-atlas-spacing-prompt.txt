@@ -1,0 +1,16 @@
+Use case: precise-object-edit
+Asset type: transparent PNG sprite atlas.
+
+Edit this image ONLY to fix overlapping atlas sprites.
+The large neutral yellow referee in row 4 currently overlaps the RPS ARENA logo with its red flag. Move and proportionally reduce ONLY this large neutral referee so that the ENTIRE referee, including both flags, fits separately inside the rightmost cell of row 4.
+For the current 1121 x 1403 canvas, place that complete neutral referee approximately within x=825..1100, y=875..1075. Its width including flags must be at most 275 pixels. Keep a fully transparent gutter of at least 35 pixels between the RPS ARENA logo and the neutral referee's leftmost red flag. Restore the complete red flag silhouette where it was previously hidden by the logo.
+Keep the neutral referee's exact pose and colors: RED flag in his anatomical RIGHT hand (IMAGE LEFT); BLUE flag in his anatomical LEFT hand (IMAGE RIGHT). Both arms out. Do not mirror.
+Keep the RPS ARENA logo in its existing row 4 column 3 location, complete and unchanged.
+
+ALL OTHER PIXELS/MOTIFS SHOULD BE PRESERVED:
+- Especially the THREE BLUE BOTTOM-ROW FIGURES are now approved. Preserve their exact short low arm poses and tool placements. The paper and scissors are held low beside the torso. Do not change them.
+- Preserve all first three rows, both green tiles, the logo, and BOTH small turn-referees in bottom-right (blue active upper, red active lower).
+- Retain all 21 motifs.
+- Keep the same portrait canvas size and 4-column, 5-row layout; two small referees share the last cell.
+- True transparent RGBA background, no text additions, no grid lines.
+This is a spacing correction for the SINGLE LARGE NEUTRAL REFEREE ONLY, not a redesign.

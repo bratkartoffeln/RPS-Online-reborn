@@ -1,0 +1,13 @@
+Make ONLY TWO small edits to this existing transparent game atlas. Leave EVERY blue fighter, every weapon, every red fighter, the tiles, the logo, canvas size and every position untouched.
+
+EDIT 1: The LARGE yellow referee in ROW 4, COLUMN 4 (immediately right of the RPS ARENA logo) is the NEUTRAL referee. He currently incorrectly has TWO BLUE FLAGS. Recolor ONLY the flag fabric on the LEFT SIDE OF THE IMAGE to solid RED, matching the existing red flag below. The flag on the RIGHT SIDE OF THE IMAGE MUST stay BLUE. Both arms stay outstretched. Final neutral pose: RED at image-left, BLUE at image-right. Do not add another flag.
+
+EDIT 2: In the BOTTOM-RIGHT cell there are TWO SMALL yellow referees stacked vertically. Horizontally MIRROR ONLY THE UPPER SMALL REFEREE, as one complete sprite including his body, arms, flags and shadow, within its existing position. Do NOT recolor its flags. After mirroring, its active BLUE flag and raised arm must be on the RIGHT SIDE OF THE IMAGE and its inactive red flag behind its back on the LEFT SIDE OF THE IMAGE.
+The LOWER SMALL REFEREE must remain completely UNCHANGED: active RED flag on the LEFT SIDE OF THE IMAGE and inactive BLUE behind his back on the RIGHT.
+
+Required final three referee states, in screen coordinates:
+Large neutral = RED left, BLUE right, both out.
+Upper small = BLUE right out, RED left behind.
+Lower small = RED left out, BLUE right behind.
+
+No other edits. Preserve the actual transparent RGBA background, existing dimensions and sprite positions. No text or labels.

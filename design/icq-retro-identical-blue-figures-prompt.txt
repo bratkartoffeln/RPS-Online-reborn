@@ -1,0 +1,19 @@
+Use case: precise-object-edit
+Asset type: transparent PNG sprite atlas for an existing game.
+
+The attached image is the edit source. Edit ONLY the SECOND and THIRD blue figures in the BOTTOM ROW.
+
+The bottom-left BLUE ROCK figure is the master template.
+DUPLICATE that entire exact character twice into the two cells immediately to its right. This must be the SAME character silhouette, head, hat, torso, legs, arms, sleeves and hands in all three cells, at the same size and baseline. Do not invent different poses for paper and scissors.
+
+After duplicating the rock character:
+- In the second copy replace ONLY the grey stone with a white rolled paper.
+- In the third copy replace ONLY the grey stone with yellow-handled silver scissors.
+- Keep both hands and both arms in precisely the master rock figure's positions. The hand holding the tool stays low beside the waist, on image right.
+- The tools are BEHIND the near blue forearm/sleeve and its beige hand, because these figures are seen from behind. Preserve the exact foreground outline of the blue forearm and hand from the rock template. The forearm and hand must visibly OCCLUDE the near edge of the paper/scissors, exactly as they occlude the stone.
+- Fit the replacement tools to that fixed hand position. Never move or raise an arm to accommodate a tool. Parts of a tool may be hidden by the torso, head, sleeve or hand.
+- No extra arms or fingers; no arm attached to head/ear; no long curved arm.
+
+Preserve the original bottom-left rock character. Preserve EVERYTHING ELSE in the atlas: all first three rows of pieces, both green board tiles, the RPS ARENA logo, and all three referee sprites with their present correct flag colors and positions. Keep the clear gap between logo and neutral referee.
+
+Keep all 21 sprites fully separated within the same 1121 x 1403 transparent RGBA canvas and the existing 4-column, 5-row arrangement. The two small turn referees remain stacked in the bottom-right cell. No labels, no grid lines, no new elements.

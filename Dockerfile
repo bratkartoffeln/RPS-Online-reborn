@@ -13,6 +13,7 @@ ENV PORT=2567
 COPY package.json package-lock.json ./
 RUN npm ci --omit=dev && npm cache clean --force
 COPY --from=build /app/dist ./dist
+COPY scripts/check-online.mjs ./scripts/check-online.mjs
 USER node
 EXPOSE 2567
 HEALTHCHECK --interval=30s --timeout=5s --start-period=10s --retries=3 \

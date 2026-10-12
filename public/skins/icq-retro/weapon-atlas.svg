@@ -1,0 +1,64 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="960" height="320" viewBox="0 0 960 320">
+  <title>ICQ Retro – Stein, Papier und Schere</title>
+  <desc>Drei eigenständige Vektormotive mit transparentem Hintergrund. Jedes Motiv belegt ein 320 × 320 großes Feld. Keine eingebetteten Rasterbilder.</desc>
+  <defs>
+    <linearGradient id="stone-fill" x1=".18" y1="0" x2=".76" y2="1" gradientUnits="objectBoundingBox">
+      <stop stop-color="#bcbdb8"/>
+      <stop offset=".48" stop-color="#959692"/>
+      <stop offset="1" stop-color="#6b6c69"/>
+    </linearGradient>
+    <linearGradient id="paper-fill" x1="0" y1="0" x2="1" y2=".18" gradientUnits="objectBoundingBox">
+      <stop stop-color="#ddded7"/>
+      <stop offset=".24" stop-color="#fffffb"/>
+      <stop offset=".74" stop-color="#fffef6"/>
+      <stop offset="1" stop-color="#e3e4dc"/>
+    </linearGradient>
+    <linearGradient id="blade-fill" x1="0" y1="0" x2="1" y2=".3" gradientUnits="objectBoundingBox">
+      <stop stop-color="#d5d9d8"/>
+      <stop offset=".42" stop-color="#fbfcf8"/>
+      <stop offset="1" stop-color="#8c9495"/>
+    </linearGradient>
+    <linearGradient id="handle-fill" x1="0" y1="0" x2=".8" y2="1" gradientUnits="objectBoundingBox">
+      <stop stop-color="#ffe06d"/>
+      <stop offset=".52" stop-color="#ffc327"/>
+      <stop offset="1" stop-color="#e69d12"/>
+    </linearGradient>
+  </defs>
+  <view id="rock" viewBox="0 0 320 320"/>
+  <view id="paper" viewBox="320 0 320 320"/>
+  <view id="scissors" viewBox="640 0 320 320"/>
+
+  <g id="weapon-rock" transform="translate(32 32)" stroke-linecap="round" stroke-linejoin="round">
+    <path d="M27 144C22 115 36 79 60 56C85 32 121 22 153 28C185 30 212 52 228 83C243 113 245 147 233 177C221 207 190 228 153 232C116 237 79 225 53 205C36 190 29 169 27 144Z" fill="url(#stone-fill)"/>
+    <path d="M31 142C34 181 62 207 98 214L109 231C87 226 64 216 53 205C36 190 29 169 27 144Z" fill="#555853" opacity=".48"/>
+    <path d="M36 108L59 61L91 44L102 66L85 101L66 119Z" fill="#d4d5ce" opacity=".39"/>
+    <path d="M63 127L94 97L137 103L156 132L145 170L114 186L77 168Z" fill="#b3b4ae" opacity=".35"/>
+    <path d="M161 83L200 63L219 85L234 124L212 144L178 128Z" fill="#c2c3be" opacity=".31"/>
+    <path d="M153 177L187 157L224 163L214 193L191 215L151 227L128 205Z" fill="#565a56" opacity=".28"/>
+    <path d="M139 39C154 35 176 44 179 54C178 64 160 64 150 59C140 55 131 44 139 39Z" fill="#f3f3ed" opacity=".68"/>
+    <path d="M27 144C22 115 36 79 60 56C85 32 121 22 153 28C185 30 212 52 228 83C243 113 245 147 233 177C221 207 190 228 153 232C116 237 79 225 53 205C36 190 29 169 27 144Z" fill="none" stroke="#10120e" stroke-width="9"/>
+  </g>
+
+  <g id="weapon-paper" transform="translate(352 32)" stroke="#10120e" stroke-linecap="round" stroke-linejoin="round">
+    <g transform="rotate(27 128 128)">
+      <path d="M86 42C83 82 88 122 84 166L80 213L106 225C127 217 146 221 167 215C170 166 173 113 170 43Z" fill="url(#paper-fill)" stroke-width="9"/>
+      <path d="M91 64C98 92 95 143 93 179L90 206L107 213" fill="none" stroke="#ffffff" stroke-width="7" opacity=".75"/>
+      <path d="M107 224L114 205C134 210 151 208 168 203L167 215C147 221 128 216 107 224Z" fill="#c9cbc3" stroke="none"/>
+      <path d="M106 225C127 217 146 221 167 215" fill="none" stroke-width="9"/>
+      <ellipse cx="128" cy="42" rx="42" ry="17" fill="#fffef6" stroke-width="8"/>
+      <path d="M109 38C115 33 137 33 147 38C155 43 145 49 133 47C124 46 120 41 125 39C130 37 137 40 137 42" fill="#f8d24d" stroke-width="4.5"/>
+    </g>
+  </g>
+
+  <g id="weapon-scissors" transform="translate(672 32)" stroke="#10120e" stroke-linecap="round" stroke-linejoin="round">
+    <g transform="rotate(24 128 128)">
+      <path d="M117 119L139 128C149 154 166 190 177 232C152 218 129 186 109 147Z" fill="#bbc2c1" stroke-width="8"/>
+      <path d="M139 116L154 135C139 175 114 217 81 237C85 189 101 147 123 121Z" fill="url(#blade-fill)" stroke-width="8"/>
+      <path d="M131 144C119 173 108 198 93 220" fill="none" stroke="#ffffff" stroke-width="5" opacity=".9"/>
+      <path d="M114 125C98 112 77 91 71 67C66 43 73 20 89 17C110 13 121 38 125 62C129 84 126 103 125 111L136 125Z M106 94C96 82 88 67 87 53C86 42 88 34 92 35C100 36 108 58 109 73C111 82 111 90 110 95Z" fill="url(#handle-fill)" fill-rule="evenodd" stroke-width="8"/>
+      <path d="M129 124C135 98 138 67 150 44C160 24 179 17 190 29C204 42 195 69 182 87C169 105 152 122 147 132Z M150 104C154 80 165 52 175 44C180 40 182 47 178 59C173 77 159 95 150 104Z" fill="url(#handle-fill)" fill-rule="evenodd" stroke-width="8"/>
+      <circle cx="133" cy="133" r="12" fill="#d9ded8" stroke-width="6"/>
+      <path d="M130 136L136 130" fill="none" stroke="#7d8684" stroke-width="3.5"/>
+    </g>
+  </g>
+</svg>

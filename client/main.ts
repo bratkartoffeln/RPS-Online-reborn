@@ -1,26 +1,41 @@
 import './styles.css';
-import type { FighterKind, PlayerView } from '../shared/game';
+import './series.css';
+import './retro.css';
+import './combat-ui.css';
+import type { FighterKind, PlayerView, PieceView } from '../shared/game';
 import type { Snapshot } from '../shared/protocol';
 import { ArenaBoard, coordinate, kindName } from './board';
 import { escapeHtml as esc, icon } from './icons';
 import { RpsConnection, readSession, roomCodeFrom, writeSession, type NetworkStatus, type SessionEnd } from './network';
+import { builtInSkin, loadSkin, loadSkinCatalog } from './skins';
+import { applyUiPalette, atlasIcon, pieceIcon, weaponIcon } from './skin-ui';
+import type { LoadedSkin, SkinCatalog, SkinEntry, TeamColor } from './skin-types';
+import { freshAction } from './board-motion';
+import { GameSounds } from './sound';
+import { readSeriesMode, seriesAnnouncement, seriesModeDescription, seriesModeLabel, seriesScoreMarkup, seriesVoteStatus, seriesWinnerText } from './series-ui';
+import { refereePortrait } from './referee-ui';
+import { otherTeamColor, teamColorForPlayer, teamColorName } from './team-ui';
+import { CombatOverlay } from './combat-ui';
+import { freshVictory } from './match-victory';
 
 const app = document.querySelector<HTMLDivElement>('#app')!;
 app.innerHTML = [
   '<div class="app-shell" id="shell">',
   '<header class="app-header"><a class="brand" href="' + esc(location.pathname) + '" aria-label="RPS Arena Startseite" data-action="home">',
-  '<span class="brand-emblem">' + icon('rock', '', 29) + '</span><span><span class="brand-title">RPS ARENA</span><span class="brand-tagline" style="display:block">Stein. Papier. Schere.</span></span></a>',
-  '<div class="header-right"><span class="header-note" id="header-note"><span class="status-dot"></span>PRIVATE PARTIEN</span><span class="version">v' + esc(__APP_VERSION__) + '</span></div></header>',
+  '<span class="brand-emblem" id="brand-emblem">' + icon('rock', '', 29) + '</span><span><span class="brand-title">RPS ARENA</span><span class="brand-tagline" style="display:block">Stein. Papier. Schere.</span></span></a>',
+  '<div class="header-right"><span class="header-note" id="header-note"><span class="status-dot"></span>PRIVATE PARTIEN</span><details class="appearance-menu" id="appearance-menu"><summary>Design ' + icon('chevron', '', 12) + '</summary><div class="appearance-panel"><label class="appearance-label" for="skin-select">Dein Design</label><select id="skin-select" aria-describedby="skin-status"><option value="classic">Klassisch</option></select><p class="appearance-status" id="skin-status" role="status">Grafiksets werden geladen …</p><label class="motion-option"><input id="animations-enabled" type="checkbox" checked />Animationen</label><p class="appearance-hint" id="motion-hint">Deine Auswahl gilt für diesen Browser.</p><label class="motion-option"><input id="sounds-enabled" type="checkbox" />Spielsounds</label><p class="appearance-hint">Kurze Retro-Töne für Züge und Kämpfe.</p></div></details><span class="version">v' + esc(__APP_VERSION__) + '</span></div></header>',
   '<div class="intro-row"><div><p class="eyebrow" id="page-eyebrow">DAS TAKTISCHE DUELL FÜR ZWEI</p><h1 class="page-title" id="page-title">Dein Zug beginnt hier.</h1></div><p class="page-subtitle" id="page-subtitle">Figuren verdecken.<br>Gedanken lesen. Flagge holen.</p></div>',
   '<div class="notice" id="notice" role="alert" hidden></div>',
   '<main class="arena-grid"><section class="play-panel" aria-label="Spielbereich">',
   '<div class="board-topbar"><div><h2 id="board-title">Das Spielfeld</h2><span class="board-subtitle" id="board-subtitle">7 × 6 Felder · Vorschau</span></div><span class="pill accent" id="board-phase">DEINE ARENA</span></div>',
-  '<div class="board-region"><div id="board" class="canvas-wrap" tabindex="0" role="application" aria-label="Spielfeld mit sieben Spalten und sechs Reihen" aria-describedby="board-help board-focus"></div>',
+  '<section class="series-scoreboard" id="series-scoreboard" aria-label="Spielstand der Serie" aria-live="polite" aria-atomic="true" hidden></section>',
+  '<div class="board-region"><div class="board-surface"><div id="board" class="canvas-wrap" tabindex="0" role="application" aria-label="Spielfeld mit sieben Spalten und sechs Reihen" aria-describedby="board-help board-focus"></div><div id="combat-overlay" class="combat-overlay" hidden></div></div>',
   '<div class="preview-banner" id="preview-banner">' + icon('unknown', '', 18) + '<span>Ein guter Plan bleibt erst einmal geheim.</span></div></div>',
-  '<div class="board-footer"><span class="team-key"><span class="team-square"></span><span id="own-count">Dein Team</span></span><span class="team-key enemy"><span class="team-square"></span><span id="enemy-count">Gegner</span></span><span class="board-hint" id="board-hint">Erstelle oder betrete einen Raum.</span></div></section>',
+  '<div class="action-recap" id="action-recap" hidden></div>',
+  '<div class="board-footer"><span class="team-key" id="own-team-key" data-team-color="blue"><span class="team-square"></span><span id="own-count">Dein Team</span></span><span class="team-key enemy" id="enemy-team-key" data-team-color="red"><span class="team-square"></span><span id="enemy-count">Gegner</span></span><span class="board-hint" id="board-hint">Erstelle oder betrete einen Raum.</span></div></section>',
   '<aside class="side-column" id="sidebar" aria-label="Spielsteuerung"></aside></main>',
   '<footer class="footer"><span>' + icon('info', '', 13) + 'Ein unabhängiges Remake · vorläufige Regeln für Version ' + esc(__APP_VERSION__) + '</span><span>Figur anklicken oder <kbd>↑</kbd><kbd>←</kbd><kbd>↓</kbd><kbd>→</kbd> + <kbd>Enter</kbd></span></footer></div>',
-  '<p class="sr-only" id="board-help">Mit den Pfeiltasten ein Feld wählen. Mit Enter oder Leertaste eine eigene Figur und anschließend ein Zielfeld wählen. Escape hebt die Auswahl auf. In der Aufstellung tauschen zwei eigene Figuren die Plätze. Im Spiel sind grün markierte Felder erlaubte Ziele.</p>',
+  '<p class="sr-only" id="board-help">Mit den Pfeiltasten ein Feld wählen. Mit Enter oder Leertaste eine eigene Figur und anschließend ein Zielfeld wählen. Escape hebt die Auswahl auf. In der Aufstellung tauschen zwei eigene Figuren die Plätze. Alternativ eine eigene Figur auf eine zweite eigene Figur ziehen. Im Spiel sind markierte Felder erlaubte Ziele.</p>',
   '<p class="sr-only" id="board-focus" aria-live="polite"></p><p class="sr-only" id="announcement" aria-live="polite" aria-atomic="true"></p>',
   '<div class="toast" id="toast" role="status" aria-live="polite"></div><div id="modal-root"></div>',
 ].join('');
@@ -34,11 +49,20 @@ let pending = false;
 let pendingTimeout: ReturnType<typeof setTimeout> | undefined;
 let toastTimeout: ReturnType<typeof setTimeout> | undefined;
 let name = readSession('rps-arena:name') ?? '';
+let seriesMode = readSeriesMode(readPreference('rps-arena:series-mode'));
 let inputRoom = roomCodeFrom(new URL(location.href).searchParams.get('room') ?? '');
 let notice = '';
 let lastAnnouncement = '';
 let confirmAction: (() => void) | null = null;
 let lastModalFocus: HTMLElement | null = null;
+let currentSkin = builtInSkin();
+const fallbackEntry: SkinEntry = { id: 'classic', name: 'Klassisch', file: 'classic/skin.json' };
+let skinCatalog: SkinCatalog = { version: 1, default: 'classic', skins: [fallbackEntry] };
+let skinLoadSequence = 0;
+let animationsPreferred = readPreference('rps-arena:animations') !== 'off';
+const reducedMotion = window.matchMedia('(prefers-reduced-motion: reduce)');
+const sounds = new GameSounds();
+let soundsPreferred = readPreference('rps-arena:sounds') === 'on';
 
 const connection = new RpsConnection({
   onStatus(status) {
@@ -51,7 +75,15 @@ const connection = new RpsConnection({
     render();
   },
   onSnapshot(snapshot) {
-    if (view?.phase !== snapshot.phase) selected = null;
+    const showPlayPanel = !view || view.series.matchId !== snapshot.series.matchId ||
+      (view.phase === 'setup' && snapshot.phase === 'playing');
+    const action = networkStatus === 'connected' ? freshAction(view, snapshot) : null;
+    const victory = networkStatus === 'connected' ? freshVictory(view, snapshot) : null;
+    if (action) sounds.playAction(action, snapshot.you, currentSkin.definition.motion.battleMs);
+    if (view?.phase !== snapshot.phase || view?.series.matchId !== snapshot.series.matchId) {
+      selected = null;
+      if (confirmAction) closeModal();
+    }
     view = snapshot;
     sessionEnd = null;
     inputRoom = snapshot.roomId;
@@ -59,12 +91,23 @@ const connection = new RpsConnection({
     notice = '';
     if (selected !== null && snapshot.board[selected]?.owner !== snapshot.you) selected = null;
     setRoomUrl(snapshot.roomId);
+    if (action && action.kind !== 'move') combat.present(action, snapshot);
+    else if (victory) combat.reset();
     render();
+    if (victory && (!action || action.kind === 'move')) board.celebrate(victory);
+    if (showPlayPanel) {
+      requestAnimationFrame(() => {
+        if (view?.series.matchId === snapshot.series.matchId) {
+          app.querySelector<HTMLElement>('.play-panel')?.scrollIntoView({ block: 'start', behavior: 'instant' });
+        }
+      });
+    }
     const latest = snapshot.log.at(-1) ?? '';
-    const next = [snapshot.phase, snapshot.turnNumber, snapshot.duel?.round ?? 0, latest].join(':');
+    const next = [snapshot.series.id, snapshot.series.matchId, snapshot.phase, snapshot.turnNumber, snapshot.duel?.round ?? 0, latest].join(':');
     if (next !== lastAnnouncement) {
       lastAnnouncement = next;
-      el('announcement').textContent = phaseAnnouncement(snapshot) + ' ' + latest;
+      el('announcement').textContent = phaseAnnouncement(snapshot) + ' ' + latest +
+        (snapshot.phase === 'finished' ? ' ' + seriesAnnouncement(snapshot) : '');
     }
   },
   onProblem(message) {
@@ -74,6 +117,7 @@ const connection = new RpsConnection({
     connection.send('sync');
   },
   onEnded(end) {
+    combat.reset();
     sessionEnd = end;
     notice = end.message;
     inputRoom = '';
@@ -87,10 +131,126 @@ const connection = new RpsConnection({
 
 const board = new ArenaBoard(el('board'), {
   onCell: handleCell,
+  onSwap(from, to) {
+    if (!view || pending || networkStatus !== 'connected' || me()?.ready ||
+        (view.phase !== 'waiting' && view.phase !== 'setup')) return;
+    selected = null;
+    send('swap', { from, to, revision: view.revision });
+  },
   onCancel() { selected = null; render(); },
   onFocus(description) { el('board-focus').textContent = description; },
 });
+const combat = new CombatOverlay(el('combat-overlay'), {
+  onBusyChange() { updateBoardInteraction(); },
+  onCelebrate(ownerId) { board.celebrate(ownerId); },
+});
 el('board').addEventListener('pointerdown', () => el('board').focus({ preventScroll: true }));
+
+function updateBoardInteraction(): void {
+  board.update(view, selected, networkStatus === 'connected' && !pending && !combat.busy);
+  el('board').setAttribute('aria-busy', String(combat.busy));
+  el('board-hint').textContent = boardHint();
+}
+
+function readPreference(key: string): string | null {
+  try { return localStorage.getItem(key); } catch { return null; }
+}
+
+function savePreference(key: string, value: string): void {
+  try { localStorage.setItem(key, value); } catch { /* Private browsing can disable persistence. */ }
+}
+
+function updateMotion(): void {
+  const enabled = animationsPreferred && !reducedMotion.matches;
+  board.setAnimationsEnabled(enabled);
+  combat.setAnimationsEnabled(enabled);
+  const checkbox = el<HTMLInputElement>('animations-enabled');
+  checkbox.checked = enabled;
+  checkbox.disabled = reducedMotion.matches;
+  document.documentElement.dataset.motion = enabled ? 'on' : 'off';
+  el('motion-hint').textContent = reducedMotion.matches
+    ? 'Animationen sind durch deine Systemeinstellung für reduzierte Bewegung ausgeschaltet.'
+    : 'Deine Auswahl gilt für diesen Browser.';
+}
+
+function applySkin(skin: LoadedSkin): void {
+  currentSkin = skin;
+  applyUiPalette(skin);
+  board.setSkin(skin);
+  const logo = atlasIcon(skin, skin.definition.logo, 42);
+  el('brand-emblem').classList.toggle('custom-logo', !!logo);
+  el('brand-emblem').innerHTML = logo ?? icon('rock', '', 29);
+  render();
+}
+
+function showSkinOptions(): void {
+  // Keep the built-in escape route available even in an entirely custom catalog.
+  const entries = skinCatalog.skins.some((entry) => entry.id === 'classic')
+    ? skinCatalog.skins : [fallbackEntry, ...skinCatalog.skins];
+  el<HTMLSelectElement>('skin-select').innerHTML = entries.map((entry) =>
+    '<option value="' + esc(entry.id) + '">' + esc(entry.name) + '</option>'
+  ).join('');
+}
+
+async function chooseSkin(id: string): Promise<void> {
+  const sequence = ++skinLoadSequence;
+  const entry = skinCatalog.skins.find((candidate) => candidate.id === id);
+  el('skin-status').textContent = 'Design wird geladen …';
+  el('skin-select').setAttribute('aria-busy', 'true');
+  try {
+    const loaded = entry ? await loadSkin(entry) : builtInSkin();
+    if (sequence !== skinLoadSequence) return;
+    applySkin(loaded);
+    el<HTMLSelectElement>('skin-select').value = loaded.id;
+    savePreference('rps-arena:skin', loaded.id);
+    el('skin-status').textContent = 'Aktiv: ' + loaded.definition.name;
+  } catch (error) {
+    if (sequence !== skinLoadSequence) return;
+    applySkin(builtInSkin());
+    el<HTMLSelectElement>('skin-select').value = 'classic';
+    savePreference('rps-arena:skin', 'classic');
+    const reason = error instanceof Error ? error.message : 'Die Grafiken konnten nicht geladen werden.';
+    el('skin-status').textContent = 'Arena Klassik ist aktiv. ' + reason;
+    toast('Das Grafikset konnte nicht geladen werden. Arena Klassik ist aktiv. Details unter „Design“.', true);
+  } finally {
+    if (sequence === skinLoadSequence) el('skin-select').removeAttribute('aria-busy');
+  }
+}
+
+async function initializeSkins(): Promise<void> {
+  try {
+    skinCatalog = await loadSkinCatalog();
+    showSkinOptions();
+    const saved = readPreference('rps-arena:skin');
+    const wanted = saved && (saved === 'classic' || skinCatalog.skins.some((entry) => entry.id === saved))
+      ? saved : skinCatalog.default;
+    el<HTMLSelectElement>('skin-select').value = wanted;
+    await chooseSkin(wanted);
+  } catch (error) {
+    showSkinOptions();
+    el('skin-status').textContent = 'Arena Klassik ist aktiv. ' + (error instanceof Error ? error.message : 'Die Designauswahl ist nicht erreichbar.');
+  }
+}
+
+el('skin-select').addEventListener('change', () => { void chooseSkin(el<HTMLSelectElement>('skin-select').value); });
+el('animations-enabled').addEventListener('change', () => {
+  animationsPreferred = el<HTMLInputElement>('animations-enabled').checked;
+  savePreference('rps-arena:animations', animationsPreferred ? 'on' : 'off');
+  updateMotion();
+});
+el('sounds-enabled').addEventListener('change', () => {
+  soundsPreferred = el<HTMLInputElement>('sounds-enabled').checked;
+  savePreference('rps-arena:sounds', soundsPreferred ? 'on' : 'off');
+  sounds.setEnabled(soundsPreferred);
+  if (soundsPreferred) void sounds.unlock();
+});
+reducedMotion.addEventListener('change', updateMotion);
+document.addEventListener('pointerdown', (event) => {
+  void sounds.unlock();
+  if (!(event.target instanceof Node) || el('appearance-menu').contains(event.target)) return;
+  el<HTMLDetailsElement>('appearance-menu').open = false;
+});
+
 
 function clearPending(): void {
   pending = false;
@@ -116,18 +276,23 @@ function send(message: string, payload?: unknown): void {
 
 function me(): PlayerView | undefined { return view?.players.find((p) => p.id === view?.you); }
 function opponent(): PlayerView | undefined { return view?.players.find((p) => p.id !== view?.you); }
+function ownTeamColor(): TeamColor { return teamColorForPlayer(view, view?.you); }
+function phaseTeamColor(): TeamColor | null {
+  const playerId = view?.phase === 'playing' ? view.currentTurn : view?.phase === 'finished' ? view.winner : null;
+  return view?.players.some((player) => player.id === playerId) ? teamColorForPlayer(view, playerId) : null;
+}
 
 function phaseAnnouncement(snapshot: Snapshot): string {
   if (snapshot.paused) return 'Die Partie pausiert, bis beide Spieler wieder verbunden sind.';
   if (snapshot.phase === 'waiting') return 'Dein Raum ist erstellt. Du kannst dein Team schon aufstellen.';
-  if (snapshot.phase === 'setup') return 'Beide Spieler sind da. Stellt eure Figuren auf und bestätigt mit Ich bin bereit.';
+  if (snapshot.phase === 'setup') return 'Partie ' + snapshot.series.gameNumber + '. Stellt eure Figuren auf und bestätigt mit Ich bin bereit. Den ersten Zug macht ' + (snapshot.players.find((player) => player.id === snapshot.series.startingPlayer)?.name ?? 'der Startspieler') + '.';
   if (snapshot.phase === 'duel') return 'Ein verdecktes Duell beginnt. Runde ' + (snapshot.duel?.round ?? 1) + '.';
   if (snapshot.phase === 'finished') return snapshot.winner === snapshot.you ? 'Du hast die Partie gewonnen.' : snapshot.winner ? 'Die Partie ist beendet.' : 'Die Partie endet unentschieden.';
   return snapshot.currentTurn === snapshot.you ? 'Du bist am Zug.' : 'Dein Gegner ist am Zug.';
 }
 
 function handleCell(index: number): void {
-  if (!view || pending || networkStatus !== 'connected' || view.paused) return;
+  if (!view || pending || combat.busy || networkStatus !== 'connected' || view.paused) return;
   const piece = view.board[index];
   if (view.phase === 'setup' || view.phase === 'waiting') {
     if (me()?.ready || piece?.owner !== view.you) return;
@@ -162,15 +327,16 @@ function handleCell(index: number): void {
 }
 
 function rulesCard(): string {
+  const color = ownTeamColor();
   return [
-    '<section class="card rules-card"><div class="card-heading"><h2>Einfaches Prinzip. Gute Taktik.</h2>' + icon('info', '', 16) + '</div><div class="rps-cycle">',
-    '<div class="rule-piece">' + icon('rock') + '<strong>Stein</strong><span>schlägt Schere</span></div>',
-    '<div class="rule-piece">' + icon('paper') + '<strong>Papier</strong><span>schlägt Stein</span></div>',
-    '<div class="rule-piece">' + icon('scissors') + '<strong>Schere</strong><span>schlägt Papier</span></div></div>',
+    '<section class="card rules-card" data-team-color="' + color + '"><div class="card-heading"><h2>Einfaches Prinzip. Gute Taktik.</h2>' + icon('info', '', 16) + '</div><div class="rps-cycle">',
+    '<div class="rule-piece">' + weaponIcon(currentSkin, 'rock', currentSkin.definition.weapons?.rock ? 44 : 29, color) + '<strong>Stein</strong><span>schlägt Schere</span></div>',
+    '<div class="rule-piece">' + weaponIcon(currentSkin, 'paper', currentSkin.definition.weapons?.paper ? 44 : 29, color) + '<strong>Papier</strong><span>schlägt Stein</span></div>',
+    '<div class="rule-piece">' + weaponIcon(currentSkin, 'scissors', currentSkin.definition.weapons?.scissors ? 44 : 29, color) + '<strong>Schere</strong><span>schlägt Papier</span></div></div>',
     '<p class="rule-description"><strong>Das Ziel: die gegnerische Flagge.</strong><br>Dein Team: je 4 Steine, Papiere und Scheren, eine Flagge und eine Falle.</p>',
-    '<details class="rules-details"><summary>So wird gespielt</summary><p>Vor dem Start kannst du deine Figuren durch Anklicken tauschen. Wenn beide bereit sind, beginnt die Partie. Kämpfer ziehen jeweils ein Feld waagerecht oder senkrecht. Flagge und Falle bleiben stehen.</p>',
+    '<details class="rules-details"><summary>So wird gespielt</summary><p>Vor dem Start kannst du deine Figuren durch Anklicken oder Ziehen auf eine zweite eigene Figur tauschen. Wenn beide bereit sind, beginnt die Partie. Kämpfer ziehen jeweils ein Feld waagerecht oder senkrecht. Flagge und Falle bleiben stehen.</p>',
     '<p>Betrittst du ein gegnerisches Feld, werden beide Figuren aufgedeckt. Das stärkere Symbol gewinnt. Gleiche Symbole lösen ein verdecktes Stein-Papier-Schere-Duell aus. Bei Gleichstand wählt ihr erneut; die Figuren übernehmen den gewählten Typ.</p>',
-    '<p>Eine Falle entfernt ihren Angreifer und bleibt auf dem Feld. Wer die gegnerische Flagge erobert oder seinem Gegner keinen Zug mehr lässt, gewinnt. Nach 300 Zügen endet die Partie unentschieden. Der kleine grüne Punkt zeigt eine bereits aufgedeckte Figur.</p></details></section>',
+    '<p>Eine Falle entfernt ihren Angreifer und bleibt auf dem Feld. Wer die gegnerische Flagge erobert oder seinem Gegner keinen Zug mehr lässt, gewinnt. Nach 300 Zügen endet die Partie unentschieden. ' + (currentSkin.definition.presentation === 'retro' ? 'Bereits aufgedeckte Waffen bleiben an den Figuren sichtbar.' : 'Der kleine Punkt zeigt eine bereits aufgedeckte Figur.') + '</p></details></section>',
   ].join('');
 }
 
@@ -181,6 +347,7 @@ function lobbyMarkup(): string {
     '<section class="card lobby-card"><div class="lobby-intro"><p class="eyebrow">DEIN PRIVATER SPIELRAUM</p><h2 class="lobby-title">Zwei Plätze.<br>Ein gutes Duell.</h2>',
     '<p class="body-copy">' + (sessionEnd ? 'Die vorige Partie ist beendet. Erstelle eine neue Partie oder tritt einem anderen Raum bei.' : inputRoom ? 'Du hast einen Raumcode. Gib deinen Namen ein und tritt der Partie bei.' : 'Erstelle eine Partie und lade jemanden über deinen Link ein.') + '</p></div>',
     '<form id="create-form"><label class="field"><span>Dein Spielername</span><input id="player-name" name="player-name" autocomplete="nickname" placeholder="Wie heißt du?" maxlength="24" value="' + esc(name) + '"' + disabled + ' /></label>',
+    '<label class="field series-mode-field"><span>Spielmodus für deinen neuen Raum</span><select id="series-mode" name="series-mode" aria-describedby="series-mode-hint"' + disabled + '>' + (['free', 'best-of-3', 'best-of-5'] as const).map((mode) => '<option value="' + mode + '"' + (mode === seriesMode ? ' selected' : '') + '>' + seriesModeLabel(mode) + (mode === 'free' ? ' – Siege weiterzählen' : mode === 'best-of-3' ? ' – zuerst 2 Siege' : ' – zuerst 3 Siege') + '</option>').join('') + '</select><small class="input-hint" id="series-mode-hint">' + seriesModeDescription(seriesMode) + '</small></label>',
     '<button class="primary-button full-width action-button" type="submit" id="create-button"' + disabled + '>' + (busy ? '<span class="spinner" aria-hidden="true"></span> Verbinde …' : (sessionEnd ? 'Neue Partie erstellen ' : 'Raum erstellen ') + icon('arrow', 'button-arrow', 18)) + '</button></form>',
     '<form class="join-form" id="join-form"><div class="form-divider">oder einem Raum beitreten</div><label class="field join-field"><span>Raumcode oder Einladungslink</span><input id="room-input" name="room-code" autocomplete="off" autocapitalize="off" spellcheck="false" placeholder="Code oder Link einfügen" value="' + esc(inputRoom) + '"' + disabled + ' /></label>',
     '<button class="secondary-button full-width action-button" type="submit" id="join-button"' + disabled + '>' + icon('link', '', 16) + 'Raum beitreten</button></form>',
@@ -190,19 +357,33 @@ function lobbyMarkup(): string {
 }
 
 function playerMarkup(player: PlayerView | undefined, own: boolean): string {
-  if (!player) return '<div class="player-row enemy empty"><span class="player-avatar">' + icon('unknown', '', 17) + '</span><div class="player-info"><p class="player-name">' + (networkStatus === 'ended' ? 'Kein Mitspieler' : 'Platz noch frei') + '</p><p class="player-state">' + (networkStatus === 'ended' ? 'Partie beendet.' : 'Teile deinen Einladungslink.') + '</p></div><span class="waiting-dots" aria-hidden="true">···</span></div>';
+  const color = teamColorForPlayer(view, player?.id, own ? ownTeamColor() : otherTeamColor(ownTeamColor()));
+  if (!player) return '<div class="player-row enemy empty"><span class="player-avatar">' + pieceIcon(currentSkin, 'unknown', 23, 'enemy', false, color) + '</span><div class="player-info"><p class="player-name">' + (networkStatus === 'ended' ? 'Kein Mitspieler' : 'Platz noch frei') + '</p><p class="player-state">' + (networkStatus === 'ended' ? 'Partie beendet.' : 'Teile deinen Einladungslink.') + '</p></div><span class="waiting-dots" aria-hidden="true">···</span></div>';
   const active = view?.currentTurn === player.id && view?.phase === 'playing';
   const preparing = view?.phase === 'waiting' || view?.phase === 'setup';
   const ended = networkStatus === 'ended';
-  let status = ended ? 'Partie beendet' : !player.connected ? 'Verbindung unterbrochen' : preparing ? player.ready ? 'Bereit für die Partie' : 'Stellt das Team auf' : active ? 'Am Zug' : view?.phase === 'finished' ? player.restartRequested ? 'Bereit für die Revanche' : 'Partie beendet' : 'Verbunden';
+  let status = ended ? 'Partie beendet' : !player.connected ? 'Verbindung unterbrochen' : preparing ? player.ready ? 'Bereit für die Partie' : 'Stellt das Team auf' : active ? 'Am Zug' : view?.phase === 'finished' ? player.newSeriesRequested ? 'Möchte eine neue Serie' : player.restartRequested ? 'Bereit für die nächste Partie' : 'Partie beendet' : 'Verbunden';
   if (view?.phase === 'duel' && player.connected && !ended) status = view.duel?.choiceLocked[player.id] ? 'Wahl verdeckt abgegeben' : 'Wählt im Duell';
   const connected = player.connected && !ended;
   const marker = connected && player.ready && preparing ? icon('check', 'ready-icon', 17) : '<span class="status-dot ' + (connected ? '' : 'offline') + '" aria-label="' + (connected ? 'Verbunden' : 'Getrennt') + '"></span>';
-  return '<div class="player-row ' + (own ? '' : 'enemy') + '"><span class="player-avatar">' + icon(own ? 'flag' : 'unknown', '', 17) + '</span><div class="player-info"><p class="player-name">' + esc(player.name) + (own ? '<span class="player-you">du</span>' : '') + '</p><p class="player-state">' + status + '</p></div>' + marker + '</div>';
+  return '<div class="player-row ' + (own ? '' : 'enemy') + '" data-team-color="' + color + '"><span class="player-avatar">' + pieceIcon(currentSkin, own ? 'flag' : 'unknown', 23, own ? 'own' : 'enemy', false, color) + '</span><div class="player-info"><p class="player-name">' + esc(player.name) + (own ? '<span class="player-you">du</span>' : '') + '</p><p class="player-state">' + teamColorName(color) + ' · ' + status + '</p></div>' + marker + '</div>';
+}
+
+function refereeMarkup(size: number): string {
+  if (currentSkin.definition.presentation !== 'retro') return '';
+  const state = refereePortrait(currentSkin.definition, view);
+  const image = atlasIcon(currentSkin, state.frame, size);
+  return image ? '<span class="referee-portrait" role="img" aria-label="' + esc(state.label) + '" title="' + esc(state.label) + '" data-turn-team="' + (state.team ?? 'neutral') + '" data-turn-direction="' + (state.direction ?? 'neutral') + '">' + image + '</span>' : '';
 }
 
 function phaseSection(label: string, title: string, copy: string, controls = '', classes = ''): string {
-  return '<section class="card phase-card ' + classes + '"><p class="phase-label">' + label + '</p><h2>' + esc(title) + '</h2><p class="body-copy">' + esc(copy) + '</p>' + controls + '</section>';
+  const color = phaseTeamColor();
+  const referee = view ? refereeMarkup(180) : '';
+  const showTurnWithReferee = referee && view?.phase === 'playing' && !view.paused && networkStatus === 'connected';
+  const heading = showTurnWithReferee
+    ? '<h2 class="phase-referee-turn" aria-label="' + esc(title) + '">' + referee + '</h2>'
+    : '<h2>' + esc(title) + '</h2>' + (referee ? '<div class="phase-referee">' + referee + '</div>' : '');
+  return '<section class="card phase-card ' + classes + '"' + (color ? ' data-team-color="' + color + '"' : '') + '><p class="phase-label">' + label + '</p>' + heading + '<p class="body-copy">' + esc(copy) + '</p>' + controls + '</section>';
 }
 
 function phaseCard(): string {
@@ -220,7 +401,7 @@ function phaseCard(): string {
   if (networkStatus === 'reconnecting') return phaseSection('<span class="spinner" aria-hidden="true"></span> VERBINDE ERNEUT', 'Eine kurze Pause.', 'Deine Verbindung wird wiederhergestellt. Der Server hält deinen Platz bis zu ' + view.reconnectSeconds + ' Sekunden frei.', '', 'paused');
   if (view.paused) return phaseSection('PARTIE PAUSIERT', 'Wir warten kurz.', (other?.name ?? 'Dein Gegner') + ' hat die Verbindung verloren. Sobald beide wieder da sind, geht es weiter.', '', 'paused');
   if (view.phase === 'waiting' || view.phase === 'setup') {
-    const copy = own?.ready ? other ? 'Deine Aufstellung steht. Die Partie beginnt, sobald dein Gegner ebenfalls bereit ist.' : 'Dein Team ist aufgestellt. Lade deinen Gegner über den Link ein.' : selected !== null ? kindName(view.board[selected]?.kind ?? null) + ' auf ' + coordinate(selected) + ' ausgewählt. Klicke eine zweite eigene Figur an, um die Plätze zu tauschen.' : 'Tausche zwei eigene Figuren durch Anklicken. Oder mische dein Team neu, bis die Aufstellung passt.';
+    const copy = own?.ready ? other ? 'Deine Aufstellung steht. Die Partie beginnt, sobald dein Gegner ebenfalls bereit ist.' : 'Dein Team ist aufgestellt. Lade deinen Gegner über den Link ein.' : selected !== null ? kindName(view.board[selected]?.kind ?? null) + ' auf ' + coordinate(selected) + ' ausgewählt. Klicke eine zweite eigene Figur an, um die Plätze zu tauschen.' : 'Tausche zwei eigene Figuren durch Anklicken oder Ziehen. Oder mische dein Team neu, bis die Aufstellung passt.';
     const lock = own?.ready ? ' disabled' : disabled;
     return phaseSection('01 / AUFSTELLUNG', own?.ready ? 'Du bist bereit.' : 'Dein Plan. Dein Team.', copy,
       '<div class="button-row"><button class="secondary-button" data-action="shuffle" id="shuffle-button"' + lock + '>' + icon('shuffle', '', 16) + 'Mischen</button><button class="primary-button" data-action="ready" id="ready-button"' + lock + '>' + icon('check', '', 16) + (own?.ready ? 'Bereit' : 'Ich bin bereit') + '</button></div>');
@@ -228,33 +409,36 @@ function phaseCard(): string {
   if (view.phase === 'duel' && view.duel) {
     const duel = view.duel;
     const locked = duel.choiceLocked[view.you] === true;
-    const choices = (['rock', 'paper', 'scissors'] as const).map((kind) =>
-      '<button class="duel-choice ' + (duel.yourChoice === kind ? 'selected' : '') + '" data-action="duel" data-kind="' + kind + '" id="duel-' + kind + '" aria-pressed="' + (duel.yourChoice === kind) + '"' + (locked ? ' disabled' : disabled) + '>' + icon(kind) + '<span>' + kindName(kind) + '</span></button>'
-    ).join('');
-    const confirmation = locked ? 'Du hast ' + kindName(duel.yourChoice) + ' gewählt.' : other && duel.choiceLocked[other.id] ? 'Dein Gegner hat bereits verdeckt gewählt.' : 'Dein Gegner kann deine Wahl nicht sehen.';
     return phaseSection('DUELL / RUNDE ' + duel.round, duel.round > 1 ? 'Noch einmal. Ganz geheim.' : 'Gleiche Figur. Neues Duell.', locked ? 'Deine Wahl bleibt verborgen, bis dein Gegner ebenfalls gewählt hat.' : 'Wähle Stein, Papier oder Schere. Beide Entscheidungen werden gleichzeitig aufgedeckt.',
-      '<div class="duel-choices">' + choices + '</div><p class="duel-confirmation">' + icon(locked ? 'check' : 'unknown', '', 13) + esc(confirmation) + '</p>');
+      '<p class="duel-confirmation">' + icon(locked ? 'check' : 'unknown', '', 13) + (locked ? 'Deine Auswahl ist gespeichert.' : 'Die Waffenwahl findest du direkt über dem Spielfeld.') + '</p>');
   }
   if (view.phase === 'finished') {
     const won = view.winner === view.you;
-    let reason = 'Diese Runde ist entschieden. Bereit für die nächste?';
-    if (view.finishReason === 'flag') reason = won ? 'Du hast die gegnerische Flagge erobert. Gut gespielt.' : 'Deine Flagge wurde erobert. Bei der Revanche beginnt alles neu.';
+    let reason = 'Diese Partie ist entschieden.';
+    if (view.finishReason === 'flag') reason = won ? 'Du hast die gegnerische Flagge erobert. Gut gespielt.' : 'Deine Flagge wurde erobert.';
     if (view.finishReason === 'resign') reason = won ? 'Dein Gegner hat die Partie aufgegeben.' : 'Du hast diese Partie aufgegeben.';
     if (view.finishReason === 'no_moves') reason = won ? 'Dein Gegner hat keinen gültigen Zug mehr.' : 'Dein Team hat keinen gültigen Zug mehr.';
     if (view.finishReason === 'turn_limit') reason = 'Nach 300 Zügen endet diese Partie unentschieden.';
-    if (own?.restartRequested) reason += ' Du bist für eine Revanche bereit.';
-    else if (other?.restartRequested) reason += ' ' + other.name + ' möchte eine Revanche.';
-    const title = view.winner === null ? 'Unentschieden.' : won ? 'Du gewinnst die Runde.' : (other?.name ?? 'Dein Gegner') + ' gewinnt.';
-    return phaseSection('PARTIE BEENDET', title, reason, '<div class="button-row"><button class="primary-button" data-action="restart" id="restart-button"' + (own?.restartRequested || !other?.connected ? ' disabled' : disabled) + '>' + icon('refresh', '', 16) + (own?.restartRequested ? 'Warten auf Revanche …' : 'Revanche spielen') + '</button></div>');
+    const seriesFinished = view.series.winner !== null;
+    const title = seriesFinished ? seriesWinnerText(view) : view.winner === null ? 'Unentschieden.' : won ? 'Du gewinnst die Partie.' : (other?.name ?? 'Dein Gegner') + ' gewinnt.';
+    const guard = ' data-series-id="' + esc(view.series.id) + '" data-match-id="' + esc(view.series.matchId) + '"';
+    const nextButton = seriesFinished ? '' : '<button class="primary-button" data-action="restart" id="restart-button"' + guard + (own?.restartRequested || !other?.connected ? ' disabled' : disabled) + '>' + icon('refresh', '', 16) + (own?.restartRequested ? 'Nächste Partie angefragt …' : 'Nächste Partie') + '</button>';
+    const newButton = '<button class="' + (seriesFinished ? 'primary-button' : 'secondary-button') + '" data-action="new-series" id="new-series-button"' + guard + (own?.newSeriesRequested || !other?.connected ? ' disabled' : disabled) + '>' + (own?.newSeriesRequested ? 'Neue Serie angefragt …' : 'Neue Serie (0 : 0)') + '</button>';
+    const hint = seriesFinished
+      ? 'Eine neue Serie beginnt im selben Modus bei 0 : 0. Der erste Zug wechselt zum anderen Spieler.'
+      : '„Nächste Partie“ zählt eure Siege weiter. „Neue Serie“ setzt den Stand gemeinsam auf 0 : 0. Der erste Zug wechselt bei jeder Partie.';
+    return phaseSection(seriesFinished ? 'SERIE ENTSCHIEDEN' : 'PARTIE ' + view.series.gameNumber + ' BEENDET', title, reason,
+      '<div class="series-controls">' + nextButton + newButton + '</div><p class="series-vote-status" role="status">' + esc(seriesVoteStatus(view)) + '</p><p class="series-control-hint">' + hint + '</p>');
   }
   const yourTurn = view.currentTurn === view.you;
-  const copy = yourTurn ? selected !== null ? kindName(view.board[selected]?.kind ?? null) + ' auf ' + coordinate(selected) + ' ausgewählt. Ziehe auf eines der grün markierten Felder.' : 'Wähle eine bewegliche Figur. Die grünen Markierungen zeigen dir ihre möglichen Ziele.' : 'Behalte die aufgedeckten Figuren im Blick und plane deinen nächsten Zug.';
-  return phaseSection('02 / ZUG ' + (view.turnNumber + 1), yourTurn ? 'Du bist am Zug.' : (other?.name ?? 'Dein Gegner') + ' ist am Zug.', copy, '', yourTurn ? '' : 'enemy-turn');
+  const copy = yourTurn ? selected !== null ? kindName(view.board[selected]?.kind ?? null) + ' auf ' + coordinate(selected) + ' ausgewählt. Ziehe auf eines der markierten Felder.' : 'Wähle eine bewegliche Figur. Die Zielmarkierungen zeigen dir ihre möglichen Ziele.' : 'Behalte die aufgedeckten Figuren im Blick und plane deinen nächsten Zug.';
+  return phaseSection('02 / ZUG ' + (view.turnNumber + 1), yourTurn ? 'Du bist am Zug.' : (other?.name ?? 'Dein Gegner') + ' ist am Zug.', copy);
 }
 
 function gameMarkup(): string {
   if (!view) return '';
   const recent = view.log.slice(-4).reverse();
+  const older = view.log.slice(0, -4).reverse();
   const connected = networkStatus === 'connected';
   const ended = networkStatus === 'ended';
   const connectionLabel = connected ? 'VERBUNDEN' : ended ? 'BEENDET' : networkStatus === 'reconnecting' || networkStatus === 'connecting' ? 'VERBINDE …' : 'GETRENNT';
@@ -263,11 +447,40 @@ function gameMarkup(): string {
     '<div class="room-code-row"><code class="room-code" title="Raumcode">' + esc(view.roomId) + '</code><button class="icon-button" data-action="copy" id="copy-button" aria-label="Einladungslink kopieren" title="Einladungslink kopieren"' + (ended ? ' disabled' : '') + '>' + icon('copy', '', 17) + '</button></div>',
     '<p class="room-help">' + (ended ? 'Dieser Raum ist beendet. Starte eine neue Partie.' : 'Kopiere den Link und lade deinen Mitspieler ein.') + '</p><div class="players">' + playerMarkup(me(), true) + playerMarkup(opponent(), false) + '</div></section>',
     phaseCard(),
-    '<section class="card history-card"><div class="card-heading"><h2>' + (ended ? 'Die letzte Partie' : 'Was gerade passiert') + '</h2><span class="eyebrow">' + (ended ? 'VERLAUF' : 'LIVE') + '</span></div><ol class="move-log">' + (recent.length ? recent.map((entry) => '<li>' + esc(entry) + '</li>').join('') : '<li>Deine Arena wartet auf den ersten Zug.</li>') + '</ol></section>',
+    '<section class="card history-card"><div class="card-heading"><h2>' + (ended ? 'Die letzte Partie' : 'Was gerade passiert') + '</h2><span class="eyebrow">' + (ended ? 'VERLAUF' : 'LIVE') + '</span></div><ol class="move-log">' + (recent.length ? recent.map((entry) => '<li>' + esc(entry) + '</li>').join('') : '<li>Deine Arena wartet auf den ersten Zug.</li>') + '</ol>' + (older.length ? '<details class="history-details"><summary id="history-toggle">Ältere Ereignisse (' + older.length + ')</summary><p>Die letzten 100 Ereignisse dieser Partie. Neueste zuerst.</p><ol class="move-log history-scroll" id="history-scroll" tabindex="0" aria-label="Ältere Spielereignisse">' + older.map((entry) => '<li>' + esc(entry) + '</li>').join('') + '</ol></details>' : '') + '</section>',
     '<div class="game-actions"><button class="text-button" data-action="leave" id="leave-button">' + icon('leave', '', 13) + 'Zur Lobby</button>',
     !ended && (view.phase === 'playing' || view.phase === 'duel') ? '<button class="text-button danger" data-action="resign" id="resign-button"' + (!connected || pending ? ' disabled' : '') + '>Partie aufgeben ' + icon('close', '', 12) + '</button>' : '',
     '</div>', rulesCard(),
   ].join('');
+}
+
+function actionRecap(): string {
+  const action = view?.lastAction;
+  if (!action || !view) return '';
+  const ownerName = (piece: PieceView): string => view!.players.find((player) => player.id === piece.owner)?.name ?? 'Spieler';
+  const route = coordinate(action.from) + ' → ' + coordinate(action.to);
+  if (action.kind === 'move') {
+    return '<span class="action-route">' + esc(route) + '</span><div><span class="eyebrow">LETZTER ZUG · ' + action.turnNumber + '</span><p><span class="team-name" data-team-color="' + teamColorForPlayer(view, action.attacker.owner) + '">' + esc(ownerName(action.attacker)) + '</span> hat eine Figur gezogen.</p></div>';
+  }
+  const attacker = action.attacker;
+  const defender = action.defender!;
+  const winner = action.winnerId === attacker.id ? attacker : action.winnerId === defender.id ? defender : null;
+  let title: string;
+  if (action.outcome === 'duel') title = 'Gleiche Figuren: Ein geheimes Duell beginnt.';
+  else if (action.outcome === 'tie') title = 'Gleichstand. Beide wählen erneut.';
+  else if (action.outcome === 'trap') title = 'Die Falle hält stand. Der Angreifer fällt.';
+  else if (action.outcome === 'flag') title = ownerName(attacker) + ' erobert die Flagge.';
+  else title = ownerName(winner!) + ' gewinnt den Kampf.';
+  const figure = (piece: PieceView): string => {
+    const own = piece.owner === view!.you;
+    const color = teamColorForPlayer(view, piece.owner);
+    const removed = action.removedIds.includes(piece.id);
+    return '<span class="recap-piece ' + (own ? 'own' : 'enemy') + (removed ? ' removed' : '') + '" data-team-color="' + color + '">' +
+      pieceIcon(currentSkin, piece.kind ?? 'unknown', 30, own ? 'own' : 'enemy', piece.revealed, color) +
+      '<span>' + esc(kindName(piece.kind)) + (removed ? '<small>entfernt</small>' : winner?.id === piece.id ? '<small>Sieger</small>' : '') + '</span></span>';
+  };
+  return '<div class="recap-fight">' + figure(attacker) + '<span class="recap-versus">vs.</span>' + figure(defender) + '</div>' +
+    '<div class="recap-copy"><span class="eyebrow">' + (action.kind === 'duel' ? 'DUELL · RUNDE ' + action.duelRound : 'KAMPF · ZUG ' + action.turnNumber) + ' · ' + esc(route) + '</span><p' + (winner ? ' class="team-name" data-team-color="' + teamColorForPlayer(view, winner.owner) + '"' : '') + '>' + esc(title) + '</p></div>';
 }
 
 function boardHint(): string {
@@ -275,42 +488,90 @@ function boardHint(): string {
   if (networkStatus === 'ended') return 'Diese Partie ist beendet.';
   if (pending) return 'Zug wird bestätigt …';
   if (view.paused || networkStatus !== 'connected') return 'Die Partie pausiert.';
+  if (combat.busy) return 'Der Kampf wird aufgedeckt …';
   if (view.phase === 'waiting' || view.phase === 'setup') return me()?.ready ? 'Deine Aufstellung steht.' : selected !== null ? 'Zweite eigene Figur wählen.' : 'Zwei Figuren zum Tauschen wählen.';
   if (view.phase === 'playing') return view.currentTurn === view.you ? selected !== null ? 'Ein markiertes Ziel wählen.' : 'Wähle eine eigene Figur.' : 'Dein Gegner ist am Zug.';
-  return view.phase === 'duel' ? 'Wähle im Duell.' : 'Zeit für eine Revanche?';
+  return view.phase === 'duel' ? 'Wähle deine Waffe über dem Spielfeld.' : view.series.winner ? 'Die Serie ist entschieden.' : 'Gemeinsam die nächste Partie starten.';
 }
 
 function render(): void {
   const active = document.activeElement instanceof HTMLElement ? document.activeElement : null;
   const focusId = active?.closest('#sidebar') ? active.id : '';
   const detailsOpen = el('sidebar').querySelector<HTMLDetailsElement>('.rules-details')?.open;
+  const historyOpen = el('sidebar').querySelector<HTMLDetailsElement>('.history-details')?.open;
+  const oldHistory = el('sidebar').querySelector<HTMLElement>('.history-scroll');
+  const historyScroll = oldHistory?.scrollTop ?? 0;
+  const oldRows = oldHistory ? Array.from(oldHistory.children) as HTMLElement[] : [];
+  const oldTop = oldHistory?.getBoundingClientRect().top ?? 0;
+  const anchorIndex = oldRows.findIndex((row) => row.getBoundingClientRect().bottom > oldTop);
+  const anchor = historyOpen && historyScroll > 0 && anchorIndex >= 0 ? {
+    text: oldRows[anchorIndex].textContent,
+    next: oldRows[anchorIndex + 1]?.textContent,
+    offset: oldRows[anchorIndex].getBoundingClientRect().top - oldTop,
+  } : null;
   el('shell').classList.toggle('game-mode', !!view);
-  el('sidebar').innerHTML = view ? gameMarkup() : lobbyMarkup();
+  const retroLogo = currentSkin.definition.presentation === 'retro' ? atlasIcon(currentSkin, currentSkin.definition.logo, 148) : null;
+  const refereeState = refereePortrait(currentSkin.definition, view);
+  const referee = retroLogo && !view ? refereeMarkup(96) : '';
+  const masthead = retroLogo ? '<section class="retro-masthead" aria-label="RPS Arena"><div class="retro-masthead-art">' + retroLogo + referee + '</div><span>' + esc(view ? 'Stein · Papier · Schere' : refereeState.caption) + '</span></section>' : '';
+  el('sidebar').innerHTML = masthead + (view ? gameMarkup() : lobbyMarkup());
   if (detailsOpen) el('sidebar').querySelector<HTMLDetailsElement>('.rules-details')!.open = true;
+  const historyDetails = el('sidebar').querySelector<HTMLDetailsElement>('.history-details');
+  if (historyOpen && historyDetails) {
+    historyDetails.open = true;
+    const list = historyDetails.querySelector<HTMLElement>('.history-scroll')!;
+    list.scrollTop = historyScroll;
+    if (anchor) {
+      const rows = Array.from(list.children) as HTMLElement[];
+      const row = rows.find((item, index) => item.textContent === anchor.text &&
+        (anchor.next === undefined || rows[index + 1]?.textContent === anchor.next));
+      if (row) list.scrollTop += row.getBoundingClientRect().top - list.getBoundingClientRect().top - anchor.offset;
+    }
+  }
   if (focusId) el(focusId)?.focus({ preventScroll: true });
   el('preview-banner').hidden = !!view;
+  const scores = view ? seriesScoreMarkup(view) : '';
+  el('series-scoreboard').hidden = !view;
+  if (el('series-scoreboard').innerHTML !== scores) el('series-scoreboard').innerHTML = scores;
   const paused = networkStatus === 'reconnecting' || networkStatus === 'disconnected' || networkStatus === 'ended';
   el('header-note').innerHTML = '<span class="status-dot ' + (paused ? 'offline' : '') + '"></span>' + (networkStatus === 'ended' ? 'PARTIE BEENDET' : view ? networkStatus === 'connected' ? 'VERBUNDEN' : 'VERBINDUNG PAUSIERT' : 'PRIVATE PARTIEN');
-  el('page-title').textContent = view ? networkStatus === 'ended' ? 'Diese Partie ist beendet.' : view.phase === 'waiting' || view.phase === 'setup' ? 'Die Aufstellung zählt.' : view.phase === 'finished' ? 'Die Runde ist entschieden.' : 'Jeder Zug zählt.' : 'Dein Zug beginnt hier.';
+  el('page-title').textContent = view ? networkStatus === 'ended' ? 'Diese Partie ist beendet.' : view.phase === 'waiting' || view.phase === 'setup' ? 'Die Aufstellung zählt.' : view.phase === 'finished' ? view.series.winner ? 'Die Serie ist entschieden.' : 'Die Partie ist entschieden.' : 'Jeder Zug zählt.' : 'Dein Zug beginnt hier.';
   el('page-eyebrow').textContent = view ? 'DEINE PRIVATE ARENA' : 'DAS TAKTISCHE DUELL FÜR ZWEI';
   el('page-subtitle').innerHTML = view ? 'Ein Plan. Ein Gegner.<br>Und eine Flagge.' : 'Figuren verdecken.<br>Gedanken lesen. Flagge holen.';
   el('board-title').textContent = view ? 'Dein Spielfeld' : 'Das Spielfeld';
   el('board-subtitle').textContent = view ? '7 × 6 Felder · Dein Team startet unten' : '7 × 6 Felder · Vorschau';
   const badge = el('board-phase');
   badge.className = 'pill accent';
+  delete badge.dataset.teamColor;
   if (!view) badge.textContent = 'DEINE ARENA';
   else if (networkStatus === 'ended') { badge.textContent = 'BEENDET'; badge.className = 'pill orange'; }
   else if (networkStatus !== 'connected' || view.paused) { badge.textContent = 'PAUSE'; badge.className = 'pill orange'; }
   else if (view.phase === 'setup' || view.phase === 'waiting') badge.textContent = 'AUFSTELLUNG';
-  else if (view.phase === 'finished') badge.textContent = 'BEENDET';
+  else if (view.phase === 'finished') {
+    badge.textContent = 'BEENDET';
+    const color = phaseTeamColor();
+    if (color) { badge.className = 'pill team-pill'; badge.dataset.teamColor = color; }
+  }
   else if (view.phase === 'duel') { badge.textContent = 'DUELL · RUNDE ' + view.duel?.round; badge.className = 'pill orange'; }
-  else { badge.textContent = 'ZUG ' + (view.turnNumber + 1); badge.className = 'pill ' + (view.currentTurn === view.you ? 'accent' : 'orange'); }
-  el('own-count').textContent = view ? 'Dein Team · ' + view.board.filter((p) => p?.owner === view?.you).length : 'Dein Team';
-  el('enemy-count').textContent = view ? 'Gegner · ' + view.board.filter((p) => p && p.owner !== view?.you).length : 'Gegner';
+  else {
+    badge.textContent = 'ZUG ' + (view.turnNumber + 1);
+    const color = phaseTeamColor();
+    if (color) { badge.className = 'pill team-pill'; badge.dataset.teamColor = color; }
+  }
+  const ownColor = ownTeamColor();
+  const enemyColor = teamColorForPlayer(view, opponent()?.id, otherTeamColor(ownColor));
+  el('own-team-key').dataset.teamColor = ownColor;
+  el('enemy-team-key').dataset.teamColor = enemyColor;
+  el('own-count').textContent = view ? 'Dein Team · ' + teamColorName(ownColor) + ' · ' + view.board.filter((p) => p?.owner === view?.you).length : 'Dein Team';
+  el('enemy-count').textContent = view ? 'Gegner · ' + teamColorName(enemyColor) + ' · ' + view.board.filter((p) => p && p.owner !== view?.you).length : 'Gegner';
   el('board-hint').textContent = boardHint();
+  const recap = actionRecap();
+  el('action-recap').hidden = !recap;
+  if (el('action-recap').innerHTML !== recap) el('action-recap').innerHTML = recap;
   el('notice').hidden = !notice;
   el('notice').innerHTML = notice ? icon('info', '', 17) + '<span class="notice-content">' + esc(notice) + '</span><button class="notice-button" data-action="dismiss-notice" aria-label="Hinweis schließen">' + icon('close', '', 12) + '</button>' : '';
-  board.update(view, selected, networkStatus === 'connected' && !pending);
+  combat.update(view, currentSkin, { connected: networkStatus === 'connected', pending });
+  updateBoardInteraction();
 }
 
 function toast(message: string, error = false): void {
@@ -348,7 +609,11 @@ async function begin(action: 'create' | 'join'): Promise<void> {
   }
   notice = '';
   try {
-    if (action === 'create') await connection.create(chosenName);
+    if (action === 'create') {
+      seriesMode = readSeriesMode(el<HTMLSelectElement>('series-mode')?.value ?? seriesMode);
+      savePreference('rps-arena:series-mode', seriesMode);
+      await connection.create(chosenName, seriesMode);
+    }
     else if (connection.hasSavedSession(code)) await connection.resume(code);
     else await connection.join(code, chosenName);
   } catch (error) { notice = error instanceof Error ? error.message : 'Die Verbindung konnte nicht hergestellt werden.'; render(); }
@@ -399,6 +664,7 @@ function closeModal(): void {
 
 async function leaveRoom(): Promise<void> {
   view = null;
+  combat.reset();
   sessionEnd = null;
   selected = null;
   inputRoom = '';
@@ -417,11 +683,12 @@ function requestLeave(): void {
 
 async function newGame(): Promise<void> {
   const chosenName = (me()?.name ?? name).trim();
+  seriesMode = view?.series.mode ?? seriesMode;
   await leaveRoom();
   name = chosenName;
   if (!chosenName) { el('player-name').focus(); return; }
   writeSession('rps-arena:name', chosenName);
-  try { await connection.create(chosenName); }
+  try { await connection.create(chosenName, seriesMode); }
   catch (error) { notice = error instanceof Error ? error.message : 'Der neue Raum konnte nicht erstellt werden. Bitte versuche es erneut.'; render(); }
 }
 
@@ -446,6 +713,13 @@ app.addEventListener('input', (event) => {
   if (input.id === 'player-name') { name = input.value; writeSession('rps-arena:name', name); }
   if (input.id === 'room-input') inputRoom = input.value;
 });
+app.addEventListener('change', (event) => {
+  const select = event.target;
+  if (!(select instanceof HTMLSelectElement) || select.id !== 'series-mode') return;
+  seriesMode = readSeriesMode(select.value);
+  savePreference('rps-arena:series-mode', seriesMode);
+  el('series-mode-hint').textContent = seriesModeDescription(seriesMode);
+});
 app.addEventListener('click', (event) => {
   const button = (event.target as HTMLElement).closest<HTMLElement>('[data-action]');
   if (!button || button instanceof HTMLButtonElement && button.disabled) return;
@@ -455,9 +729,18 @@ app.addEventListener('click', (event) => {
   if (action === 'dismiss-notice') { notice = ''; render(); }
   if (action === 'shuffle' && view) { selected = null; send('shuffle', { revision: view.revision }); }
   if (action === 'ready' && view) { selected = null; send('ready', { revision: view.revision }); }
-  if (action === 'restart') { selected = null; send('restart'); }
-  if (action === 'duel' && view?.duel) send('duel', { kind: button.dataset.kind as FighterKind, duelId: view.duel.id, round: view.duel.round });
-  if (action === 'resign') confirm('Diese Partie aufgeben?', 'Dein Gegner gewinnt diese Runde. Danach könnt ihr im selben Raum eine Revanche starten.', 'Partie aufgeben', () => send('resign'));
+  if ((action === 'restart' || action === 'new-series') && view?.phase === 'finished') {
+    if (button.dataset.seriesId !== view.series.id || button.dataset.matchId !== view.series.matchId) {
+      toast('Die Partie wurde inzwischen aktualisiert. Bitte wähle erneut.', true);
+      return;
+    }
+    selected = null;
+    send(action === 'restart' ? 'restart' : 'new_series', { seriesId: view.series.id, matchId: view.series.matchId });
+  }
+  if (action === 'duel' && view?.duel && !combat.busy && !view.paused && !view.duel.choiceLocked[view.you]) {
+    send('duel', { kind: button.dataset.kind as FighterKind, duelId: view.duel.id, round: view.duel.round });
+  }
+  if (action === 'resign') confirm('Diese Partie aufgeben?', 'Dein Gegner erhält einen Sieg in dieser Serie. Danach entscheidet ihr gemeinsam, wie es im selben Raum weitergeht.', 'Partie aufgeben', () => send('resign'));
   if (action === 'leave') requestLeave();
   if (action === 'new-game') void newGame();
   if (action === 'retry') void retry();
@@ -465,6 +748,11 @@ app.addEventListener('click', (event) => {
   if (action === 'confirm-modal') { const callback = confirmAction; closeModal(); callback?.(); }
 });
 document.addEventListener('keydown', (event) => {
+  void sounds.unlock();
+  if (event.key === 'Escape' && el<HTMLDetailsElement>('appearance-menu').open) {
+    el<HTMLDetailsElement>('appearance-menu').open = false;
+    el('appearance-menu').querySelector<HTMLElement>('summary')?.focus();
+  }
   const modal = el('modal-root').querySelector<HTMLElement>('.modal');
   if (!modal) return;
   if (event.key === 'Escape') { event.preventDefault(); closeModal(); }
@@ -477,7 +765,12 @@ document.addEventListener('keydown', (event) => {
   }
 });
 
-render();
+applySkin(currentSkin);
+updateMotion();
+el<HTMLInputElement>('sounds-enabled').checked = soundsPreferred;
+el<HTMLInputElement>('sounds-enabled').disabled = typeof window.AudioContext !== 'function';
+sounds.setEnabled(soundsPreferred);
+void initializeSkins();
 if (inputRoom && connection.hasSavedSession(inputRoom)) {
   void connection.resume(inputRoom).catch((error: unknown) => {
     notice = error instanceof Error ? error.message : 'Die vorige Sitzung konnte nicht wiederhergestellt werden. Du kannst dem Raum erneut beitreten.';
