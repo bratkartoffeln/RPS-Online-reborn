@@ -1,7 +1,7 @@
 
 name: QNAP Deployment anfordern
 
-run-name: QNAP Deployment durch ${{ github.actor }}
+run-name: QNAP Update durch ${{ github.actor }}
 
 on:
   workflow_dispatch:
@@ -20,8 +20,31 @@ jobs:
 
     steps:
       - name: Deploymentanforderung registrieren
+        shell: bash
         run: |
           echo "QNAP Deployment angefordert"
           echo "Branch: $GITHUB_REF_NAME"
           echo "Commit: $GITHUB_SHA"
           echo "Angefordert durch: $GITHUB_ACTOR"
+
+          {
+            echo "## RPS Arena – QNAP Deployment"
+            echo ""
+            echo "**Anforderung:** erfolgreich registriert"
+            echo ""
+            echo "**Branch:** $GITHUB_REF_NAME"
+            echo ""
+            echo "**Commit:** \`$GITHUB_SHA\`"
+            echo ""
+            echo "Das QNAP prüft alle 5 Minuten auf Updates."
+            echo "Aktive Spielräume verhindern einen Neustart."
+            echo ""
+            echo "Der Erfolg dieses Workflows bestätigt nur"
+            echo "die Anforderung, nicht die NAS-Installation."
+            echo ""
+            echo "### Tatsächlicher Deploymentstatus"
+            echo ""
+            echo "[GitHub Deployments öffnen](https://github.com/bratkartoffeln/RPS-Online-reborn/deployments)"
+            echo ""
+            echo "[RPS Arena öffnen](https://flusensieb.dns.navy:8443)"
+          } >> "$GITHUB_STEP_SUMMARY"
