@@ -2,7 +2,7 @@ import express from 'express';
 import { existsSync } from 'node:fs';
 import path from 'node:path';
 import type { AddressInfo } from 'node:net';
-import { Server } from '@colyseus/core';
+import { Server, matchMaker } from '@colyseus/core';
 import { WebSocketTransport } from '@colyseus/ws-transport';
 import { RpsRoom } from './RpsRoom.js';
 import { APP_VERSION } from './version.js';
@@ -44,6 +44,23 @@ export async function startServer(config: ServerConfig = {}) {
       app.disable('x-powered-by');
       app.use((_request, response, next) => { response.setHeader('X-Content-Type-Options', 'nosniff'); next(); });
       app.get('/health', (_request, response) => response.set('Cache-Control', 'no-store').json({ ok: true, version: APP_VERSION }));
+      app.get('/internal/deploy-status', (request, response) => {
+        const address = request.socket.remoteAddress;
+      
+        if (
+          address !== '127.0.0.1' &&
+          address !== '::1' &&
+          address !== '::ffff:127.0.0.1'
+        ) {
+          response.sendStatus(404);
+          return;
+        }
+      
+        response.set('Cache-Control', 'no-store').json({
+          roomCount: matchMaker.stats.local.roomCount,
+          connectedPlayers: matchMaker.stats.local.ccu,
+        });
+      });      
       app.get('/ready', (_request, response) => response.status(ready ? 200 : 503)
         .set('Cache-Control', 'no-store').json({ ok: ready, version: APP_VERSION }));
       // Skin files may be replaced on the NAS while this process is running.
