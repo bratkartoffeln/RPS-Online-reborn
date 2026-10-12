@@ -1,0 +1,32 @@
+[
+  {
+    "mobile": false,
+    "id": "icq-retro",
+    "errors": []
+  },
+  {
+    "mobile": false,
+    "id": "classic",
+    "errors": []
+  },
+  {
+    "mobile": false,
+    "id": "arcade",
+    "errors": []
+  },
+  {
+    "mobile": true,
+    "id": "icq-retro",
+    "errors": []
+  },
+  {
+    "mobile": true,
+    "id": "classic",
+    "errors": []
+  },
+  {
+    "mobile": true,
+    "id": "arcade",
+    "errors": []
+  }
+]

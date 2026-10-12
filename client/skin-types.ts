@@ -72,6 +72,8 @@ export interface SkinDefinition {
   weapons?: Partial<Record<SkinWeapon, string>>;
   /** Optional sharper SVG/raster artwork for declared weapons, using the same frame names. */
   weaponAtlas?: SkinAtlas;
+  /** Optional small raster atlas for touch-first devices, with its own coordinates. */
+  mobileAtlas?: SkinAtlas;
   board?: { light?: string; dark?: string };
   logo?: string;
   /** Optional static host/referee illustration used by the retro masthead. */
@@ -82,6 +84,8 @@ export interface SkinDefinition {
   colorTurnPortraits?: Partial<Record<TeamColor, string>>;
   /** Absolute player color, then its position in this viewer's board orientation. */
   directionalTurnPortraits?: Partial<Record<TeamColor, Partial<Record<PortraitDirection, string>>>>;
+  /** Frontal flag-capture victory poses, keyed by the capturer's absolute owner color. */
+  flagVictoryFrames?: Partial<Record<TeamColor, string>>;
   /** Legacy color slots; use teamPieces when separate viewing directions exist. */
   pieces?: PerspectivePieces;
   /** Absolute owner color, then the own/enemy viewing direction for that color. */

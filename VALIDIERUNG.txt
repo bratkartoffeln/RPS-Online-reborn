@@ -1,0 +1,291 @@
+VERIFY node_modules/typescript/bin/tsc --noEmit
+VERIFY node_modules/typescript/bin/tsc -p tsconfig.server.json --noEmit
+VERIFY node_modules/vite/bin/vite.js build
+vite v7.3.7 building client environment for production...
+transforming...
+✓ 74 modules transformed.
+rendering chunks...
+computing gzip size...
+dist/client/index.html                     1.04 kB │ gzip:   0.61 kB
+dist/client/assets/index-DYh4oYGi.css     46.85 kB │ gzip:   9.46 kB
+dist/client/assets/index-C23pk9Ob.js     279.06 kB │ gzip:  90.22 kB
+dist/client/assets/phaser-DFK5Ua9d.js  1,208.06 kB │ gzip: 332.17 kB
+✓ built in 2.67s
+VERIFY scripts/compress-skin-svgs.mjs
+SVG-Komprimierung: 3 Dateien, 10336065 Originalbytes, 2148976 gzip-Bytes.
+VERIFY node_modules/typescript/bin/tsc -p tsconfig.server.json
+VERIFY --import tsx --test tests/chat.test.ts
+✔ a direct public battle animates once; repeated render/sync never replays it (6.6452ms)
+✔ joining, reconnect gaps, paused states, changed room and new game do not replay (0.5181ms)
+✔ the final flag capture is animated even though its snapshot is finished (0.1418ms)
+✔ flag heroes face both viewers, share four hops and reset with the match or skin (0.8413ms)
+✔ the first private duel choice continues the visible effect; resolution gets its own event (0.2702ms)
+✔ unknown movers remain unknown; battle ghosts require explicit public kinds (0.3227ms)
+✔ nonadjacent or mismatched piece transitions cannot fabricate an effect (0.2058ms)
+✔ captured motion identity survives caller mutation without retaining hidden kinds (0.0824ms)
+✔ a new action, disconnect, phase reset or revision gap ends an existing effect (0.223ms)
+✔ artwork selection never substitutes a known figure or the other team for unknown (0.1725ms)
+✔ colored artwork varies its viewing direction without exchanging the owner color (0.0941ms)
+✔ partial colored packs fall back only to the matching absolute legacy color slot (0.094ms)
+✔ hidden colored figures only use unknown artwork and never a revealed or other-color pose (0.0808ms)
+✔ idle/selected/duel loop; move and battle clips play once and hold their last frame (0.1045ms)
+✔ reduced motion always uses the base frame; missing one-shot art stays static (0.0492ms)
+✔ team celebration has exactly two bounded hops and returns to the base position (0.3099ms)
+✔ a whole army staggers briefly and every piece lands within the shared duration (0.0804ms)
+✔ combat animation endpoints ignore unrelated and bubbled animations and complete exactly once (0.885ms)
+✔ cancelled combat nodes cannot advance a replacement, while a missing animation has a bounded fallback (0.1414ms)
+✔ public combat models retain seat colors, attack roles and winner ownership in both browser perspectives (0.392ms)
+✔ all resolved weapon pairings display the server-confirmed winner rather than recomputing combat rules (0.1974ms)
+✔ trap and flag combat preserve their public artwork and celebrate only the surviving owner (0.1422ms)
+✔ equal weapons and repeated tied choices remain neutral even if stale winner fields are present (0.1581ms)
+✔ combat models never recover hidden weapons from current board cells or either private duel choice (0.117ms)
+✔ moves, incomplete opponents and unconfirmed removals never create a winning celebration (0.1613ms)
+✔ weapon selection shows only the viewer choice and remembers its fixed team color (0.2476ms)
+✔ weapon choices are blocked during the fight, pause, disconnect, submission and spectator states (0.1507ms)
+✔ duel and match identity change only when the corresponding displayed round or match changes (0.1505ms)
+✔ confirmed choice pause contains only the viewer weapon, including the second submitter without a private acknowledgement (0.6548ms)
+✔ confirmed choices hold the board busy for 600ms; skin repaints neither reveal early nor repeat the start callback (0.9644ms)
+✔ reset, disconnect, pause and a new match discard delayed and queued fights without affecting a later valid pause (1.2698ms)
+✔ ordinary fights start immediately and use all four animation endpoints before celebration; neutral results remain for 1800ms (0.4373ms)
+✔ missing animation events use the longer bounded phase fallbacks (0.1996ms)
+✔ motion disabled during the choice pause and system reduced motion retain the pause followed by a static 350ms result (0.3144ms)
+✔ typing targets preserve their focus while board controls can still receive the initial weapon choice focus (0.1216ms)
+✔ a resignation celebrates the same winning army in both browser perspectives exactly once (7.7712ms)
+✔ a restored winner, a changed match and a draw do not launch a stale or invented celebration (0.6084ms)
+✔ reconnection and pause snapshots cannot celebrate a completed game again (0.245ms)
+✔ mobile rendering follows the displayed board and caps density (0.4485ms)
+✔ mobile atlas is a complete raster replacement; desktop SVG is preserved (1.6673ms)
+✔ mobileAtlas contract rejects invalid data and retains legacy definitions (1.6725ms)
+✔ room chat and chat errors use their own callbacks without changing the game or connection status (1.6224ms)
+✔ chat from a wrong or former room cannot enter a new room or report a stale error (0.5085ms)
+✔ room creation sends the selected series mode and defaults to a free series (0.2933ms)
+✔ server_shutdown ends the room, invalidates its token and closes the socket (0.2916ms)
+✔ 4001 closes a session even when the shutdown message was not received (0.1926ms)
+✔ a short network drop preserves the session and saves the rotated reconnect token (0.3735ms)
+✔ an expired reservation during automatic reconnect becomes terminal (0.3632ms)
+✔ manual resume of an expired session clears its token and reports a terminal reason (0.4969ms)
+✔ transport failures and proxy 524 errors retain a resumable token (0.4408ms)
+✔ joining a disposed room reports its expiry without entering a reconnect loop (0.3188ms)
+✔ late terminal messages from a former room cannot end the new room (0.1894ms)
+✔ an expired result from a cancelled resume cannot invalidate a newer connection (0.2193ms)
+✔ referee portraits accept optional per-team atlas references and reject invalid mappings (1.7125ms)
+✔ both viewers see the same seat color for a turn, independent of player order (0.374ms)
+✔ each viewer gets the active flag color pointing toward that player on their board (0.1218ms)
+✔ waiting, setup and simultaneous duels use the neutral referee with both flags (0.1595ms)
+✔ finished games retain the confirmed winner's seat color in both browsers (0.1922ms)
+✔ winner portraits point toward the winner in both browsers, regardless of the last turn (0.1077ms)
+✔ draws use both flags while invalid winner IDs do not claim a draw or a winner (0.1358ms)
+✔ pause and a freshly recovered snapshot retain the current turn without animation history (0.2003ms)
+✔ absolute portraits take precedence and legacy portraits retain their fixed blue and red slots (0.1419ms)
+✔ partial directional mappings fall back per color without borrowing the opposite flag direction (0.1755ms)
+✔ unknown turns and missing portrait variants fall back without inventing a team (0.1419ms)
+✔ revealed artwork parses its own resting frame and independently validated animation clips (1.5327ms)
+✔ revealed variants reject nested variants, invalid objects, missing frames and unsafe clips (0.6605ms)
+✔ known own weapons stay concealed until public reveal and return to base after a new setup (0.2459ms)
+✔ missing variants preserve old skins and neither unknown nor null can select revealed artwork (0.1223ms)
+✔ revealed clips replace concealed clips and reduced motion retains the revealed resting pose (0.1813ms)
+✔ mode preferences fall back to a free series and explain wins rather than a hard game limit (0.5606ms)
+✔ a restored series shows authoritative scores, draws and the actual first player (0.3728ms)
+✔ opponent names and winner announcements cannot inject markup into the scoreboard (0.1441ms)
+✔ scores, first player and series winner keep their seat color for either viewer (0.2702ms)
+✔ a vacant first-player seat still has the seat color and an unknown winner has no invented team (0.1141ms)
+✔ different transition votes are explained as a disagreement and can be changed (0.1235ms)
+✔ partial palettes and motion merge defaults without sharing mutable state (1.3226ms)
+✔ omitted artwork remains valid and allows vector fallback per team and piece (0.438ms)
+✔ retro presentation and a static referee are opt-in and validated (0.3911ms)
+✔ absolute team colors support independent viewing directions and revealed artwork (0.332ms)
+✔ team artwork and color portraits strictly validate colors, directions and every frame reference (0.7382ms)
+✔ directional referee portraits accept optional and partial top/bottom mappings for absolute colors (0.1688ms)
+✔ directional referee portraits reject unknown colors, directions and invalid atlas references (0.3718ms)
+✔ catalog preserves selectable classic fallback and rejects ambiguous or escaping entries (0.398ms)
+✔ configuration rejects unsupported fields, unsafe colors, invalid names and nonobjects (0.2883ms)
+✔ atlas image paths stay local inside the selected pack and permit vector and raster images (0.3606ms)
+✔ atlas fallback images must be distinct local raster files (0.3912ms)
+✔ atlas rectangles reject invalid values and every rectangle must fit the decoded image (0.3624ms)
+✔ standalone weapon artwork requires existing main-atlas frames and leaves missing weapons optional (0.5993ms)
+✔ optional weapon atlases accept local SVG and raster paths but only declared weapon frames (0.4729ms)
+✔ all frame references and reserved texture names are checked (1.035ms)
+✔ animation validation supports battle states with bounded clips, speed and motion (0.3059ms)
+✔ bundled retro, classic and Arcade packs resolve to existing, correctly bounded assets (22.7275ms)
+✔ missing catalog rejects readably while the zero-network fallback remains available (12.9603ms)
+✔ JSON loading checks declared and streamed byte limits and malformed data (4.2868ms)
+✔ a stalled catalog request is aborted after the bounded loading timeout (0.4887ms)
+✔ a vector-only pack loads without an image and fetches fresh same-origin JSON (0.5668ms)
+✔ malformed direct entries are rejected before fetch (0.0999ms)
+✔ missing or invalid custom assets reject and permit callers to restore the builtin (1.0205ms)
+✔ decoded image bounds are enforced during actual pack loading (0.5845ms)
+✔ successful image loads return the decoded image and distinct cache-busting URLs (0.794ms)
+✔ a valid main SVG is preferred without loading its raster fallback (0.4274ms)
+✔ an unavailable main SVG automatically uses the raster URL and format (0.5069ms)
+▶ main SVG decode failures and decoded bounds violations both try the raster fallback
+  ✔ {"decodeFails":true} (0.4583ms)
+  ✔ {"width":100} (0.3241ms)
+  ✔ {"height":0} (0.2595ms)
+  ✔ {"width":4097} (0.2521ms)
+✔ main SVG decode failures and decoded bounds violations both try the raster fallback (1.8632ms)
+✔ failure of both main SVG and raster fallback keeps the normal skin-error behavior (0.4436ms)
+✔ the main raster fallback must also satisfy every frame bound (0.5763ms)
+✔ weapon SVG loads separately with validated bounds and a fresh same-skin URL (0.3897ms)
+✔ missing optional weapon images keep the selected pack and main-atlas weapon fallback (0.3359ms)
+✔ out-of-bounds optional weapon images keep the decoded main-atlas fallback (0.288ms)
+✔ optional weapons never hide a main-atlas loading failure (0.3491ms)
+✔ touch devices load only the small raster and use its own frame coordinates (0.4331ms)
+✔ missing optional mobile artwork falls back to the existing raster before SVG (0.382ms)
+✔ touch devices with legacy packs prefer raster and skip the optional weapon SVG (0.3063ms)
+✔ public seats keep each player color fixed in both viewing perspectives and roster orders (0.5468ms)
+✔ missing preview players use an explicit fallback without deriving a color from their id (0.0949ms)
+✔ color names, opposite colors and legacy artwork slots express the same fixed identity (0.0836ms)
+✔ chat normalization produces one line without destroying Unicode or emoji sequences (0.5723ms)
+✔ request identifiers accept bounded UUID-style text and reject arbitrary reflected payloads (0.1398ms)
+✔ malformed and empty requests return only the validated request ID and do not consume history (0.5634ms)
+✔ the 300-character boundary counts Unicode code points after normalization and never truncates (0.1954ms)
+✔ only the trusted sender and server clock determine authorship, seat, timestamp and message ID (0.1186ms)
+✔ deduplication belongs to a player and acknowledges retries without rate limiting or overwriting (0.1259ms)
+✔ each player has a 500 ms interval; rejected attempts and retries do not extend it (0.1537ms)
+✔ the room retains exactly 50 messages with monotonic IDs and deduplicates only retained entries (0.6418ms)
+✔ room histories and returned snapshots are independent (0.14ms)
+✔ move events reveal an unknown mover only to its owner, while known movers stay public (1.9562ms)
+✔ resolved battles preserve both public participants even after the losing figure is removed (1.0535ms)
+✔ duel events publish choices only after both submissions and keep earlier results unchanged (0.6858ms)
+✔ action snapshots are detached, stable on invalid commands and reconnect, and cleared by an agreed rematch (0.4027ms)
+✔ room modes default to free, validate values and initialize identity-based scores (2.1609ms)
+✔ free mode keeps wins and draws beyond three games and alternates every start (0.7375ms)
+✔ best-of-3 needs two wins even with a draw and then requires a jointly agreed new series (0.4828ms)
+✔ best-of-5 finishes at three wins, not two (0.2434ms)
+✔ a finish is scored once despite repeated resignations, sync views and connection callbacks (0.3484ms)
+✔ next-game and new-series votes are exclusive per player and never combine to reset scores (0.229ms)
+✔ both votes from one generation succeed; stale, malformed or foreign votes cannot advance later games (0.5944ms)
+✔ disconnect clears consent and blocks both continuations without altering series results (0.2554ms)
+✔ ready confirmations never begin a game while one participant is disconnected (0.133ms)
+✔ restarting preserves identities and secrets while series views are detached and explicitly sanitized (0.263ms)
+✔ flag, trap and duel endings use the same exactly-once series scoring (0.3661ms)
+✔ starts with a 7 x 6 board, two randomized 14-piece armies, and opaque IDs (1.6412ms)
+✔ sanitized view exposes own kinds only and contains no shared mutable objects (0.8669ms)
+✔ a lone player can shuffle, swap and ready; both ready starts with seat zero (0.3885ms)
+✔ validates identity, name and malformed setup payloads without mutation (0.2601ms)
+✔ moves only one orthogonal cell and rejects all invalid/out-of-turn moves (0.5639ms)
+✔ does not wrap a horizontal move around an edge (0.1441ms)
+✔ all six unequal RPS matchups resolve correctly and reveal the surviving fighter (0.4832ms)
+✔ equal fighters enter a duel; opponent locked choices are never sent early (0.351ms)
+✔ duel ties repeat with a new round and immutable choices reset; defender can win (0.192ms)
+✔ flag capture wins immediately, including on the turn-limit boundary (0.2366ms)
+✔ trap kills the attacker and remains publicly revealed on its cell (0.1465ms)
+✔ taking the last enemy fighter or losing the last attacker ends the game (0.112ms)
+✔ no-legal-move detection handles fully blocked fighters, not just piece counts (0.078ms)
+✔ draws after 300 completed turns and keeps unrevealed enemy kinds hidden (0.1041ms)
+✔ connection loss pauses moves and duel choices without losing private choices (0.2495ms)
+✔ resignation ends a duel and a two-player rematch resets all match secrets (0.4842ms)
+✔ public log is capped at 100 entries (0.2207ms)
+@colyseus/sdk: onMessage() not registered for type 'chat'.
+@colyseus/sdk: onMessage() not registered for type 'chat'.
+@colyseus/sdk: onMessage() not registered for type 'chat'.
+@colyseus/sdk: onMessage() not registered for type 'chat'.
+@colyseus/sdk: onMessage() not registered for type 'chat'.
+@colyseus/sdk: onMessage() not registered for type 'chat'.
+@colyseus/sdk: onMessage() not registered for type 'chat'.
+✔ wire events keep movers and unsubmitted duel choices private and retain their ID on sync/reconnect (256.2893ms)
+▶ real room chat authenticates senders, stays separate from gameplay and survives room continuations
+  ✔ the server supplies all authorship fields and never revises the game for chat (16.8561ms)
+  ✔ a joining player receives prior messages and another room starts with independent history (28.6605ms)
+  ✔ invalid or oversized input produces chat-only errors and leaves both views and histories unchanged (116.6755ms)
+  ✔ 300 emoji are accepted, rapid messages are rejected, and retained request IDs deduplicate per player (549.9468ms)
+  ✔ chat cannot alter a pending private duel choice, revision or last action (500.7312ms)
+  ✔ a connected opponent can chat during a pause and reconnect supplies all history without repeating accepted messages (548.9685ms)
+  ✔ finished games, rematches and new series preserve the room chat (548.7119ms)
+  ✔ the terminal server shutdown does not accept a final chat send (17.2574ms)
+✔ real room chat authenticates senders, stays separate from gameplay and survives room continuations (2410.4502ms)
+Error: Wähle Freies Spiel, Best-of-3 oder Best-of-5.
+    at RpsRoom.onCreate (C:\Users\BeQuiet\.codex\.chatgpt-projects\g-p-6aca23ccb9088191b460740fe99a4657\work\rps-remake\server\RpsRoom.ts:46:42)
+    at handleCreateRoom (file:///C:/Users/BeQuiet/.codex/.chatgpt-projects/g-p-6aca23ccb9088191b460740fe99a4657/work/rps-remake/node_modules/.pnpm/@colyseus+core@0.18.18_@col_61636e785be9f8b535981425bea47f14/node_modules/@colyseus/core/build/MatchMaker.mjs:301:18)
+    at createRoom (file:///C:/Users/BeQuiet/.codex/.chatgpt-projects/g-p-6aca23ccb9088191b460740fe99a4657/work/rps-remake/node_modules/.pnpm/@colyseus+core@0.18.18_@col_61636e785be9f8b535981425bea47f14/node_modules/@colyseus/core/build/MatchMaker.mjs:246:18)
+    at process.processTicksAndRejections (node:internal/process/task_queues:104:5)
+    at async Module.create (file:///C:/Users/BeQuiet/.codex/.chatgpt-projects/g-p-6aca23ccb9088191b460740fe99a4657/work/rps-remake/node_modules/.pnpm/@colyseus+core@0.18.18_@col_61636e785be9f8b535981425bea47f14/node_modules/@colyseus/core/build/MatchMaker.mjs:117:16)
+    at async Object.invokeMethod (file:///C:/Users/BeQuiet/.codex/.chatgpt-projects/g-p-6aca23ccb9088191b460740fe99a4657/work/rps-remake/node_modules/.pnpm/@colyseus+core@0.18.18_@col_61636e785be9f8b535981425bea47f14/node_modules/@colyseus/core/build/matchmaker/controller.mjs:42:14)
+    at async file:///C:/Users/BeQuiet/.codex/.chatgpt-projects/g-p-6aca23ccb9088191b460740fe99a4657/work/rps-remake/node_modules/.pnpm/@colyseus+core@0.18.18_@col_61636e785be9f8b535981425bea47f14/node_modules/@colyseus/core/build/router/default_routes.mjs:15:22
+    at async internalHandler (C:\Users\BeQuiet\.codex\.chatgpt-projects\g-p-6aca23ccb9088191b460740fe99a4657\work\rps-remake\node_modules\.pnpm\@colyseus+better-call@1.3.3\node_modules\@colyseus\better-call\src\endpoint.ts:607:20)
+    at async processRequest (C:\Users\BeQuiet\.codex\.chatgpt-projects\g-p-6aca23ccb9088191b460740fe99a4657\work\rps-remake\node_modules\.pnpm\@colyseus+better-call@1.3.3\node_modules\@colyseus\better-call\src\router.ts:254:22)
+    at async Object.handler (C:\Users\BeQuiet\.codex\.chatgpt-projects\g-p-6aca23ccb9088191b460740fe99a4657\work\rps-remake\node_modules\.pnpm\@colyseus+better-call@1.3.3\node_modules\@colyseus\better-call\src\router.ts:296:16)
+Error: Wähle Freies Spiel, Best-of-3 oder Best-of-5.
+    at RpsRoom.onCreate (C:\Users\BeQuiet\.codex\.chatgpt-projects\g-p-6aca23ccb9088191b460740fe99a4657\work\rps-remake\server\RpsRoom.ts:46:42)
+    at handleCreateRoom (file:///C:/Users/BeQuiet/.codex/.chatgpt-projects/g-p-6aca23ccb9088191b460740fe99a4657/work/rps-remake/node_modules/.pnpm/@colyseus+core@0.18.18_@col_61636e785be9f8b535981425bea47f14/node_modules/@colyseus/core/build/MatchMaker.mjs:301:18)
+    at createRoom (file:///C:/Users/BeQuiet/.codex/.chatgpt-projects/g-p-6aca23ccb9088191b460740fe99a4657/work/rps-remake/node_modules/.pnpm/@colyseus+core@0.18.18_@col_61636e785be9f8b535981425bea47f14/node_modules/@colyseus/core/build/MatchMaker.mjs:246:18)
+    at process.processTicksAndRejections (node:internal/process/task_queues:104:5)
+    at async Module.create (file:///C:/Users/BeQuiet/.codex/.chatgpt-projects/g-p-6aca23ccb9088191b460740fe99a4657/work/rps-remake/node_modules/.pnpm/@colyseus+core@0.18.18_@col_61636e785be9f8b535981425bea47f14/node_modules/@colyseus/core/build/MatchMaker.mjs:117:16)
+    at async Object.invokeMethod (file:///C:/Users/BeQuiet/.codex/.chatgpt-projects/g-p-6aca23ccb9088191b460740fe99a4657/work/rps-remake/node_modules/.pnpm/@colyseus+core@0.18.18_@col_61636e785be9f8b535981425bea47f14/node_modules/@colyseus/core/build/matchmaker/controller.mjs:42:14)
+    at async file:///C:/Users/BeQuiet/.codex/.chatgpt-projects/g-p-6aca23ccb9088191b460740fe99a4657/work/rps-remake/node_modules/.pnpm/@colyseus+core@0.18.18_@col_61636e785be9f8b535981425bea47f14/node_modules/@colyseus/core/build/router/default_routes.mjs:15:22
+    at async internalHandler (C:\Users\BeQuiet\.codex\.chatgpt-projects\g-p-6aca23ccb9088191b460740fe99a4657\work\rps-remake\node_modules\.pnpm\@colyseus+better-call@1.3.3\node_modules\@colyseus\better-call\src\endpoint.ts:607:20)
+    at async processRequest (C:\Users\BeQuiet\.codex\.chatgpt-projects\g-p-6aca23ccb9088191b460740fe99a4657\work\rps-remake\node_modules\.pnpm\@colyseus+better-call@1.3.3\node_modules\@colyseus\better-call\src\router.ts:254:22)
+    at async Object.handler (C:\Users\BeQuiet\.codex\.chatgpt-projects\g-p-6aca23ccb9088191b460740fe99a4657\work\rps-remake\node_modules\.pnpm\@colyseus+better-call@1.3.3\node_modules\@colyseus\better-call\src\router.ts:296:16)
+▶ real room series coordinate scores, continuation generations and reconnected seats
+  ✔ creation validates the room mode and older create callers default to free (69.7238ms)
+  ✔ room mode and score keys belong to the server and not the joining nickname (83.9772ms)
+  ✔ both next-game votes from the same snapshot succeed and alternate the starter (50.0588ms)
+  ✔ a decided best-of cannot continue; resetting needs two fresh series votes (134.0935ms)
+  ✔ finished-game reconnect retains scores but clears pending continuation consent (133.201ms)
+❌ reconnection token invalid or expired. Did you miss .allowReconnection()?
+👉 https://docs.colyseus.io/room#allow-reconnection
+  ✔ an expired reconnection forfeits once and never permits a new match with the missing seat (2098.2649ms)
+✔ real room series coordinate scores, continuation generations and reconnected seats (2621.6485ms)
+▶ real two-client sessions keep secrets, validate commands and recover seats
+  ✔ each player receives only their own hidden army; third player rejected (36.597ms)
+  ✔ setup swaps and ready lead to a synchronized match (47.0127ms)
+  ✔ illegal, out-of-turn and repeated stale moves do not alter the game (50.1094ms)
+  ✔ secret duel choices work concurrently and reject old duel rounds (100.9937ms)
+  ✔ a page-reload reconnect preserves identity and private game state (48.4849ms)
+  ✔ rematch requires both votes and a departed player cannot be replaced (52.8274ms)
+✔ real two-client sessions keep secrets, validate commands and recover seats (431.3869ms)
+▶ online server reports readiness and terminates matches explicitly on shutdown
+  ✔ liveness and readiness return the package version without caching (19.8201ms)
+@colyseus/sdk: onMessage() not registered for type 'chat'.
+@colyseus/sdk: onMessage() not registered for type 'chat'.
+@colyseus/sdk: onMessage() not registered for type 'chat'.
+@colyseus/sdk: onMessage() not registered for type 'chat'.
+  ✔ readiness changes before drain; both players receive shutdown before close (15.571ms)
+✔ online server reports readiness and terminates matches explicitly on shutdown (123.2004ms)
+▶ skin files use live NAS overrides and fall back to the bundled files
+  ✔ JSON overrides and vector/raster atlas files preserve MIME types and disable caching (31.8208ms)
+  ✔ an edited file is returned immediately, and deleting it reveals its bundled fallback (5.2609ms)
+  ✔ directory indexes, dotfiles and traversal never expose other files (16.4824ms)
+✔ skin files use live NAS overrides and fall back to the bundled files (88.4521ms)
+✔ an absent optional skin directory does not prevent startup and can be added later (12.9119ms)
+▶ production online checks validate SVG and configured raster fallback without rejecting NAS overrides
+  ✔ an atlas-free NAS override stays valid (1.0475ms)
+  ✔ SVG and its configured PNG replacement are both checked (1.1703ms)
+  ✔ legacy PNG, WebP and JPEG NAS atlases remain supported (0.7397ms)
+  ✔ a missing or corrupted configured fallback fails deployment verification (2.2656ms)
+  ✔ SVG responses need the correct MIME type and an actual SVG root (0.6736ms)
+  ✔ main and fallback paths stay within the selected pack, and the fallback is raster (1.2996ms)
+✔ production online checks validate SVG and configured raster fallback without rejecting NAS overrides (55.8347ms)
+▶ bundled SVG gzip is negotiated without affecting live skin overrides
+  ✔ GET keeps the SVG URL and sends actual gzip with SVG MIME, Vary and no-store (10.8841ms)
+  ✔ missing support, q=0 and an explicit identity preference use the original SVG (5.9384ms)
+  ✔ HEAD returns the selected representation headers without a body (2.05ms)
+  ✔ a missing sidecar falls through to SVG and missing files remain ordinary 404s (3.4707ms)
+  ✔ live external SVG always wins, including after edits and with stale external sidecars (5.5401ms)
+  ✔ compression stays within the built-in skin route and retains static path protection (2.8063ms)
+✔ bundled SVG gzip is negotiated without affecting live skin overrides (61.5099ms)
+✖ skin SVG build compression preserves originals, skips other files and symlinks, and refreshes sidecars (16.9541ms)
+ℹ tests 207
+ℹ suites 0
+ℹ pass 206
+ℹ fail 1
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 5042.2868
+
+✖ failing tests:
+
+test at tests\skin-compression-build.test.ts:1:245
+✖ skin SVG build compression preserves originals, skips other files and symlinks, and refreshes sidecars (16.9541ms)
+  Error: EPERM: operation not permitted, symlink 'C:\Users\BeQuiet\AppData\Local\Temp\rps-skin-compression-avZpvu\outside\linked.svg' -> 'C:\Users\BeQuiet\AppData\Local\Temp\rps-skin-compression-avZpvu\skins\linked.svg'
+      at async symlink (node:internal/fs/promises:999:10)
+      at async TestContext.<anonymous> (C:\Users\BeQuiet\.codex\.chatgpt-projects\g-p-6aca23ccb9088191b460740fe99a4657\work\rps-remake\tests\skin-compression-build.test.ts:31:5)
+      at async Test.run (node:internal/test_runner/test:1125:7)
+      at async startSubtestAfterBootstrap (node:internal/test_runner/harness:358:3) {
+    errno: -4048,
+    code: 'EPERM',
+    syscall: 'symlink',
+    path: 'C:\\Users\\BeQuiet\\AppData\\Local\\Temp\\rps-skin-compression-avZpvu\\outside\\linked.svg',
+    dest: 'C:\\Users\\BeQuiet\\AppData\\Local\\Temp\\rps-skin-compression-avZpvu\\skins\\linked.svg'
+  }

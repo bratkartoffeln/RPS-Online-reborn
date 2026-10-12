@@ -1,13 +1,14 @@
-# ICQ Retro – Design der Version 0.4.5
+# ICQ Retro – Design der Version 0.4.7
 
 Das Grafikset rekonstruiert das Erscheinungsbild des damaligen taktischen
 ICQ-Spiels anhand historischer Aufnahmen. Die Figuren, Kacheln, das Logo und
 der Schiedsrichter wurden mit der **integrierten Bildgenerierung** neu erstellt
 und zunächst als PNG-Bild-Map eingebunden. Version 0.4.3 ergänzte drei einzeln
 gezeichnete Vektorwaffen. Version 0.4.4 führte den vollständigen SVG-Atlas ein.
-Seit 0.4.5 enthält er 41 Motive: beide Teamfarben in Vorder- und Rückenansicht,
-zusätzliche Aufdeckposen sowie vier Schiedsrichter-Farbrichtungen und eine
-neutrale Pose. Die Fallen sind für beide Spieler wieder goldgelb.
+Version 0.4.7 enthält 43 Motive: beide Teamfarben in Vorder- und Rückenansicht,
+zusätzliche Aufdeckposen, vier Schiedsrichter-Farbrichtungen, eine neutrale Pose
+und zwei lächelnde Fahnenträger für eine tatsächliche Flaggeneroberung.
+Die Fallen sind für beide Spieler wieder goldgelb.
 Eine aus derselben SVG exportierte PNG dient als automatische Rückfallgrafik.
 Die PNG aus 0.4.3 wird nur noch als Bearbeitungsquelle aufbewahrt.
 
@@ -55,7 +56,8 @@ als bearbeitbare Vektorquelle in `icq-retro-source/referees.svg`.
 | Stein | Grauer, rundlicher Stein |
 | Papier | Helle Papierrolle mit gerolltem Ende |
 | Schere | Lange silberne Klingen mit gelben Griffen |
-| Flagge | Kleiner Wimpel an einem Holzstab; Figur und Wimpel folgen der Teamfarbe |
+| Flagge | Kleiner Wimpel an einem Holzstab; Figur oder Sockel folgen der Besitzerfarbe, das Tuch trägt seit 0.4.5 die Gegenfarbe |
+| Flaggensieger | Lächelnder Kämpfer von vorn mit erhobener eroberter Flagge; blaues Tuch beim blauen Sieger, rotes beim roten |
 | Falle | Für beide Spieler dieselbe goldgelbe gebänderte Figur, jeweils als Vorder- oder Rückenansicht |
 | Logo | Große RPS-Buchstaben mit Kopf darüber und dem Namen ARENA darunter |
 | Schiedsrichter | Größer in der Statuskarte: vier statische Farb-/Richtungsposen für Blau/Rot oben/unten und eine neutrale Pose mit beiden Flaggen |
@@ -66,8 +68,8 @@ Das neue Layout verwendet Systemschriften und eine schmale Informationsspalte.
 Auf kleinen Bildschirmen stehen die Informationen unter dem Brett.
 
 Die heutigen Raum-, Serien- und Bedienfunktionen bleiben Teil der Oberfläche.
-Ein historischer Countdown oder Chat wurde durch diese Designarbeit nicht
-als neue Spielfunktion eingeführt.
+Seit 0.4.7 ergänzt ein eigener Raumchat unter dem Spielfeld die Partie. Ein
+historischer Countdown wurde weiterhin nicht als Spielfunktion eingeführt.
 
 ### Korrektur in 0.4.2
 
@@ -146,17 +148,43 @@ enthält nun 41 Motive, die 39 bisherigen Rechtecke behalten ihre Koordinaten.
 SVG, PNG und Manifest werden gemeinsam erzeugt. Die größere Darstellung im
 Spiel verwendet 180 × 135 statt 136 × 102 Pixel.
 
+### Flaggensieger und Raumchat in 0.4.7
+
+Zwei native SVG-Zeichnungen zeigen den erfolgreichen Flaggeneroberer lächelnd
+mit erhobener Fahne. Beide Browser sehen ihn von vorn. Das Tuch entspricht
+der tatsächlich eroberten gegnerischen Zielflagge: Der blaue Spieler erobert
+das blaue Tuch der roten Mannschaft; der rote Spieler erobert das rote Tuch
+der blauen. Die vier regulären Flaggenansichten behalten ihre bisherige Zuordnung.
+
+Bei einer Flaggeneroberung springen alle verbliebenen Figuren der Gewinnerarmee
+viermal gemeinsam. Anschließend bleibt der Fahnenträger am Zielfeld in seiner
+Siegerpose stehen. Ohne Animationen oder bei reduzierter Bewegung erscheint
+die Pose statisch. Andere Sieggründe verwenden den bisherigen Jubel.
+
+Der Atlas wächst auf 2016 × 2016 mit 43 Motiven; die bisherigen 41 Rechtecke
+behalten ihre Positionen. Die bearbeitbaren neuen Zeichnungen liegen in
+`icq-retro-source/flag-victory.svg`, die Zuordnung im Manifest unter
+`flagVictoryFrames.blue/red`. Die PNG wird aus demselben Vollatlas neu exportiert.
+
+Der Chat erscheint ausschließlich im Raum unter dem Spielfeld und verwendet
+die festen Teamfarben für die Spielernamen. Nachrichten werden per Enter oder
+**Senden** übertragen. Der Server hält die letzten 50 Nachrichten mit höchstens
+300 Unicode-Zeichen je Nachricht bis zum Raumende im Arbeitsspeicher. Der Verlauf
+bleibt über Partiewechsel und Wiederverbindung erhalten; Sendefehler lassen den
+Entwurf stehen. Bei einem Serverneustart geht der Raumverlauf verloren.
+
 ## 3. Tatsächlich gelieferte Bild-Map
 
 | Datei | Inhalt |
 | --- | --- |
-| `public/skins/icq-retro/atlas.svg` | Primärer Atlas mit 41 Vektormotiven auf einer Zeichenfläche von 1728 × 2016 |
-| `public/skins/icq-retro/atlas.png` | Frisch aus derselben SVG exportierte Rückfallgrafik; 1728 × 2016 Pixel mit RGBA-Transparenz |
+| `public/skins/icq-retro/atlas.svg` | Primärer Atlas mit 43 Vektormotiven auf einer Zeichenfläche von 2016 × 2016 |
+| `public/skins/icq-retro/atlas.png` | Frisch aus derselben SVG exportierte Rückfallgrafik; 2016 × 2016 Pixel mit RGBA-Transparenz |
 | `public/skins/icq-retro/weapon-atlas.svg` | Bearbeitbare Waffenquelle mit 960 × 320 Einheiten; wird im Retro-Set nicht separat geladen |
-| `public/skins/icq-retro/skin.json` | 41 gemeinsame Frame-Rechtecke für SVG und PNG, Besitzerfarben, Blickrichtungen, Waffen und Präsentation |
+| `public/skins/icq-retro/skin.json` | 43 gemeinsame Frame-Rechtecke für SVG und PNG, Besitzerfarben, Blickrichtungen, Waffen, Flaggensieger und Präsentation |
 | `design/icq-retro-source/original.png` | PNG aus 0.4.3 als Bearbeitungsvorlage |
 | `design/icq-retro-source/layout.json` | Ausschnittplan der alten Vorlage mit 1121 × 1787 Pixeln |
 | `design/icq-retro-source/referees.svg` | Vier Farb-/Richtungsposen und eine neutrale Schiedsrichterzeichnung |
+| `design/icq-retro-source/flag-victory.svg` | Zwei native Siegerzeichnungen mit eroberter Flagge; je benanntes Motiv lokal 320 × 320 Einheiten |
 | `scripts/build-retro-atlas.py` | Optionaler gemeinsamer Neubau von SVG, PNG und Grafikmanifest |
 | `scripts/retro_vectorize.py` | Übertragung der Figurenkonturen in Pfade mit Pillow und libpotrace |
 | `scripts/build-retro-weapons.mjs` | Kompatibler Aufruf des vollständigen Python-Grafikbuilds |
@@ -169,12 +197,15 @@ bewahrte diesen 1121 × 1403 großen Bereich und ergänzte darunter drei einzeln
 Waffen. In Version 0.4.4 wird dieser Stand zur Bearbeitungsquelle für den
 erweiterten Vektoratlas; die Laufzeit-PNG entsteht aus dessen SVG neu.
 
-Die aktuellen Rechtecke stehen in `skin.json`. Der neue Atlas verwendet ein
-Raster mit sechs Spalten und sieben Reihen bei 288 Einheiten Abstand. Die
+Die aktuellen Rechtecke stehen in `skin.json`. Die bisherigen 41 Motive behalten
+ihr Raster mit sechs Spalten und sieben Reihen bei 288 Einheiten Abstand. Die
+größere Zeichenfläche ergänzt rechts eine siebte Spalte. Die
 Motive werden proportional in maximal 272 × 272 große Bereiche eingepasst;
 die Frame-Rechtecke haben deshalb unterschiedliche Breiten und Höhen. Die
 drei bisherigen Schiedsrichter stehen in der sechsten Reihe, die Waffen
-und die beiden neuen Farbrichtungen in der siebten Reihe.
+und die beiden zusätzlichen Farbrichtungen in der siebten Reihe. Der blaue
+Flaggensieger ergänzt den freien Platz rechts daneben; der rote steht oben
+in der neuen siebten Spalte.
 
 Für die blauen Kämpfer ist die natürliche, tiefe Armhaltung der bereits
 akzeptierten Steinfigur maßgeblich. Papier und Schere liegen vor oder seitlich
@@ -182,8 +213,10 @@ am Oberkörper und dürfen teilweise von Kopf, Körper oder Hand überdeckt sein
 In den Rückenansichten beider Farben liegen der kurze Ärmel und die greifende
 Hand vor dem Werkzeug und verdecken dessen Rand. Die Motive besitzen getrennte
 Bildbereiche mit transparentem Abstand.
-Ein hochgehobener Arm oder ein über dem Kopf gehaltenes Werkzeug ist nicht
-vorgesehen. Diese Festlegung übernimmt die letzte Nutzerkorrektur.
+Bei diesen regulären Aufdeckfiguren ist ein hochgehobener Arm oder ein über dem
+Kopf gehaltenes Werkzeug nicht vorgesehen. Diese Festlegung übernimmt die
+Nutzerkorrektur für die Waffenhaltung. Die neue Flaggensiegerpose hebt dagegen
+gezielt die eroberte Fahne.
 
 | Gruppe | Frame-Namen | Anzahl |
 | --- | --- | ---: |
@@ -196,10 +229,18 @@ vorgesehen. Diese Festlegung übernimmt die letzte Nutzerkorrektur.
 | Logo und neutraler Schiedsrichter | `logo`, `referee-neutral` | 2 |
 | Zugposen des Schiedsrichters | `referee-blue-turn`, `referee-red-turn`, `referee-blue-top`, `referee-red-bottom` | 4 |
 | Einzelne Waffen | `weapon-rock`, `weapon-paper`, `weapon-scissors` | 3 |
+| Flaggensieger | `blue-front-flag-victory`, `red-front-flag-victory` | 2 |
 
 Die genauen Koordinaten stehen direkt in `skin.json`; die Motive bilden keine
 gleichmäßig zugeschnittenen Kacheln. Eine spätere Änderung der Bildgröße oder
 Motivpositionen erfordert entsprechend aktualisierte Rechtecke.
+
+Die beiden neuen Siegerbilder sind jeweils 272 × 272 Einheiten groß:
+
+| Frame | Ursprung in SVG und PNG |
+| --- | --- |
+| `blue-front-flag-victory` | x = 1448, y = 1736 |
+| `red-front-flag-victory` | x = 1736, y = 8 |
 
 Die Waffen verwenden im vollständigen SVG-Atlas und der PNG dieselben Namen
 und Koordinaten. Ihre separate bearbeitbare Quelle hat eine eigene Anordnung.
@@ -247,6 +288,15 @@ weiterhin keine Waffe. Die Zielflaggentücher tragen die Gegenfarbe (Blau erhäl
 Rot, Rot erhält Blau); die Figuren darunter behalten die Besitzerfarbe.
 Die Fallen sind für beide Besitzer goldgelb.
 
+`flagVictoryFrames.<farbe>` ist eine optionale Ausnahme von der normalen
+Figurenansicht. Sie wird nur für den überlebenden Eroberer einer durch das
+öffentliche Schlussereignis bestätigten Flagge verwendet. Sieger, Figur und
+Zielfeld müssen zum beendeten Spielstand passen. Die beiden Retro-Frames zeigen
+in beiden Browsern eine Vorderansicht. Die Pose bleibt am Partieende und nach
+Wiederverbindung sichtbar; eine neue Aufstellung verwendet wieder die normalen
+Figuren. Fehlt der Eintrag, bleibt die reguläre Darstellung erhalten. Ein
+Sieg durch Aufgabe oder fehlende legale Züge setzt keine Flaggenpose.
+
 `directionalTurnPortraits.<farbe>.<top|bottom>` wählt die Schiedsrichterpose.
 Die Richtung folgt der Seite im aktuellen Browser: eigene Seite unten,
 gegnerische Seite oben. Die Besitzerfarbe bleibt in beiden Ansichten gleich.
@@ -277,16 +327,32 @@ Andere Figurenanzeigen verwenden die passenden Ausschnitte für Besitzerfarbe
 und Blickrichtung. Sets ohne `weapons` behalten in Regeln und Duell ihre
 Figurensymbole in der eigenen festen Teamfarbe.
 
-Die Overlays liegen genau über dem Brett und haben einen transparenten
-Gesamthintergrund. Überschrift, Auswahlfelder und Status verwenden für die
-Lesbarkeit lokale, leicht durchsichtige Flächen. Die Kampfanimation bewegt die
+Die Overlays liegen genau über dem Brett. Seit 0.4.6 bündelt ein gemeinsames
+hellolives Panel alle Elemente der jeweiligen Waffenwahl oder Kampfdarstellung.
+Seine Hintergrundfarbe ist rund 92 Prozent deckend; außerhalb des Panels bleibt
+das Brett unverdeckt sichtbar. Die Transparenz gilt ausschließlich für die
+Hintergrundfarbe. Waffen, Texte und Bedienelemente bleiben vollständig deckend,
+auch nach der bestätigten Auswahl. Überschrift, Rollen, Spielernamen und Status
+haben keine eigenen Hintergrundkacheln mehr. Die Waffenbuttons bleiben dezent
+konturiert; Auswahl und Tastaturfokus verwenden die feste Teamfarbe. Auf schmalen
+Brettern sinken die Panelabstände, die großen Waffenbilder bleiben erhalten.
+Auch bei reduzierter Bewegung bleibt die statische Verliererwaffe deckend und
+wird durch Graustufen und „Besiegt“ gekennzeichnet. Die Kampfanimation bewegt die
 beiden bereits öffentlich aufgedeckten Waffen zur Mitte, zeigt eine native
 SVG-Kampfwolke und zerlegt die Verliererwaffe in sechs maskierte Bildteile.
+Die vier Phasen dauern in v0.4.7 nominell 600, 600, 700 und 1100 Millisekunden,
+zusammen 3 Sekunden; vor dem Kampf liegen nach einer bestätigten Waffenwahl
+600 Millisekunden Pause. Klassisch und Arcade verwenden für denselben
+Overlaygrund 85 Prozent Deckkraft, während Retro seine 92 Prozent behält.
+
 Der Sieger pulsiert; anschließend springen alle verbliebenen Figuren seines
-Teams kurz auf ihren unveränderten Feldern. Die Atlasbilder bleiben unverändert,
-die Bewegung entsteht in der Oberfläche beziehungsweise im Brett-Renderer.
-Die gleiche Darstellung funktioniert mit dem PNG-Rückfall. Ohne Animationen
-oder bei reduzierter Bewegung bleibt ein kurzer statischer Ergebniszustand.
+Teams auf ihren unveränderten Feldern. Bei der Flaggeneroberung sind es vier
+synchrone Sprünge in 1680 Millisekunden, bei normalen Kampfgewinnen bleibt der
+bisherige kurze Jubel. Die Bewegung entsteht in der Oberfläche beziehungsweise
+im Brett-Renderer; die neuen Fahnenträger verwenden dabei ihre statischen
+Atlasmotive. Die gleiche Darstellung funktioniert mit dem PNG-Rückfall.
+Ohne Animationen oder bei reduzierter Bewegung bleibt das Kampfergebnis
+350 Millisekunden statisch sichtbar und die Flaggensiegerpose anschließend stehen.
 
 Das Brett berücksichtigt beim Erstellen die Bildschirmdichte, auf Viertelschritte
 aufgerundet und auf Faktor 2 begrenzt. Die logischen Brettkoordinaten bleiben
@@ -322,13 +388,14 @@ Die drei Einzelwaffen sind direkt in
 [`scripts/build-retro-atlas.py`](../scripts/build-retro-atlas.py) überträgt die
 Figuren mithilfe von [`scripts/retro_vectorize.py`](../scripts/retro_vectorize.py)
 aus `icq-retro-source/original.png` und dessen `layout.json` in Pfade.
-Der Build übernimmt die Waffenquelle und die neuen Schiedsrichter aus
-[`icq-retro-source/referees.svg`](icq-retro-source/referees.svg) und erzeugt
+Der Build übernimmt die Waffenquelle, die Schiedsrichter aus
+[`icq-retro-source/referees.svg`](icq-retro-source/referees.svg) und die Flaggensieger aus
+[`icq-retro-source/flag-victory.svg`](icq-retro-source/flag-victory.svg) und erzeugt
 **SVG, PNG und `skin.json` gemeinsam**. Die PNG wird aus der vollständigen SVG
 exportiert. Dieser optionale Arbeitsweg benötigt Python 3 mit **Pillow**,
 die Systembibliothek **libpotrace** und **Inkscape** für den PNG-Export.
 
-Nach einer Änderung der Figuren-, Waffen- oder Schiedsrichterquelle wird
+Nach einer Änderung der Figuren-, Waffen-, Schiedsrichter- oder Siegerquelle wird
 derselbe vollständige Build ausgeführt. Der frühere Aufruf
 [`scripts/build-retro-weapons.mjs`](../scripts/build-retro-weapons.mjs) ist ein
 Kompatibilitätseinstieg und startet jetzt ebenfalls den Pythonbuild. Der
@@ -336,10 +403,11 @@ normale Spielbuild verwendet die fertigen SVG-/PNG-Dateien und benötigt keine
 dieser Grafikwerkzeuge. Der Bearbeitungsablauf steht in
 [GRAFIKSETS.md](../GRAFIKSETS.md).
 
-Alle 24 Basisfiguren, sechs zusätzlichen Aufdeckposen und drei
-Schiedsrichterposen sowie die drei Einzelwaffen verwenden **statische Frames**.
+Alle 24 Basisfiguren, sechs zusätzlichen Aufdeckposen, fünf Schiedsrichterposen,
+drei Einzelwaffen und zwei Flaggensieger verwenden **statische Frames**.
 Es gibt in diesem Set noch keine neu gezeichneten Bildfolgen für Gehen,
-Angriff, Sieg, Niederlage oder den Schiedsrichter. Die bereits vorhandenen
+Angriff, Sieg, Niederlage oder den Schiedsrichter. Auch die vier Sprünge beim
+Flaggensieg bewegen das jeweilige statische Motiv. Die bereits vorhandenen
 allgemeinen Zug- und Kampfeffekte sowie die Option „Animationen“ funktionieren
 weiterhin. Arcade verwendet jetzt ebenfalls seine SVG als primäres Bild mit
 PNG-Rückfall; seine 147 Frames und vorhandenen Animationsclips bleiben erhalten.

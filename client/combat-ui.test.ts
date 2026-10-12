@@ -1,8 +1,9 @@
 import assert from 'node:assert/strict';
-import test from 'node:test';
+import test, { type TestContext } from 'node:test';
 import type { FighterKind, GameActionView, PieceKind } from '../shared/game';
 import type { Snapshot } from '../shared/protocol';
-import { combatModel, duelChoiceState, waitForCombatAnimation } from './combat-ui';
+import { CombatOverlay, combatModel, confirmedDuelChoice, duelChoiceState, isTextEntry, waitForCombatAnimation, type CombatModel, type CombatStage, type DuelChoiceState } from './combat-ui';
+import { builtInSkin } from './skins';
 
 function animationEnd(name: string, bubbledTarget?: EventTarget): Event {
   const event = new Event('animationend');
@@ -207,4 +208,223 @@ test('duel and match identity change only when the corresponding displayed round
   const nextMatch = { ...initial, series: { ...initial.series, matchId: 'next-match' } };
   assert.notEqual(duelChoiceState(nextMatch, options)!.identity, identity);
   assert.notEqual(combatModel(action(), nextMatch)!.identity, combatModel(action(), initial)!.identity);
+});
+
+/** Keep the real queue, epoch guards and animation waits; substitute only DOM painting. */
+function overlayHarness(t: TestContext, systemReduced = false) {
+  const left = new EventTarget(), cloud = new EventTarget(), winner = new EventTarget();
+  const nodes: Record<string, EventTarget> = {
+    '.combat-fighter:first-child .combat-art': left,
+    '.combat-cloud': cloud,
+    '.combat-fighter[data-result="winner"] .combat-art': winner,
+  };
+  const root = {
+    classList: { add() {} }, dataset: {}, hidden: true, childElementCount: 0,
+    contains: () => false, querySelector: (selector: string) => nodes[selector] ?? null,
+    ownerDocument: { activeElement: null, body: {}, defaultView: { matchMedia: () => ({ matches: systemReduced }) } },
+  } as unknown as HTMLElement;
+  const starts: GameActionView[] = [], celebrations: string[] = [], busyChanges: boolean[] = [], choices: DuelChoiceState[] = [];
+  const overlay = new CombatOverlay(root, {
+    onBusyChange: (busy) => busyChanges.push(busy),
+    onCelebrate: (owner) => celebrations.push(owner),
+    onBattleStart: (event) => starts.push(event),
+  });
+  const paint = overlay as unknown as {
+    active: CombatModel | null; activeStage: CombatStage; activeReduced: boolean;
+    paintChoice: (choice: DuelChoiceState) => void; paintBattle: () => void; continueBattle: () => void;
+  };
+  t.mock.method(paint, 'paintChoice', (choice: DuelChoiceState) => {
+    root.hidden = false;
+    root.dataset.mode = 'choice';
+    choices.push({ ...choice });
+  });
+  t.mock.method(paint, 'paintBattle', () => {
+    root.hidden = false;
+    root.dataset.mode = 'battle';
+    root.dataset.stage = paint.activeStage;
+    root.dataset.motion = paint.activeReduced ? 'reduced' : 'full';
+    delete root.dataset.transition;
+    paint.continueBattle();
+  });
+  return { overlay, root, left, cloud, winner, starts, celebrations, busyChanges, choices, skin: builtInSkin() };
+}
+
+function resolvedChoice(id = 8): GameActionView {
+  return { ...action('paper', 'rock'), id, kind: 'duel', duelRound: 1 };
+}
+
+test('confirmed choice pause contains only the viewer weapon, including the second submitter without a private acknowledgement', () => {
+  for (const you of ['a', 'b']) {
+    const view = { ...fixture(), you };
+    const model = combatModel(resolvedChoice(), view)!;
+    const held = confirmedDuelChoice(model, null)!;
+    assert.equal(held.selected, you === 'a' ? 'paper' : 'rock');
+    assert.equal(held.team, you === 'a' ? 'blue' : 'red');
+    assert.equal(held.disabled, true);
+    assert.equal(held.locked, true);
+    assert.doesNotMatch(held.status, /Papier|Stein|Schere|gewinnt|verliert/);
+    const changedOpponent = resolvedChoice();
+    (you === 'a' ? changedOpponent.defender! : changedOpponent.attacker).kind = 'scissors';
+    assert.deepEqual(confirmedDuelChoice(combatModel(changedOpponent, view)!, null), held, 'The held UI does not depend on the opponent weapon.');
+  }
+  assert.equal(confirmedDuelChoice(combatModel(action(), fixture())!, null), null, 'Ordinary attacks do not create a choice pause.');
+});
+
+test('confirmed choices hold the board busy for 600ms; skin repaints neither reveal early nor repeat the start callback', (t) => {
+  t.mock.timers.enable({ apis: ['setTimeout'] });
+  const h = overlayHarness(t), before = duelView(), after = fixture();
+  before.duel!.yourChoice = 'paper';
+  before.duel!.choiceLocked.a = true;
+  h.overlay.update(before, h.skin, { connected: true, pending: false });
+  const event = resolvedChoice();
+  h.overlay.present(event, after);
+  assert.equal(h.overlay.busy, true);
+  assert.equal(h.overlay.waitingForReveal, true);
+  assert.equal(h.root.dataset.transition, 'reveal');
+  assert.equal(h.root.dataset.mode, 'choice');
+  assert.equal(h.choices.at(-1)!.duelId, 'duel');
+  assert.equal(h.choices.at(-1)!.selected, 'paper');
+  assert.equal(h.starts.length, 0);
+  t.mock.timers.tick(300);
+  h.overlay.update(after, { ...h.skin }, { connected: true, pending: false });
+  t.mock.timers.tick(299);
+  assert.equal(h.starts.length, 0);
+  event.defender!.kind = 'scissors';
+  t.mock.timers.tick(1);
+  assert.equal(h.overlay.waitingForReveal, false);
+  assert.equal(h.root.dataset.mode, 'battle');
+  assert.equal(h.starts.length, 1);
+  assert.equal(h.starts[0].defender!.kind, 'rock', 'The deferred callback owns a copy of its original public event.');
+  h.overlay.update(after, { ...h.skin }, { connected: true, pending: false });
+  assert.equal(h.starts.length, 1);
+  assert.deepEqual(h.busyChanges, [true]);
+  h.overlay.reset();
+  t.mock.timers.tick(20000);
+  assert.deepEqual(h.celebrations, []);
+});
+
+test('reset, disconnect, pause and a new match discard delayed and queued fights without affecting a later valid pause', (t) => {
+  t.mock.timers.enable({ apis: ['setTimeout'] });
+  for (const cancel of ['reset', 'disconnect', 'pause', 'match']) {
+    const h = overlayHarness(t), before = duelView();
+    let current = fixture();
+    h.overlay.update(before, h.skin, { connected: true, pending: false });
+    h.overlay.present(resolvedChoice(8), current);
+    h.overlay.present(resolvedChoice(9), current);
+    t.mock.timers.tick(250);
+    if (cancel === 'reset') h.overlay.reset();
+    if (cancel === 'disconnect') h.overlay.update(current, h.skin, { connected: false, pending: false });
+    if (cancel === 'pause') h.overlay.update({ ...current, paused: true }, h.skin, { connected: true, pending: false });
+    if (cancel === 'match') {
+      current = { ...current, series: { ...current.series, matchId: 'next-match' } };
+      h.overlay.update(current, h.skin, { connected: true, pending: false });
+    }
+    assert.equal(h.overlay.busy, false, cancel);
+    assert.equal(h.overlay.waitingForReveal, false, cancel);
+    h.overlay.update(current, h.skin, { connected: true, pending: false });
+    h.overlay.present(resolvedChoice(10), current);
+    t.mock.timers.tick(350); // The cancelled first pause would have expired here.
+    assert.equal(h.overlay.waitingForReveal, true, cancel);
+    assert.equal(h.starts.length, 0, cancel);
+    t.mock.timers.tick(249);
+    assert.equal(h.starts.length, 0, cancel);
+    t.mock.timers.tick(1);
+    assert.deepEqual(h.starts.map((event) => event.id), [10], cancel);
+    h.overlay.reset();
+    t.mock.timers.tick(20000);
+    assert.deepEqual(h.starts.map((event) => event.id), [10], cancel);
+    assert.deepEqual(h.celebrations, [], cancel);
+  }
+});
+
+test('ordinary fights start immediately and use all four animation endpoints before celebration; neutral results remain for 1800ms', (t) => {
+  t.mock.timers.enable({ apis: ['setTimeout'] });
+  const h = overlayHarness(t), view = fixture();
+  h.overlay.update(view, h.skin, { connected: true, pending: false });
+  h.overlay.present(action(), view);
+  assert.equal(h.overlay.waitingForReveal, false);
+  assert.equal(h.starts.length, 1);
+  t.mock.timers.tick(600);
+  h.left.dispatchEvent(animationEnd('combat-approach-left'));
+  assert.equal(h.root.dataset.stage, 'impact');
+  t.mock.timers.tick(600);
+  h.cloud.dispatchEvent(animationEnd('combat-impact'));
+  assert.equal(h.root.dataset.stage, 'shatter');
+  t.mock.timers.tick(700);
+  h.left.dispatchEvent(animationEnd('combat-return-left'));
+  assert.equal(h.root.dataset.stage, 'winner');
+  t.mock.timers.tick(1100);
+  assert.deepEqual(h.celebrations, []);
+  h.winner.dispatchEvent(animationEnd('combat-winner-pulse'));
+  assert.equal(h.overlay.busy, false);
+  assert.deepEqual(h.celebrations, ['a']);
+  h.overlay.present({ ...action('rock', 'rock', null), id: 9 }, duelView());
+  t.mock.timers.tick(600);
+  h.left.dispatchEvent(animationEnd('combat-approach-left'));
+  t.mock.timers.tick(600);
+  h.cloud.dispatchEvent(animationEnd('combat-impact'));
+  assert.equal(h.root.dataset.stage, 'result');
+  t.mock.timers.tick(1799);
+  assert.equal(h.overlay.busy, true);
+  t.mock.timers.tick(1);
+  assert.equal(h.overlay.busy, false);
+  assert.equal(h.root.dataset.mode, 'choice');
+  assert.deepEqual(h.celebrations, ['a']);
+  h.overlay.reset();
+});
+
+test('missing animation events use the longer bounded phase fallbacks', (t) => {
+  t.mock.timers.enable({ apis: ['setTimeout'] });
+  const h = overlayHarness(t), view = fixture();
+  h.overlay.update(view, h.skin, { connected: true, pending: false });
+  h.overlay.present(action(), view);
+  for (const [delay, current, next] of [[1600, 'approach', 'impact'], [1600, 'impact', 'shatter'], [1700, 'shatter', 'winner']] as const) {
+    t.mock.timers.tick(delay - 1);
+    assert.equal(h.root.dataset.stage, current);
+    t.mock.timers.tick(1);
+    assert.equal(h.root.dataset.stage, next);
+  }
+  t.mock.timers.tick(2099);
+  assert.equal(h.overlay.busy, true);
+  t.mock.timers.tick(1);
+  assert.equal(h.overlay.busy, false);
+  assert.deepEqual(h.celebrations, ['a']);
+  h.overlay.reset();
+});
+
+test('motion disabled during the choice pause and system reduced motion retain the pause followed by a static 350ms result', (t) => {
+  t.mock.timers.enable({ apis: ['setTimeout'] });
+  for (const systemReduced of [false, true]) {
+    const h = overlayHarness(t, systemReduced);
+    h.overlay.update(duelView(), h.skin, { connected: true, pending: false });
+    h.overlay.present(resolvedChoice(), fixture());
+    t.mock.timers.tick(300);
+    if (!systemReduced) h.overlay.setAnimationsEnabled(false);
+    assert.equal(h.overlay.waitingForReveal, true);
+    assert.equal(h.starts.length, 0);
+    t.mock.timers.tick(300);
+    assert.equal(h.root.dataset.stage, 'result');
+    assert.equal(h.root.dataset.motion, 'reduced');
+    assert.equal(h.starts.length, 1);
+    t.mock.timers.tick(349);
+    assert.equal(h.overlay.busy, true);
+    t.mock.timers.tick(1);
+    assert.equal(h.overlay.busy, false);
+    assert.deepEqual(h.celebrations, ['a']);
+    h.left.dispatchEvent(animationEnd('combat-approach-left'));
+    t.mock.timers.tick(20000);
+    assert.equal(h.starts.length, 1);
+    assert.deepEqual(h.celebrations, ['a']);
+    h.overlay.reset();
+  }
+});
+
+test('typing targets preserve their focus while board controls can still receive the initial weapon choice focus', () => {
+  const element = (tagName: string, type = '', isContentEditable = false) => ({ tagName, type, isContentEditable }) as unknown as Element;
+  for (const input of [element('INPUT', 'text'), element('INPUT', 'search'), element('TEXTAREA'), element('SPAN', '', true)]) {
+    assert.equal(isTextEntry(input), true);
+  }
+  for (const control of [null, element('DIV'), element('BUTTON', 'button'), element('INPUT', 'checkbox'), element('SPAN')]) {
+    assert.equal(isTextEntry(control), false);
+  }
 });

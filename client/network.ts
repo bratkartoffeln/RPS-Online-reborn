@@ -1,5 +1,5 @@
 import { Client, CloseCode, ErrorCode, MatchMakeError, ServerError, type Room } from '@colyseus/sdk';
-import { SERVER_SHUTDOWN_MESSAGE as SHUTDOWN_MESSAGE, type Snapshot, type Problem, type ServerShutdown } from '../shared/protocol';
+import { SERVER_SHUTDOWN_MESSAGE as SHUTDOWN_MESSAGE, type Snapshot, type Problem, type ServerShutdown, type ChatState, type ChatProblem } from '../shared/protocol';
 import type { SeriesMode } from '../shared/game';
 
 export type NetworkStatus = 'idle' | 'connecting' | 'connected' | 'reconnecting' | 'disconnected' | 'ended';
@@ -9,6 +9,8 @@ type Callbacks = {
   onSnapshot: (snapshot: Snapshot) => void;
   onProblem: (message: string) => void;
   onEnded: (end: SessionEnd) => void;
+  onChat?: (state: ChatState) => void;
+  onChatProblem?: (problem: ChatProblem) => void;
 };
 
 const SESSION_PREFIX = 'rps-arena:reconnect:';
@@ -173,6 +175,12 @@ export class RpsConnection {
     });
     room.onMessage<Problem>('problem', (problem) => {
       if (current()) this.callbacks.onProblem(problem.message || 'Diese Aktion ist gerade nicht möglich.');
+    });
+    room.onMessage<ChatState>('chat', (state) => {
+      if (current() && state.roomId === room.roomId) this.callbacks.onChat?.(state);
+    });
+    room.onMessage<ChatProblem>('chat_problem', (problem) => {
+      if (current()) this.callbacks.onChatProblem?.(problem);
     });
     room.onMessage<ServerShutdown>('server_shutdown', (shutdown) => {
       if (current()) this.endSession('server_shutdown', shutdown?.message);

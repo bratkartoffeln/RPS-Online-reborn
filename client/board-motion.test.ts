@@ -3,7 +3,8 @@ import { test } from 'node:test';
 import type { GameActionView, GameView, PieceView } from '../shared/game';
 import {
   artworkForPiece, artworkFrame, canContinueEffect, captureMotionFrame, CELEBRATION_MS,
-  celebrationOffset, clipDuration, freshAction, freshActionFromFrame, sameMotionFrame,
+  celebrationOffset, clipDuration, FLAG_CELEBRATION_MS, flagCelebrationOffset, flagVictoryForView,
+  freshAction, freshActionFromFrame, sameMotionFrame,
 } from './board-motion';
 import type { PieceArtwork } from './skin-types';
 import { DEFAULT_SKIN } from './skins';
@@ -91,6 +92,56 @@ test('the final flag capture is animated even though its snapshot is finished', 
   next.lastAction!.defender!.kind = 'flag';
   assert.equal(freshAction(previous, next), next.lastAction);
   assert.equal(freshAction(next, next), null);
+});
+
+test('flag heroes face both viewers, share four hops and reset with the match or skin', () => {
+  const skin = {
+    ...DEFAULT_SKIN,
+    atlas: { image: 'atlas.svg', frames: {
+      'blue-hero': { x: 0, y: 0, width: 272, height: 272 },
+      'red-hero': { x: 288, y: 0, width: 272, height: 272 },
+    } },
+    flagVictoryFrames: { blue: 'blue-hero', red: 'red-hero' },
+  };
+  const final = battle();
+  final.phase = 'finished'; final.finishReason = 'flag'; final.winner = 'me'; final.currentTurn = null;
+  final.lastAction!.outcome = 'flag'; final.lastAction!.defender!.kind = 'flag';
+  for (const color of ['blue', 'red'] as const) {
+    final.players[0].seat = color === 'blue' ? 0 : 1;
+    final.players[1].seat = color === 'blue' ? 1 : 0;
+    for (const viewer of ['me', 'peer']) {
+      final.you = viewer;
+      assert.deepEqual(flagVictoryForView(skin, final), { pieceId: 'a', ownerId: 'me', frame: `${color}-hero` });
+    }
+  }
+  const retained = structuredClone(final); retained.revision++;
+  assert.deepEqual(flagVictoryForView(skin, retained), flagVictoryForView(skin, final), 'End-of-game updates retain the static pose.');
+  for (const mutate of [
+    (view: typeof final) => { view.phase = 'setup'; view.series.matchId = 'match-2'; view.lastAction = null; },
+    (view: typeof final) => { view.finishReason = 'resign'; },
+    (view: typeof final) => { view.lastAction!.outcome = 'attacker'; },
+    (view: typeof final) => { view.lastAction!.defender!.owner = 'me'; },
+    (view: typeof final) => { view.winner = 'peer'; },
+    (view: typeof final) => { view.board[14] = null; },
+  ]) {
+    const changed = structuredClone(final); mutate(changed);
+    assert.equal(flagVictoryForView(skin, changed), null);
+  }
+  assert.equal(flagVictoryForView(skin, null), null);
+  assert.equal(flagVictoryForView(DEFAULT_SKIN, final), null);
+  const pose = flagVictoryForView(skin, final)!;
+  assert.equal(artworkFrame({ frame: pose.frame }, 'win', 1000, false), pose.frame, 'Reduced motion keeps the happy static pose.');
+  for (let hop = 0; hop < 4; hop++) {
+    const start = hop * 420, peak = start + 210;
+    assert.equal(flagCelebrationOffset(start, true), 0);
+    assert.equal(flagCelebrationOffset(start), 0);
+    assert.equal(flagCelebrationOffset(peak, true), -(24 - hop * 2));
+    assert.equal(flagCelebrationOffset(peak), -(16 - hop));
+  }
+  for (const elapsed of [-1, FLAG_CELEBRATION_MS, FLAG_CELEBRATION_MS + 1]) {
+    assert.equal(flagCelebrationOffset(elapsed, true), 0);
+    assert.equal(flagCelebrationOffset(elapsed), 0);
+  }
 });
 
 test('the first private duel choice continues the visible effect; resolution gets its own event', () => {

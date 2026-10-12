@@ -1,7 +1,9 @@
+import { mobileGraphics } from './mobile-graphics';
 import './styles.css';
 import './series.css';
 import './retro.css';
 import './combat-ui.css';
+import './chat-ui.css';
 import type { FighterKind, PlayerView, PieceView } from '../shared/game';
 import type { Snapshot } from '../shared/protocol';
 import { ArenaBoard, coordinate, kindName } from './board';
@@ -15,7 +17,8 @@ import { GameSounds } from './sound';
 import { readSeriesMode, seriesAnnouncement, seriesModeDescription, seriesModeLabel, seriesScoreMarkup, seriesVoteStatus, seriesWinnerText } from './series-ui';
 import { refereePortrait } from './referee-ui';
 import { otherTeamColor, teamColorForPlayer, teamColorName } from './team-ui';
-import { CombatOverlay } from './combat-ui';
+import { CombatOverlay, COMBAT_TIMING } from './combat-ui';
+import { RoomChat } from './chat-ui';
 import { freshVictory } from './match-victory';
 
 const app = document.querySelector<HTMLDivElement>('#app')!;
@@ -32,7 +35,7 @@ app.innerHTML = [
   '<div class="board-region"><div class="board-surface"><div id="board" class="canvas-wrap" tabindex="0" role="application" aria-label="Spielfeld mit sieben Spalten und sechs Reihen" aria-describedby="board-help board-focus"></div><div id="combat-overlay" class="combat-overlay" hidden></div></div>',
   '<div class="preview-banner" id="preview-banner">' + icon('unknown', '', 18) + '<span>Ein guter Plan bleibt erst einmal geheim.</span></div></div>',
   '<div class="action-recap" id="action-recap" hidden></div>',
-  '<div class="board-footer"><span class="team-key" id="own-team-key" data-team-color="blue"><span class="team-square"></span><span id="own-count">Dein Team</span></span><span class="team-key enemy" id="enemy-team-key" data-team-color="red"><span class="team-square"></span><span id="enemy-count">Gegner</span></span><span class="board-hint" id="board-hint">Erstelle oder betrete einen Raum.</span></div></section>',
+  '<div class="board-footer"><span class="team-key" id="own-team-key" data-team-color="blue"><span class="team-square"></span><span id="own-count">Dein Team</span></span><span class="team-key enemy" id="enemy-team-key" data-team-color="red"><span class="team-square"></span><span id="enemy-count">Gegner</span></span><span class="board-hint" id="board-hint">Erstelle oder betrete einen Raum.</span></div><section id="room-chat" hidden></section></section>',
   '<aside class="side-column" id="sidebar" aria-label="Spielsteuerung"></aside></main>',
   '<footer class="footer"><span>' + icon('info', '', 13) + 'Ein unabhängiges Remake · vorläufige Regeln für Version ' + esc(__APP_VERSION__) + '</span><span>Figur anklicken oder <kbd>↑</kbd><kbd>←</kbd><kbd>↓</kbd><kbd>→</kbd> + <kbd>Enter</kbd></span></footer></div>',
   '<p class="sr-only" id="board-help">Mit den Pfeiltasten ein Feld wählen. Mit Enter oder Leertaste eine eigene Figur und anschließend ein Zielfeld wählen. Escape hebt die Auswahl auf. In der Aufstellung tauschen zwei eigene Figuren die Plätze. Alternativ eine eigene Figur auf eine zweite eigene Figur ziehen. Im Spiel sind markierte Felder erlaubte Ziele.</p>',
@@ -64,6 +67,7 @@ const reducedMotion = window.matchMedia('(prefers-reduced-motion: reduce)');
 const sounds = new GameSounds();
 let soundsPreferred = readPreference('rps-arena:sounds') === 'on';
 
+const chat: RoomChat = new RoomChat(el('room-chat'), message => connection.send('chat_send', message));
 const connection = new RpsConnection({
   onStatus(status) {
     networkStatus = status;
@@ -79,7 +83,7 @@ const connection = new RpsConnection({
       (view.phase === 'setup' && snapshot.phase === 'playing');
     const action = networkStatus === 'connected' ? freshAction(view, snapshot) : null;
     const victory = networkStatus === 'connected' ? freshVictory(view, snapshot) : null;
-    if (action) sounds.playAction(action, snapshot.you, currentSkin.definition.motion.battleMs);
+    if (action?.kind === 'move') sounds.playAction(action, snapshot.you, 0);
     if (view?.phase !== snapshot.phase || view?.series.matchId !== snapshot.series.matchId) {
       selected = null;
       if (confirmAction) closeModal();
@@ -95,9 +99,9 @@ const connection = new RpsConnection({
     else if (victory) combat.reset();
     render();
     if (victory && (!action || action.kind === 'move')) board.celebrate(victory);
-    if (showPlayPanel) {
+    if (showPlayPanel && !chat.hasInputFocus) {
       requestAnimationFrame(() => {
-        if (view?.series.matchId === snapshot.series.matchId) {
+        if (view?.series.matchId === snapshot.series.matchId && !chat.hasInputFocus) {
           app.querySelector<HTMLElement>('.play-panel')?.scrollIntoView({ block: 'start', behavior: 'instant' });
         }
       });
@@ -116,6 +120,8 @@ const connection = new RpsConnection({
     toast(message, true);
     connection.send('sync');
   },
+  onChat(state) { chat.receive(state); },
+  onChatProblem(problem) { chat.problem(problem); },
   onEnded(end) {
     combat.reset();
     sessionEnd = end;
@@ -143,6 +149,9 @@ const board = new ArenaBoard(el('board'), {
 const combat = new CombatOverlay(el('combat-overlay'), {
   onBusyChange() { updateBoardInteraction(); },
   onCelebrate(ownerId) { board.celebrate(ownerId); },
+  onBattleStart(action) {
+    if (view) sounds.playAction(action, view.you, animationsPreferred && !reducedMotion.matches ? COMBAT_TIMING.shatter : 0);
+  },
 });
 el('board').addEventListener('pointerdown', () => el('board').focus({ preventScroll: true }));
 
@@ -494,6 +503,14 @@ function boardHint(): string {
   return view.phase === 'duel' ? 'Wähle deine Waffe über dem Spielfeld.' : view.series.winner ? 'Die Serie ist entschieden.' : 'Gemeinsam die nächste Partie starten.';
 }
 
+const renderedMarkup = new WeakMap<HTMLElement, string>();
+function replaceMarkup(target: HTMLElement, markup: string): void {
+  if (!mobileGraphics() || renderedMarkup.get(target) !== markup) {
+    target.innerHTML = markup;
+    if (mobileGraphics()) renderedMarkup.set(target, markup);
+  }
+}
+
 function render(): void {
   const active = document.activeElement instanceof HTMLElement ? document.activeElement : null;
   const focusId = active?.closest('#sidebar') ? active.id : '';
@@ -514,7 +531,7 @@ function render(): void {
   const refereeState = refereePortrait(currentSkin.definition, view);
   const referee = retroLogo && !view ? refereeMarkup(96) : '';
   const masthead = retroLogo ? '<section class="retro-masthead" aria-label="RPS Arena"><div class="retro-masthead-art">' + retroLogo + referee + '</div><span>' + esc(view ? 'Stein · Papier · Schere' : refereeState.caption) + '</span></section>' : '';
-  el('sidebar').innerHTML = masthead + (view ? gameMarkup() : lobbyMarkup());
+  replaceMarkup(el('sidebar'), masthead + (view ? gameMarkup() : lobbyMarkup()));
   if (detailsOpen) el('sidebar').querySelector<HTMLDetailsElement>('.rules-details')!.open = true;
   const historyDetails = el('sidebar').querySelector<HTMLDetailsElement>('.history-details');
   if (historyOpen && historyDetails) {
@@ -534,10 +551,10 @@ function render(): void {
   el('series-scoreboard').hidden = !view;
   if (el('series-scoreboard').innerHTML !== scores) el('series-scoreboard').innerHTML = scores;
   const paused = networkStatus === 'reconnecting' || networkStatus === 'disconnected' || networkStatus === 'ended';
-  el('header-note').innerHTML = '<span class="status-dot ' + (paused ? 'offline' : '') + '"></span>' + (networkStatus === 'ended' ? 'PARTIE BEENDET' : view ? networkStatus === 'connected' ? 'VERBUNDEN' : 'VERBINDUNG PAUSIERT' : 'PRIVATE PARTIEN');
+  replaceMarkup(el('header-note'), '<span class="status-dot ' + (paused ? 'offline' : '') + '"></span>' + (networkStatus === 'ended' ? 'PARTIE BEENDET' : view ? networkStatus === 'connected' ? 'VERBUNDEN' : 'VERBINDUNG PAUSIERT' : 'PRIVATE PARTIEN'));
   el('page-title').textContent = view ? networkStatus === 'ended' ? 'Diese Partie ist beendet.' : view.phase === 'waiting' || view.phase === 'setup' ? 'Die Aufstellung zählt.' : view.phase === 'finished' ? view.series.winner ? 'Die Serie ist entschieden.' : 'Die Partie ist entschieden.' : 'Jeder Zug zählt.' : 'Dein Zug beginnt hier.';
   el('page-eyebrow').textContent = view ? 'DEINE PRIVATE ARENA' : 'DAS TAKTISCHE DUELL FÜR ZWEI';
-  el('page-subtitle').innerHTML = view ? 'Ein Plan. Ein Gegner.<br>Und eine Flagge.' : 'Figuren verdecken.<br>Gedanken lesen. Flagge holen.';
+  replaceMarkup(el('page-subtitle'), view ? 'Ein Plan. Ein Gegner.<br>Und eine Flagge.' : 'Figuren verdecken.<br>Gedanken lesen. Flagge holen.');
   el('board-title').textContent = view ? 'Dein Spielfeld' : 'Das Spielfeld';
   el('board-subtitle').textContent = view ? '7 × 6 Felder · Dein Team startet unten' : '7 × 6 Felder · Vorschau';
   const badge = el('board-phase');
@@ -569,7 +586,8 @@ function render(): void {
   el('action-recap').hidden = !recap;
   if (el('action-recap').innerHTML !== recap) el('action-recap').innerHTML = recap;
   el('notice').hidden = !notice;
-  el('notice').innerHTML = notice ? icon('info', '', 17) + '<span class="notice-content">' + esc(notice) + '</span><button class="notice-button" data-action="dismiss-notice" aria-label="Hinweis schließen">' + icon('close', '', 12) + '</button>' : '';
+  replaceMarkup(el('notice'), notice ? icon('info', '', 17) + '<span class="notice-content">' + esc(notice) + '</span><button class="notice-button" data-action="dismiss-notice" aria-label="Hinweis schließen">' + icon('close', '', 12) + '</button>' : '');
+  chat.updateSession(view, networkStatus === 'connected');
   combat.update(view, currentSkin, { connected: networkStatus === 'connected', pending });
   updateBoardInteraction();
 }

@@ -23,6 +23,7 @@ function observe(room: Room) {
     },
   };
   room.onMessage('snapshot', (value: Snapshot) => { observer.snapshot = value; });
+  room.onMessage('chat', () => {}); // The separate chat suite inspects room history.
   room.onMessage('problem', (value: { message: string }) => observer.problems.push(value.message));
   room.onError(() => {});
   room.send('sync');

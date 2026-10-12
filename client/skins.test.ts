@@ -316,7 +316,8 @@ test('bundled retro, classic and Arcade packs resolve to existing, correctly bou
   assert.notEqual(retro.colorTurnPortraits.blue, retro.colorTurnPortraits.red);
   assert.notEqual(retro.colorTurnPortraits.blue, retro.portrait);
   assert.notEqual(retro.colorTurnPortraits.red, retro.portrait);
-  assert.equal(Object.keys(retro.atlas!.frames).length, 41);
+  assert.equal(Object.keys(retro.atlas!.frames).length, 43);
+  assert.deepEqual(retro.flagVictoryFrames, { blue: 'blue-front-flag-victory', red: 'red-front-flag-victory' });
   assert.deepEqual(retro.directionalTurnPortraits, {
     blue: { top: 'referee-blue-top', bottom: 'referee-blue-turn' },
     red: { top: 'referee-red-turn', bottom: 'referee-red-bottom' },
@@ -563,4 +564,44 @@ test('optional weapons never hide a main-atlas loading failure', async (t) => {
   t.mock.method(globalThis, 'fetch', async () => jsonResponse(weaponArtwork()));
   mockImages(t, 128, 64, (url) => url.includes('/atlas.png'));
   await assert.rejects(loadSkin(entry), /Atlasbild.*atlas\.png.*nicht geladen/);
+});
+
+function touchDevice(t: TestContext): void {
+  const previous = Object.getOwnPropertyDescriptor(globalThis, 'window');
+  Object.defineProperty(globalThis, 'window', { configurable: true, value: { matchMedia: () => ({ matches: true }) } });
+  t.after(() => { if (previous) Object.defineProperty(globalThis, 'window', previous); else Reflect.deleteProperty(globalThis, 'window'); });
+}
+
+test('touch devices load only the small raster and use its own frame coordinates', async (t) => {
+  touchDevice(t);
+  const source = { ...vectorArtwork(), mobileAtlas: { image: 'mobile.webp', frames: { base: { x: 0, y: 0, width: 32, height: 32 }, pulse: { x: 32, y: 0, width: 32, height: 32 } } } };
+  t.mock.method(globalThis, 'fetch', async () => jsonResponse(source));
+  const urls = mockImages(t, 64, 32);
+  const skin = await loadSkin(entry);
+  assert.equal(urls.length, 1);
+  assert.match(urls[0], /mobile\.webp/);
+  assert.equal(skin.definition.atlas?.frames.pulse.x, 32);
+  assert.equal(skin.imageIsVector, false);
+});
+
+test('missing optional mobile artwork falls back to the existing raster before SVG', async (t) => {
+  touchDevice(t);
+  const source = { ...vectorArtwork(), mobileAtlas: { ...artwork().atlas, image: 'mobile.webp' } };
+  t.mock.method(globalThis, 'fetch', async () => jsonResponse(source));
+  const urls = mockImages(t, 128, 64, url => url.includes('mobile.webp'));
+  const skin = await loadSkin(entry);
+  assert.equal(urls.length, 2);
+  assert.match(urls[1], /atlas\.png/);
+  assert.equal(skin.definition.atlas?.frames.pulse.x, 64);
+});
+
+test('touch devices with legacy packs prefer raster and skip the optional weapon SVG', async (t) => {
+  touchDevice(t);
+  const source = { ...weaponArtwork(), atlas: vectorArtwork().atlas };
+  t.mock.method(globalThis, 'fetch', async () => jsonResponse(source));
+  const urls = mockImages(t);
+  const skin = await loadSkin(entry);
+  assert.equal(urls.length, 1);
+  assert.match(urls[0], /atlas\.png/);
+  assert.equal(skin.weaponAtlas, undefined);
 });

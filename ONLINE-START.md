@@ -7,7 +7,7 @@ nicht eingerichtet. Die Dateien können weiterhin lokal oder im LAN laufen.
 
 ## Der erste Schritt bei dir
 
-Entpacke die neue ZIP in einen eigenen Ordner, öffne `rps-remake` in VS Code
+Entpacke **RPS-Arena-v0.4.7-komplett.zip** in einen eigenen Ordner, öffne `rps-remake` in VS Code
 und veröffentliche diesen Ordner als **privates GitHub-Repository**.
 Die Datei `render.yaml` muss dabei direkt in der Repository-Wurzel liegen,
 neben `package.json` und `Dockerfile`.
@@ -69,7 +69,7 @@ Partie bei einem Serverneustart oder Deployment.
    Abhängigkeiten, führt die automatisierten Tests aus und baut beide Teile
    der Anwendung. Der Container startet nur den gebauten Server.
 6. Die von Render tatsächlich ausgegebene **HTTPS-Adresse** öffnen. Dort
-   sollte RPS Arena 0.4.5 erscheinen. Diese Adresse für Einladungslinks verwenden.
+   sollte RPS Arena 0.4.7 erscheinen. Diese Adresse für Einladungslinks verwenden.
 
 `autoDeployTrigger: off` verhindert automatische Anwendungsdeploys bei jedem
 Commit. Änderungen an einem Blueprint können dennoch einen neuen Deploy
@@ -98,7 +98,8 @@ schließt sie die Testpartie. Andere Räume werden nicht verwendet.
 Dies prüft HTTP und die tatsächliche Spielverbindung. Es ersetzt keine
 Browserprüfung. Für den letzten Praxistest öffnen zwei Spieler die Adresse über
 unterschiedliche Internetanschlüsse, spielen eine vollständige Partie und
-testen Duell, Revanche sowie einmal Neuladen im selben Tab.
+testen Duell, Revanche, den Raumchat unter dem Spielfeld sowie einmal Neuladen
+im selben Tab. Der Chatverlauf desselben Raums bleibt beim Wiederbeitritt erhalten.
 
 ## Docker lokal oder automatisch prüfen
 
@@ -140,6 +141,8 @@ Compose allein stellt keine Internetadresse oder TLS bereit. Für Render wird
 - **Kurze Netzwerkstörung:** Die Partie pausiert; Wiederbeitritt bleibt möglich.
 - **Geordneter Serverneustart:** Der Server meldet das Ende ausdrücklich. Die
   Oberfläche beendet die alte Sitzung und bietet eine neue Partie an.
+  Partien, Serienwertungen und Chatverläufe liegen nur im Arbeitsspeicher und
+  werden beim Neustart nicht wiederhergestellt.
 - **Abgelaufener oder entfernter Raum:** Die alte Einladung wird deaktiviert.
   Ein vorübergehender Transportfehler löscht einen Rückkehrtoken dagegen nicht.
 - **Abrupter Prozess- oder Hostausfall:** Eine Shutdown-Nachricht kann ausbleiben.

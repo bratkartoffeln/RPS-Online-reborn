@@ -1,0 +1,78 @@
+[
+  {
+    "mobile": true,
+    "before": {
+      "running": false,
+      "frame": 4,
+      "canvas": [
+        680,
+        616
+      ],
+      "image": [
+        1008,
+        1008
+      ],
+      "limit": 30
+    },
+    "after": 4,
+    "moved": {
+      "taps": [
+        28,
+        21
+      ],
+      "turn": 1,
+      "frame": 17,
+      "running": false,
+      "effect": false
+    },
+    "appCanvas": [
+      568,
+      515,
+      284
+    ],
+    "combatResult": {
+      "motion": "reduced",
+      "shards": 0,
+      "cloud": 0
+    },
+    "errors": []
+  },
+  {
+    "mobile": false,
+    "before": {
+      "running": false,
+      "frame": 2,
+      "canvas": [
+        1360,
+        1232
+      ],
+      "image": [
+        2016,
+        2016
+      ],
+      "limit": 0
+    },
+    "after": 2,
+    "moved": {
+      "taps": [
+        29,
+        22
+      ],
+      "turn": 1,
+      "frame": 18,
+      "running": false,
+      "effect": false
+    },
+    "appCanvas": [
+      1360,
+      1232,
+      818
+    ],
+    "combatResult": {
+      "motion": "full",
+      "shards": 6,
+      "cloud": 1
+    },
+    "errors": []
+  }
+]

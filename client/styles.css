@@ -258,3 +258,7 @@ h1, h2, h3, p { margin: 0; }
 @media (max-width: 540px) { .action-recap { padding: 12px 14px; } .recap-copy { flex-basis: 100%; } .action-recap p { font-size: 10px; } .recap-fight { gap: 15px; } }
 
 .phase-card h2, .body-copy, .action-recap p, .move-log li { overflow-wrap: anywhere; }
+
+@media (hover: none) and (pointer: coarse) {
+  .preview-banner, .modal-backdrop { backdrop-filter: none; }
+}

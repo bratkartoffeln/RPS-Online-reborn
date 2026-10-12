@@ -1,5 +1,84 @@
 # Änderungen
 
+## 0.4.7
+
+### Flaggensieger und langsamere Kampfpräsentation
+
+- ICQ Retro erhält zwei native SVG-Frontposen für den tatsächlichen Eroberer
+  einer gegnerischen Flagge. Der Kämpfer lächelt und hält das eroberte Tuch
+  erhoben; beide Browser zeigen dieselbe Vorderansicht in seiner festen Teamfarbe.
+  Die seit 0.4.5 getauschten Zielflaggen bleiben unverändert: Der blaue Sieger
+  erobert ein blaues Tuch, der rote ein rotes.
+- Bei einem Flaggensieg springen alle verbliebenen Figuren der Gewinnerarmee
+  viermal gemeinsam. Der Fahnenträger bleibt danach am Zielfeld in seiner
+  Siegerpose. Ohne Animationen oder bei reduzierter Bewegung erscheint diese
+  Pose statisch. Normale Kampf- und Aufgabensiege behalten den bisherigen Jubel.
+- `flagVictoryFrames.blue/red` ist eine optionale Zuordnung im Grafikset.
+  Sie gilt ausschließlich für den durch den öffentlichen Spielstand bestätigten
+  Flaggeneroberer. Ohne passende Siegergrafik bleibt die reguläre Figur nutzbar.
+- Der Retro-Atlas wächst auf 43 Motive und 2016 × 2016 Einheiten. Die bisherigen
+  41 Ausschnittkoordinaten bleiben erhalten. SVG, daraus exportierte PNG und
+  Manifest werden gemeinsam erzeugt; `design/icq-retro-source/flag-victory.svg`
+  enthält die bearbeitbaren neuen Posen.
+- Der Atlasexport prüft die vollständige PNG vor dem Schreiben und ersetzt die
+  fertigen Grafikdateien atomar. Dadurch bleibt während eines Exports keine
+  nur teilweise geschriebene Atlasdatei sichtbar.
+- Die vier Kampfphasen dauern nominell 600/600/700/1100 Millisekunden, insgesamt
+  3000 Millisekunden. Nach bestätigter Waffenwahl folgt eine Pause von 600
+  Millisekunden bis zum Kampf. Ohne Animationen oder bei reduzierter Bewegung
+  bleibt das Ergebnis 350 Millisekunden statisch sichtbar.
+- Der gemeinsame Overlaygrund ist in Klassisch und Arcade zu 85 Prozent
+  deckend, im Retro-Design weiterhin zu 92 Prozent. Waffen, Texte und
+  Bedienelemente bleiben vollständig deckend.
+
+### Raumchat
+
+- Unter dem Spielfeld erscheint im Raum eine gemeinsame Nachrichtenliste mit
+  Eingabe und Senden-Schaltfläche. Enter sendet ebenfalls. Namen verwenden die
+  feste Teamfarbe des jeweiligen Spielers.
+- Der Server akzeptiert nichtleere, bereinigte Textnachrichten mit maximal 300
+  Unicode-Zeichen und mindestens 500 Millisekunden Abstand je Spieler. Er setzt
+  Namen, Seat, Spieler-ID, Zeit und fortlaufende Nachrichten-ID selbst.
+- Die letzten 50 Nachrichten bleiben im Arbeitsspeicher desselben Raums über
+  Partien, Serien und Wiederverbindungen erhalten. Ein neuer Raum startet leer;
+  bei Raumende oder Serverneustart geht der Verlauf verloren.
+- `chat_send`, `chat` und `chat_problem` bilden einen getrennten Nachrichtenkanal.
+  Spielrevision, letzte Aktion und geheime Duellwahlen bleiben unberührt.
+  Wiederholte Kennungen desselben Spielers werden innerhalb des behaltenen
+  Verlaufs bestätigt, ohne eine zweite Nachricht zu erzeugen.
+- Sendefehler erhalten den Entwurf. Die Wiederverbindung übernimmt den Verlauf
+  des bisherigen Raums. Ein verbundener Teilnehmer kann auch bei pausiertem
+  Gegner oder nach Partieende schreiben; nach der terminalen Servermeldung
+  werden keine Nachrichten mehr angenommen.
+
+### Lieferung
+
+- Vollständige Lieferung und aktuelle Update-Anleitungen auf **0.4.7** mit
+  `RPS-Arena-v0.4.7-komplett.zip`. Der QNAP-Neubau verwendet weiterhin den
+  vollständigen Quellstand und `--build --wait`; vorhandene HTTPS-Konfiguration,
+  eigene Grafiksets, Umgebungswerte, Token und Zertifikats-Volumes bleiben erhalten.
+- Der endgültige Prüfstand steht in `PRUEFBERICHT.md`.
+
+## 0.4.6
+
+### Zusammenhängende Flächen für Waffenwahl und Gefecht
+
+- Beide Overlays verwenden jeweils ein gemeinsames Panel mit rund 92 Prozent
+  deckender Hintergrundfarbe. Im Retro-Design ist diese Fläche helloliv.
+  Überschrift, Rollen, Spielernamen, Ergebnis und Auswahlstatus haben keine
+  separaten Hintergrundkacheln, Rahmen oder Schatten mehr.
+- Nur die Hintergrundfarbe ist leicht transparent. Waffenbilder, Texte und
+  Bedienelemente bleiben vollständig deckend, auch bei gesperrter Waffenwahl.
+  Die Auswahl bleibt mit Teamfarbe und Häkchen erkennbar; der Tastaturfokus
+  erhält eine klare Kontur.
+- Bei reduzierter Bewegung bleibt auch die statische Verliererwaffe deckend.
+  Graustufen und die Beschriftung „Besiegt“ zeigen das Ergebnis. Die animierte
+  Zerstörung der Verliererwaffe bleibt erhalten.
+- Angepasste Innenabstände halten beide Panels auf schmalen Spielfeldern
+  kompakt. Waffengrößen, Kampfphasen, Mannschaftsjubel und Spielregeln bleiben
+  erhalten. SVG- und PNG-Atlanten werden unverändert weiterverwendet.
+- Vollständige Lieferung und aktuelle QNAP-Updateversion: 0.4.6.
+
 ## 0.4.5
 
 ### Waffenwahl, Kampf-Overlay und Mannschaftsjubel

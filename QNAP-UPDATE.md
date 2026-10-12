@@ -1,4 +1,4 @@
-# QNAP: RPS Arena auf Version 0.4.5 aktualisieren
+# QNAP: RPS Arena auf Version 0.4.7 aktualisieren
 
 Diese Anleitung aktualisiert dein bestehendes Projekt **rps-arena** mit dem
 bereits funktionierenden HTTPS über Caddy und dynv6. Sie verwendet deinen
@@ -16,9 +16,9 @@ Docker-Compose-Version **v2.29.1-qnap2** unterstützt die verwendete Konfigurati
 
 ## 1. Vollständige Version übernehmen
 
-1. **RPS-Arena-v0.4.5.zip** zunächst in einen separaten Ordner entpacken. Die ZIP
+1. **RPS-Arena-v0.4.7-komplett.zip** zunächst in einen separaten Ordner entpacken. Die ZIP
    enthält den vollständigen Projektordner `rps-remake`.
-2. Die aktualisierten Programmdateien in den vorhandenen Projektordner auf dem
+2. Den vollständigen aktualisierten Quellstand in den vorhandenen Projektordner auf dem
    NAS kopieren und gleichnamige Programmdateien ersetzen. Dabei den vorhandenen
    Ordner **`skins`**, den Ordner **`secrets`** und die eigene **`.env`** behalten;
    diese lokalen Inhalte nicht durch Ordner aus der ZIP ersetzen.
@@ -33,9 +33,12 @@ Dateirechten erhalten bleiben. Die eingebauten Grafiken liegen in
 `public/skins` und gehören zu den zu aktualisierenden Programmdateien. Dazu
 gehören jetzt insbesondere `icq-retro/atlas.svg`, `icq-retro/atlas.png` und die
 zugehörige `skin.json`. Die vorhandene Caddy-Konfiguration bleibt verwendbar.
+Der Raumchat benötigt außerdem die neuen Browser-, Server- und gemeinsamen
+Quelldateien. Übernimm deshalb den vollständigen Programmstand einschließlich
+`client`, `server`, `shared`, `public`, `scripts` und der beiden Paketdateien.
 
-**Den Versionswechsel zwischen zwei Partien durchführen.** Spielstände und
-Serienwertungen liegen im Arbeitsspeicher und enden bei einem Serverneustart.
+**Den Versionswechsel zwischen zwei Partien durchführen.** Spielstände,
+Serienwertungen und Chatverläufe liegen im Arbeitsspeicher und enden bei einem Serverneustart.
 Ein Wiederbeitritt erhält sie nur, solange derselbe Raum auf dem Server weiterläuft.
 
 ## 2. Spiel und Caddy mit derselben Konfiguration neu bauen
@@ -75,7 +78,7 @@ docker compose -p rps-arena -f compose.yaml -f compose.dns.yaml --profile https 
 docker compose -p rps-arena -f compose.yaml -f compose.dns.yaml --profile https exec -T rps npm run check:online -- https://flusensieb.dns.navy:8443
 ```
 
-Die Prüfung muss **Version 0.4.5** erwarten und mit **„Onlineprüfung bestanden“**
+Die Prüfung muss **Version 0.4.7** erwarten und mit **„Onlineprüfung bestanden“**
 enden. Sie prüft unter anderem die ausgelieferte Oberfläche und Grafik-Map,
 zwei echte Spielverbindungen, verdeckte Figuren, Serienwertung, gemeinsame
 Fortsetzung und Wiederbeitritt mit vorhandenem Punktestand. Dafür erzeugt sie
@@ -83,12 +86,12 @@ eine eigene Testpartie und schließt sie anschließend wieder.
 
 Dieser Schritt bestätigt erst nach dem Update den Betrieb der neuen Version
 auf deinem NAS. Die bisherige Installation allein bestätigt noch nicht das
-Update auf 0.4.5.
+Update auf 0.4.7.
 
-## 4. Vektorgrafiken, Design und Serien im Browser ansehen
+## 4. Design und neue Funktionen im Browser ansehen
 
 1. [Die Spielseite öffnen](https://flusensieb.dns.navy:8443) und vollständig neu
-   laden. In der Oberfläche muss **v0.4.5** erscheinen.
+   laden. In der Oberfläche muss **v0.4.7** erscheinen.
 2. Unter **Design** im Feld **Dein Design** **ICQ Retro** wählen. Ohne bisher gespeicherte
    Designwahl ist es bereits der Standard. Eine vorhandene Browserwahl bleibt
    erhalten; **Klassisch** und **Arcade** sind weiterhin verfügbar. Die aktive
@@ -118,17 +121,35 @@ Update auf 0.4.5.
    davon unabhängig.
 6. In der Regelerklärung sind Stein, Papierrolle und Schere als einzelne Bilder
    sichtbar. Bei gleichen Waffen erscheinen die drei größeren Motive mittig
-   über dem Spielfeld mit der Überschrift **„Wähle deine Waffe“**. Der Hintergrund
-   bleibt transparent. Deine Wahl bleibt geheim; bei erneutem Gleichstand
+   über dem Spielfeld mit der Überschrift **„Wähle deine Waffe“**. Waffenwahl
+   und Gefecht haben jeweils eine gemeinsame, leicht transparente Hintergrundfläche.
+   Sie ist bei Klassisch und Arcade zu 85 Prozent deckend, bei ICQ Retro zu 92 Prozent.
+   Die Waffen, Texte und Bedienelemente bleiben vollständig deckend, auch nach
+   bestätigter Auswahl. Deine Wahl bleibt geheim; bei erneutem Gleichstand
    öffnet sich dort die nächste Runde.
-7. Bei jedem Kampf treffen die beiden Waffen im Overlay aufeinander. Auf eine
-   kurze Kampfwolke folgen die zerbrechende Verliererwaffe und der hervorgehobene
+7. Bei jedem Kampf treffen die beiden Waffen im Overlay aufeinander. Die vier
+   Phasen dauern zusammen nominell 3 Sekunden; nach bestätigter Waffenwahl liegt
+   davor eine Pause von 600 Millisekunden. Auf eine kurze Kampfwolke folgen
+   die zerbrechende Verliererwaffe und der hervorgehobene
    Sieger. Anschließend hüpft die gesamte verbliebene Gewinnerarmee kurz auf
    dem Brett. Derselbe Spieler und dieselbe Farbe gewinnen in beiden Browsern.
+8. Bei einer echten Flaggeneroberung erscheint im Retro-Design der erfolgreiche
+   Kämpfer lächelnd von vorn mit erhobener eroberter Flagge. Beide Browser zeigen
+   diese Vorderansicht. Der blaue Sieger hält ein blaues Tuch, der rote ein rotes;
+   die bisherigen Zielflaggen sind weiterhin getauscht. Alle verbliebenen
+   Siegerfiguren springen viermal gemeinsam. Danach bleibt der Fahnenträger
+   bis zur nächsten Partie auf dem Zielfeld stehen.
+9. Unter dem Spielfeld im **Chat** eine Nachricht mit Enter oder **Senden**
+   abschicken. Beide Teilnehmer sehen Name, feste Teamfarbe und Nachricht.
+   Bis zu 300 Unicode-Zeichen sind möglich; bei Sendefehlern bleibt der Entwurf
+   erhalten. Die letzten 50 Nachrichten bleiben über die nächste Partie,
+   neue Serien und Wiederverbindungen desselben Raums verfügbar. Ein neuer
+   Raum beginnt leer; ein Serverneustart löscht den bisherigen Raumverlauf.
 
-ICQ Retro verwendet jetzt einen vollständigen **SVG-Atlas mit 41 Motiven auf
-einer Zeichenfläche von 1728 × 2016**: Brett, beide Farben und Blickrichtungen einschließlich Aufdeckposen,
-Logo, fünf Schiedsrichterposen und die drei Einzelwaffen. Kann die SVG nicht
+ICQ Retro verwendet jetzt einen vollständigen **SVG-Atlas mit 43 Motiven auf
+einer Zeichenfläche von 2016 × 2016**: Brett, beide Farben und Blickrichtungen einschließlich Aufdeckposen,
+Logo, fünf Schiedsrichterposen, drei Einzelwaffen und zwei Flaggensieger. Die
+bisherigen 41 Ausschnittpositionen bleiben erhalten. Kann die SVG nicht
 verwendet werden, lädt das Set automatisch die aus derselben SVG neu exportierte PNG.
 Die beiden Dateien und ihre gemeinsame `skin.json` gehören deshalb zusammen.
 Auch Arcade verwendet seine `master.svg` mit passender PNG-Rückfallgrafik;
@@ -137,12 +158,13 @@ Das Brett berücksichtigt weiterhin die Bildschirmdichte bis Faktor 2. Nach dem
 Verschieben auf einen Monitor mit anderer Pixeldichte die Seite neu laden,
 damit der Zeichenpuffer dazu passt.
 
-Die Aufdeck- und Flaggenposen sowie die Waffenbilder funktionieren auch bei
+Die Aufdeck-, Flaggen- und Siegerposen sowie die Waffenbilder funktionieren auch bei
 abgeschalteten Animationen. Unter **Design → Animationen** lassen sich Kampf-
 und Sprungbewegungen ausschalten; eine Systemeinstellung für reduzierte Bewegung
-hat Vorrang. Dann erscheint kurz das statische Kampfergebnis, die zentrale
-Waffenwahl bleibt bedienbar. Für die neuen Bewegungen sind keine zusätzlichen
-Grafikdateien oder Änderungen an der Caddy-Konfiguration erforderlich.
+hat Vorrang. Dann erscheint das statische Kampfergebnis für 350 Millisekunden,
+die Flaggensiegerpose bleibt anschließend ohne Sprünge stehen und die zentrale
+Waffenwahl bleibt bedienbar. Die neuen Siegerbilder gehören zum mitgelieferten
+Atlas. Die vorhandene Caddy-Konfiguration bleibt für dieses Update verwendbar.
 
 Fehlt **ICQ Retro** in der Auswahl und existiert auf dem NAS ein eigener
 `skins/index.json`-Katalog, ergänze darin den neuen Eintrag. Das vollständige

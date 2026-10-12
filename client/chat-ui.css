@@ -1,0 +1,29 @@
+.room-chat { padding: 17px 24px 20px; border-top: 1px solid var(--line); color: var(--text); background: var(--panel); }
+.chat-header { display: flex; align-items: baseline; justify-content: space-between; flex-wrap: wrap; gap: 6px 12px; margin-bottom: 12px; }
+.chat-header h2 { font-size: 14px; font-weight: 700; }
+.chat-header > span { color: var(--muted); font-size: 10px; }
+.chat-history { min-height: 60px; max-height: 190px; overflow-y: auto; overscroll-behavior: contain; scrollbar-width: thin; padding: 0 3px 0 0; margin-bottom: 12px; }
+.chat-history:focus-visible { outline: 2px solid var(--green); outline-offset: -2px; }
+.chat-empty { padding: 13px 0; color: var(--muted); font-size: 12px; line-height: 1.5; }
+#chat-messages { margin: 0; padding: 0; list-style: none; }
+.chat-message { padding: 7px 0; }
+.chat-message + .chat-message { border-top: 1px solid var(--line); }
+.chat-message-meta { display: flex; align-items: baseline; justify-content: space-between; gap: 12px; }
+.chat-sender { min-width: 0; color: var(--team-color, var(--text)); font-size: 11px; overflow-wrap: anywhere; }
+.chat-message time { color: var(--muted); font-size: 10px; white-space: nowrap; }
+.chat-text { margin-top: 3px; color: var(--text); font-size: 13px; line-height: 1.45; overflow-wrap: anywhere; white-space: pre-wrap; }
+.chat-compose { display: flex; gap: 8px; align-items: stretch; }
+.chat-compose input { width: 100%; min-width: 0; flex: 1 1 0; min-height: 41px; padding: 10px 12px; border: 1px solid var(--surface-border); border-radius: 7px; color: var(--text); background: var(--surface-deep); font-size: 13px; }
+.chat-compose input::placeholder { color: var(--muted); opacity: 1; }
+.chat-compose button { flex: 0 0 auto; min-height: 41px; padding: 10px 15px; font-size: 12px; }
+.chat-status { margin-top: 8px; color: var(--muted); font-size: 11px; line-height: 1.4; overflow-wrap: anywhere; }
+.chat-status.chat-error { color: var(--team-red, var(--orange)); }
+:root[data-presentation="retro"] .room-chat { padding: 12px 18px 16px; }
+:root[data-presentation="retro"] .chat-compose input,
+:root[data-presentation="retro"] .chat-compose button { border-radius: 3px; }
+@media (max-width: 540px) {
+  .room-chat, :root[data-presentation="retro"] .room-chat { padding: 12px 10px 15px; }
+  .chat-history { max-height: 164px; }
+  .chat-compose input { padding: 9px; }
+  .chat-compose button { padding: 9px 12px; }
+}

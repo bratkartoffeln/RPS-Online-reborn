@@ -285,6 +285,18 @@
         "y": 1770,
         "width": 272,
         "height": 204
+      },
+      "blue-front-flag-victory": {
+        "x": 1448,
+        "y": 1736,
+        "width": 272,
+        "height": 272
+      },
+      "red-front-flag-victory": {
+        "x": 1736,
+        "y": 8,
+        "width": 272,
+        "height": 272
       }
     }
   },
@@ -474,6 +486,273 @@
     "red": {
       "top": "referee-red-turn",
       "bottom": "referee-red-bottom"
+    }
+  },
+  "flagVictoryFrames": {
+    "blue": "blue-front-flag-victory",
+    "red": "red-front-flag-victory"
+  },
+  "mobileAtlas": {
+    "image": "atlas-mobile.webp",
+    "frames": {
+      "blue-back-rock": {
+        "x": 24,
+        "y": 4,
+        "width": 96,
+        "height": 136
+      },
+      "blue-back-paper": {
+        "x": 167,
+        "y": 4,
+        "width": 97,
+        "height": 136
+      },
+      "blue-back-scissors": {
+        "x": 310,
+        "y": 4,
+        "width": 100,
+        "height": 136
+      },
+      "blue-back-flag": {
+        "x": 452,
+        "y": 4,
+        "width": 103,
+        "height": 136
+      },
+      "blue-back-trap": {
+        "x": 597,
+        "y": 4,
+        "width": 101,
+        "height": 136
+      },
+      "blue-back-unknown": {
+        "x": 740,
+        "y": 4,
+        "width": 104,
+        "height": 136
+      },
+      "blue-front-rock": {
+        "x": 14,
+        "y": 148,
+        "width": 116,
+        "height": 136
+      },
+      "blue-front-paper": {
+        "x": 157,
+        "y": 148,
+        "width": 118,
+        "height": 136
+      },
+      "blue-front-scissors": {
+        "x": 298,
+        "y": 148,
+        "width": 124,
+        "height": 136
+      },
+      "blue-front-flag": {
+        "x": 438,
+        "y": 148,
+        "width": 131,
+        "height": 136
+      },
+      "blue-front-trap": {
+        "x": 596,
+        "y": 148,
+        "width": 103,
+        "height": 136
+      },
+      "blue-front-unknown": {
+        "x": 738,
+        "y": 148,
+        "width": 108,
+        "height": 136
+      },
+      "red-back-rock": {
+        "x": 24,
+        "y": 292,
+        "width": 96,
+        "height": 136
+      },
+      "red-back-paper": {
+        "x": 167,
+        "y": 292,
+        "width": 97,
+        "height": 136
+      },
+      "red-back-scissors": {
+        "x": 310,
+        "y": 292,
+        "width": 100,
+        "height": 136
+      },
+      "red-back-flag": {
+        "x": 452,
+        "y": 292,
+        "width": 103,
+        "height": 136
+      },
+      "red-back-trap": {
+        "x": 597,
+        "y": 292,
+        "width": 101,
+        "height": 136
+      },
+      "red-back-unknown": {
+        "x": 740,
+        "y": 292,
+        "width": 104,
+        "height": 136
+      },
+      "red-front-rock": {
+        "x": 14,
+        "y": 436,
+        "width": 116,
+        "height": 136
+      },
+      "red-front-paper": {
+        "x": 157,
+        "y": 436,
+        "width": 118,
+        "height": 136
+      },
+      "red-front-scissors": {
+        "x": 298,
+        "y": 436,
+        "width": 124,
+        "height": 136
+      },
+      "red-front-flag": {
+        "x": 438,
+        "y": 436,
+        "width": 131,
+        "height": 136
+      },
+      "red-front-trap": {
+        "x": 596,
+        "y": 436,
+        "width": 103,
+        "height": 136
+      },
+      "red-front-unknown": {
+        "x": 738,
+        "y": 436,
+        "width": 108,
+        "height": 136
+      },
+      "blue-back-rock-revealed": {
+        "x": 7,
+        "y": 580,
+        "width": 129,
+        "height": 136
+      },
+      "blue-back-paper-revealed": {
+        "x": 158,
+        "y": 580,
+        "width": 116,
+        "height": 136
+      },
+      "blue-back-scissors-revealed": {
+        "x": 292,
+        "y": 580,
+        "width": 136,
+        "height": 136
+      },
+      "red-back-rock-revealed": {
+        "x": 439,
+        "y": 580,
+        "width": 129,
+        "height": 136
+      },
+      "red-back-paper-revealed": {
+        "x": 590,
+        "y": 580,
+        "width": 116,
+        "height": 136
+      },
+      "red-back-scissors-revealed": {
+        "x": 724,
+        "y": 580,
+        "width": 136,
+        "height": 136
+      },
+      "board-light": {
+        "x": 4,
+        "y": 724,
+        "width": 136,
+        "height": 136
+      },
+      "board-dark": {
+        "x": 148,
+        "y": 724,
+        "width": 136,
+        "height": 136
+      },
+      "logo": {
+        "x": 300,
+        "y": 724,
+        "width": 119,
+        "height": 136
+      },
+      "referee-blue-turn": {
+        "x": 436,
+        "y": 741,
+        "width": 136,
+        "height": 102
+      },
+      "referee-red-turn": {
+        "x": 580,
+        "y": 741,
+        "width": 136,
+        "height": 102
+      },
+      "referee-neutral": {
+        "x": 724,
+        "y": 741,
+        "width": 136,
+        "height": 102
+      },
+      "weapon-rock": {
+        "x": 4,
+        "y": 868,
+        "width": 136,
+        "height": 136
+      },
+      "weapon-paper": {
+        "x": 148,
+        "y": 868,
+        "width": 136,
+        "height": 136
+      },
+      "weapon-scissors": {
+        "x": 292,
+        "y": 868,
+        "width": 136,
+        "height": 136
+      },
+      "referee-blue-top": {
+        "x": 436,
+        "y": 885,
+        "width": 136,
+        "height": 102
+      },
+      "referee-red-bottom": {
+        "x": 580,
+        "y": 885,
+        "width": 136,
+        "height": 102
+      },
+      "blue-front-flag-victory": {
+        "x": 724,
+        "y": 868,
+        "width": 136,
+        "height": 136
+      },
+      "red-front-flag-victory": {
+        "x": 868,
+        "y": 4,
+        "width": 136,
+        "height": 136
+      }
     }
   }
 }
