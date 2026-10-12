@@ -635,3 +635,6 @@ KI und eine dauerhafte Spielstanddatenbank sind weitere Ausbauschritte.
 - Bereitstellung: https://docs.colyseus.io/deployment
 
 Der geprüfte Abhängigkeitsbaum steht in `package-lock.json`; `npm ci` installiert genau den geprüften Abhängigkeitsbaum.
+
+
+<!-- Deployment-Status-Test 2026-10-13 -->
