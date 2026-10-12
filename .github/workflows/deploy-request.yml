@@ -8,43 +8,115 @@ on:
 
 permissions:
   contents: read
+  deployments: read
 
 concurrency:
   group: rps-manual-deployment
   cancel-in-progress: false
 
 jobs:
-  request:
+  deploy:
     if: github.ref == 'refs/heads/main'
     runs-on: ubuntu-latest
+    timeout-minutes: 60
 
     steps:
-      - name: Deploymentanforderung registrieren
+      - name: Deployment anfordern
         shell: bash
         run: |
-          echo "QNAP Deployment angefordert"
-          echo "Branch: $GITHUB_REF_NAME"
-          echo "Commit: $GITHUB_SHA"
-          echo "Angefordert durch: $GITHUB_ACTOR"
-
           {
             echo "## RPS Arena – QNAP Deployment"
             echo ""
-            echo "**Anforderung:** erfolgreich registriert"
+            echo "Anforderung an das NAS übermittelt."
             echo ""
-            echo "**Branch:** $GITHUB_REF_NAME"
+            echo "- Commit: \`$GITHUB_SHA\`"
+            echo "- Run-ID: \`$GITHUB_RUN_ID\`"
             echo ""
-            echo "**Commit:** \`$GITHUB_SHA\`"
+            echo "Das NAS prüft alle 5 Minuten."
+            echo "Bei aktiven Spielräumen wird das Update verschoben."
             echo ""
-            echo "Das QNAP prüft alle 5 Minuten auf Updates."
-            echo "Aktive Spielräume verhindern einen Neustart."
-            echo ""
-            echo "Der Erfolg dieses Workflows bestätigt nur"
-            echo "die Anforderung, nicht die NAS-Installation."
-            echo ""
-            echo "### Tatsächlicher Deploymentstatus"
-            echo ""
-            echo "[GitHub Deployments öffnen](https://github.com/bratkartoffeln/RPS-Online-reborn/deployments)"
-            echo ""
-            echo "[RPS Arena öffnen](https://flusensieb.dns.navy:8443)"
+            echo "[Deployments ansehen](https://github.com/bratkartoffeln/RPS-Online-reborn/deployments)"
           } >> "$GITHUB_STEP_SUMMARY"
+
+      - name: Auf NAS-Bestätigung warten
+        shell: bash
+        env:
+          GH_TOKEN: ${{ github.token }}
+          REPO: ${{ github.repository }}
+          SHA: ${{ github.sha }}
+          RUN_ID: ${{ github.run_id }}
+        run: |
+          set -euo pipefail
+
+          API="https://api.github.com/repos/$REPO"
+
+          HEADERS=(
+            -H "Accept: application/vnd.github+json"
+            -H "Authorization: Bearer $GH_TOKEN"
+          )
+
+          echo "Warte auf NAS-Deployment für Run $RUN_ID"
+
+          for attempt in {1..100}; do
+
+            if ! DEPLOYS=$(curl -fsS --retry 2 \
+              --max-time 25 "${HEADERS[@]}" \
+              "$API/deployments?sha=$SHA&task=qnap-manual&environment=production&per_page=100"); then
+              echo "GitHub-Abfrage fehlgeschlagen, erneuter Versuch."
+              sleep 30
+              continue
+            fi
+
+            ID=$(echo "$DEPLOYS" | jq -r \
+              --arg run "$RUN_ID" '
+              [.[] | select(
+                (.payload.workflow_run_id | tostring) == $run
+              )]
+              | if length > 0
+                then (max_by(.id).id | tostring)
+                else ""
+                end
+            ')
+
+            if [ -n "$ID" ]; then
+
+              if ! STATUSES=$(curl -fsS --retry 2 \
+                --max-time 25 "${HEADERS[@]}" \
+                "$API/deployments/$ID/statuses?per_page=1"); then
+                sleep 30
+                continue
+              fi
+
+              STATE=$(echo "$STATUSES" |
+                jq -r '.[0].state // "pending"')
+
+              echo "Deployment $ID: $STATE"
+
+              case "$STATE" in
+                success)
+                  echo "NAS-Installation bestätigt."
+                  echo "" >> "$GITHUB_STEP_SUMMARY"
+                  echo "**NAS-Deployment: erfolgreich**" \
+                    >> "$GITHUB_STEP_SUMMARY"
+                  exit 0
+                  ;;
+
+                failure|error)
+                  echo "NAS-Deployment fehlgeschlagen."
+                  echo "" >> "$GITHUB_STEP_SUMMARY"
+                  echo "**NAS-Deployment: fehlgeschlagen**" \
+                    >> "$GITHUB_STEP_SUMMARY"
+                  exit 1
+                  ;;
+              esac
+            fi
+
+            echo "Warte auf NAS-Bestätigung ($attempt/100)"
+            sleep 30
+          done
+
+          echo "Keine NAS-Bestätigung innerhalb des Zeitlimits."
+          echo "" >> "$GITHUB_STEP_SUMMARY"
+          echo "**NAS-Deployment: Zeitlimit überschritten**" \
+            >> "$GITHUB_STEP_SUMMARY"
+          exit 1
