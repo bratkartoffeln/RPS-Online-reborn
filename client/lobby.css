@@ -1,0 +1,52 @@
+/* Entry and match layouts share the board; only the entry panel has a translucent surface. */
+.lobby-mode .intro-row, .game-mode .intro-row,
+.lobby-mode .app-header .brand, .lobby-mode .header-note,
+.lobby-mode .board-topbar, .lobby-mode .board-footer,
+.lobby-mode .footer, .active-match .footer { display: none; }
+.lobby-mode .app-header { min-height: 58px; justify-content: flex-end; border: 0; }
+.lobby-mode .arena-grid { display: grid; grid-template-columns: minmax(0, 1fr); max-width: 980px; margin: 0 auto 24px; }
+.lobby-mode .play-panel, .lobby-mode .lobby-overlay { grid-area: 1 / 1; }
+.lobby-mode .play-panel { align-self: center; }
+.lobby-overlay { position: relative; z-index: 5; align-self: center; padding: 24px; pointer-events: none; }
+.lobby-overlay .lobby-card { pointer-events: auto; width: min(620px, 100%); margin: auto; display: block; padding: 28px; border: 1px solid var(--surface-border); border-radius: 18px; background: color-mix(in srgb, var(--panel) 88%, transparent); box-shadow: 0 20px 65px #0004; }
+.lobby-logo { display: flex; align-items: center; justify-content: center; gap: 14px; color: var(--green); margin-bottom: 18px; }
+.lobby-logo > span:last-child { font-size: 25px; font-weight: 850; letter-spacing: .08em; color: var(--text); }
+.lobby-logo .atlas-icon { max-width: 100%; }
+.lobby-intro { text-align: center; }
+.lobby-overlay .lobby-title { font-size: 25px; margin-top: 7px; }
+.lobby-overlay .body-copy { max-width: none; margin-top: 8px; }
+.lobby-overlay .lobby-name { margin-top: 22px; }
+.lobby-options { display: grid; grid-template-columns: 1fr 1fr; gap: 22px; margin-top: 22px; padding-top: 20px; border-top: 1px solid var(--line); }
+.lobby-options form { display: flex; flex-direction: column; min-width: 0; }
+.lobby-options h2 { font-size: 13px; font-weight: 650; }
+.lobby-overlay .lobby-options .field { margin-top: 15px; }
+.lobby-options .field { flex: 1; }
+.lobby-options .action-button { margin-top: 16px; }
+.lobby-overlay .trust-note { margin-top: 20px; }
+.lobby-rules { margin-top: 16px; border-top: 1px solid var(--line); padding-top: 12px; }
+.lobby-rules > summary, .game-details > summary { cursor: pointer; padding: 6px 0; color: var(--soft-text); font-size: 12px; }
+.lobby-rules .rules-card { background: transparent; border: 0; box-shadow: none; padding: 16px 0 0; }
+.lobby-notice { margin-top: 16px; color: var(--orange); font-size: 12px; line-height: 1.6; }
+.game-mode .app-header { min-height: 68px; margin-bottom: 18px; }
+.game-details { border: 1px solid var(--line); border-radius: 10px; background: var(--panel); padding: 10px 16px; }
+.game-details .card { border: 0; padding: 14px 0 4px; box-shadow: none; }
+.game-mode .game-actions { flex-wrap: wrap; gap: 16px; }
+:root[data-presentation="retro"] .lobby-overlay .lobby-card { border: 2px solid var(--line); border-radius: 4px; background: color-mix(in srgb, var(--panel) 90%, transparent); }
+:root[data-presentation="retro"] .lobby-logo > span:last-child { display: none; }
+:root[data-presentation="retro"] .lobby-mode .app-header { min-height: 50px; border: 0; }
+:root[data-presentation="retro"] .lobby-rules .rules-card { background: transparent; border: 0; box-shadow: none; }
+@media (max-width: 850px) {
+  .game-mode .side-column { display: flex; flex-direction: column; }
+  .lobby-mode .arena-grid { gap: 0; }
+}
+@media (max-width: 600px) {
+  .lobby-overlay { padding: 12px 0; }
+  .lobby-overlay .lobby-card { padding: 22px 18px; border-radius: 12px; }
+  .lobby-options { grid-template-columns: 1fr; gap: 20px; }
+  .lobby-options form + form { padding-top: 20px; border-top: 1px solid var(--line); }
+  .lobby-logo > span:last-child { font-size: 21px; }
+  .lobby-mode .play-panel { align-self: stretch; }
+  .lobby-mode .board-region, .lobby-mode .board-surface { height: 100%; }
+  .lobby-mode .canvas-wrap { position: sticky; top: 12px; }
+  .game-mode .board-subtitle, .active-match .header-note, .active-match .version { display: none; }
+}

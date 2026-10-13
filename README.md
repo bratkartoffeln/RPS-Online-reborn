@@ -1,8 +1,8 @@
-# RPS Arena – Version 0.4.7
+# RPS Arena – Version 0.4.8
 
 Ein eigenständiges Browser-Remake des taktischen Stein-Papier-Schere-Prinzips:
 zwei Spieler, verdeckte Figuren, eine Flagge und eine Falle pro Seite. Der
-Spielserver läuft lokal, im LAN und als Container auf dem QNAP. Version 0.4.7
+Spielserver läuft lokal, im LAN und als Container auf dem QNAP. Version 0.4.8
 enthält gemeinsame Spielserien mit Punktestand und das vollständig vektorisierte
 Grafikset „ICQ Retro“. Figuren, Spielfeld, Logo, Schiedsrichter und einzelne
 Waffen stammen jetzt aus einer gemeinsamen SVG-Map. Beide Teams haben Vorder-
@@ -17,6 +17,21 @@ den Zusammenstoß und den Sieger; anschließend hüpft dessen Mannschaft.
 Bei einer Flaggeneroberung zeigt ICQ Retro einen lächelnden Fahnenträger in
 Vorderansicht, und die Gewinnerarmee springt viermal gemeinsam. Unter dem
 Spielfeld können sich die beiden Teilnehmer im Raumchat austauschen.
+
+## Neu in Version 0.4.8
+
+- **Zentraler Einstieg über dem Spielfeld:** Logo, Spielername und Raumaktionen
+  stehen auf einer durchgehenden, leicht transparenten Fläche. Der Name dient
+  als Anmeldung ohne Konto. Danach einen Raum mit Spielmodus erstellen oder
+  mit Raumcode beziehungsweise Einladungslink beitreten. Bei einer Einladung
+  steht das Beitreten zuerst; der Raum gibt den Spielmodus vor.
+- **Klarer Übergang in die Partie:** Beim Raumeintritt verschwindet der Einstieg.
+  Aufstellung und Bereitschaft sind der nächste Schritt. Während des Spiels
+  bleiben Spielfeld, Serienstand, aktuelle Phase und Raumchat direkt verfügbar;
+  Raumdetails, Regeln und Verlauf lassen sich bei Bedarf aufklappen.
+- **Für schmale Bildschirme:** Die Raumaktionen stehen untereinander. Fehler
+  erscheinen direkt im Einstieg; der Tastaturfokus bleibt bei Aktualisierungen
+  erhalten und wechselt beim Raumeintritt zum Spielfeld.
 
 ## Neu in Version 0.4.7
 
@@ -563,7 +578,7 @@ TypeScript und Browser-/Serverbuild werden vor der Auslieferung geprüft.
 
 Der LAN-Betrieb auf dem QNAP TS-251D und die bestehende DNS-01-HTTPS-Einrichtung
 unter `https://flusensieb.dns.navy:8443` wurden bereits bestätigt. Die neue
-Version **0.4.7** wird als vollständige ZIP geliefert und anschließend von dir
+Version **0.4.8** wird als vollständige ZIP geliefert und anschließend von dir
 auf dem NAS installiert und mit der Onlineprüfung kontrolliert. Die bisherige
 Installation allein bestätigt noch nicht den Betrieb der neuen Version.
 Die Regeln bleiben die dokumentierten

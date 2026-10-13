@@ -1,4 +1,4 @@
-# Grafiksets für RPS Arena v0.4.7
+# Grafiksets für RPS Arena v0.4.8
 
 RPS Arena trennt das Aussehen von den Spielregeln. Ein Grafikset kann Farben,
 Spielfeldkacheln, Figuren, kurze Figurenanimationen, einzelne Waffen, das Logo,
