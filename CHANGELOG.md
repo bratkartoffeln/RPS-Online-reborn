@@ -1,5 +1,12 @@
 # Änderungen
 
+## 0.4.11
+
+- Login zeigt die Version klein oben rechts; automatische Scrollaktionen entfernt.
+- Spielstatus aufklappbar mit festen Seriendetails und Figurenanzahlen.
+- Ereigniszeile unter dem Spielfeld entfernt, Punktestand auf Spielfeldbreite begrenzt.
+- „Partie aufgeben“ als großer Button passend zu „Zur Lobby“.
+
 ## 0.4.10
 
 - Raumeintritt scrollt zum Seitenanfang mit sichtbarem Logo.

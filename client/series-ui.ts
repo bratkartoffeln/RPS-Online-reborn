@@ -40,17 +40,23 @@ export function seriesScoreMarkup(view: GameView): string {
   const ownColor = teamColorForPlayer(view, own?.id);
   const otherColor = teamColorForPlayer(view, other?.id, otherTeamColor(ownColor));
   const nameMarkup = (name: string) => '<span class="series-player-name">' + esc(name) + '</span>';
+  return [
+    '<div class="series-scores"><div class="series-player" data-team-color="' + ownColor + '">' + nameMarkup(own?.name ?? 'Du') + '<strong class="series-player-score" aria-label="' + ownWins + ' eigene Siege">' + ownWins + '</strong></div>',
+    '<span class="series-score-divider" aria-hidden="true">:</span>',
+    '<div class="series-player enemy" data-team-color="' + otherColor + '"><strong class="series-player-score" aria-label="' + otherWins + ' gegnerische Siege">' + otherWins + '</strong>' + nameMarkup(other?.name ?? 'Platz noch frei') + '</div></div>',
+  ].join('');
+}
+
+export function seriesInfoMarkup(view: GameView): string {
+  const series = view.series;
   const first = view.players.find((player) => player.id === series.startingPlayer);
   const firstColor = teamColorForPlayer(view, first?.id, teamColorForSeat(series.startingSeat));
   const winner = seriesWinnerText(view);
   const winnerPlayer = view.players.find((player) => player.id === series.winner);
   const winnerColor = winnerPlayer ? ' data-team-color="' + teamColorForPlayer(view, winnerPlayer.id) + '"' : '';
   return [
-    '<div class="series-scores"><div class="series-player" data-team-color="' + ownColor + '">' + nameMarkup(own?.name ?? 'Du') + '<strong class="series-player-score" aria-label="' + ownWins + ' eigene Siege">' + ownWins + '</strong></div>',
-    '<span class="series-score-divider" aria-hidden="true">:</span>',
-    '<div class="series-player enemy" data-team-color="' + otherColor + '"><strong class="series-player-score" aria-label="' + otherWins + ' gegnerische Siege">' + otherWins + '</strong>' + nameMarkup(other?.name ?? 'Platz noch frei') + '</div></div>',
-    '<details class="series-info"><summary>' + seriesModeLabel(series.mode) + ' · Partie ' + series.gameNumber + '</summary><div class="series-heading"><h3>' + seriesModeLabel(series.mode) + ' · Serie ' + series.number + '</h3><span>' + (series.targetWins ? 'Ziel: ' + series.targetWins + ' Siege' : 'Ohne feste Siegzahl') + '</span></div>',
-    '<div class="series-meta"><span>Partie ' + series.gameNumber + ' · ' + series.completedGames + ' beendet · ' + series.draws + ' Remis</span><span class="series-starting-player" data-team-color="' + firstColor + '">Erster Zug: ' + esc(first?.name ?? 'Spieler auf Platz ' + (series.startingSeat + 1)) + '</span></div></details>',
+    '<div class="series-info"><div class="series-heading"><h3>' + seriesModeLabel(series.mode) + ' · Serie ' + series.number + '</h3><span>' + (series.targetWins ? 'Ziel: ' + series.targetWins + ' Siege' : 'Ohne feste Siegzahl') + '</span></div>',
+    '<div class="series-meta"><span>Partie ' + series.gameNumber + ' · ' + series.completedGames + ' beendet · ' + series.draws + ' Remis</span><span class="series-starting-player" data-team-color="' + firstColor + '">Erster Zug: ' + esc(first?.name ?? 'Spieler auf Platz ' + (series.startingSeat + 1)) + '</span></div></div>',
     winner ? '<p class="series-winner"' + winnerColor + '>' + esc(winner) + '</p>' : '',
   ].join('');
 }

@@ -91,11 +91,7 @@ export class RoomChat {
     if ((state.messages.at(-1)?.id ?? 0) < (this.messages.at(-1)?.id ?? 0)) return;
     const acknowledged = this.lastAttempt && state.messages.some(message =>
       message.playerId === this.playerId && message.requestId === this.lastAttempt!.requestId);
-    const history = this.root.querySelector<HTMLElement>('#chat-history')!;
-    const atTop = history.scrollTop < 28;
     const firstSync = !this.synced;
-    const previousHeight = history.scrollHeight;
-    const previousTop = history.scrollTop;
     const latestId = this.messages.at(-1)?.id ?? 0;
     const opponentMessage = !firstSync && state.messages.some(message => message.id > latestId && message.playerId !== this.playerId);
     const existing = new Map(Array.from(this.list.children, child => [Number((child as HTMLElement).dataset.messageId), child]));
@@ -112,8 +108,6 @@ export class RoomChat {
       this.lastAttempt = null;
       this.error = '';
     }
-    if (atTop || firstSync || acknowledged) history.scrollTop = 0;
-    else history.scrollTop = previousTop + history.scrollHeight - previousHeight;
     if (opponentMessage) this.onOpponentMessage();
     this.paintControls();
   }

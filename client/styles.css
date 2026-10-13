@@ -42,6 +42,7 @@
 .team-name { color: var(--team-color, var(--soft-text)); }
 
 * { box-sizing: border-box; }
+html { overflow-anchor: none; }
 body { margin: 0; min-width: 320px; min-height: 100vh; background: radial-gradient(ellipse at 5% 0%, var(--accent-glow) 0%, transparent 38%), var(--bg); }
 button, input, select { font: inherit; }
 button, a, input, select { -webkit-tap-highlight-color: transparent; }
