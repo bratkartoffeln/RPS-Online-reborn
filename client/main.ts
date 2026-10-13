@@ -27,7 +27,7 @@ app.innerHTML = [
   '<div class="app-shell" id="shell">',
   '<header class="app-header"><a class="brand" href="' + esc(location.pathname) + '" aria-label="RPS Arena Startseite" data-action="home">',
   '<span class="brand-emblem" id="brand-emblem">' + icon('rock', '', 29) + '</span><span><span class="brand-title">RPS ARENA</span><span class="brand-tagline" style="display:block">Stein. Papier. Schere.</span></span></a>',
-  '<div class="header-right"><span class="header-note" id="header-note"><span class="status-dot"></span>PRIVATE PARTIEN</span><details class="appearance-menu" id="appearance-menu"><summary>Design ' + icon('chevron', '', 12) + '</summary><div class="appearance-panel"><label class="appearance-label" for="skin-select">Dein Design</label><select id="skin-select" aria-describedby="skin-status"><option value="classic">Klassisch</option></select><p class="appearance-status" id="skin-status" role="status">Grafiksets werden geladen …</p><label class="motion-option"><input id="animations-enabled" type="checkbox" checked />Animationen</label><p class="appearance-hint" id="motion-hint">Deine Auswahl gilt für diesen Browser.</p><label class="motion-option"><input id="sounds-enabled" type="checkbox" />Spielsounds</label><p class="appearance-hint">Kurze Retro-Töne für Züge und Kämpfe.</p></div></details><span class="version">v' + esc(__APP_VERSION__) + '</span></div></header>',
+  '<section class="series-scoreboard" id="series-scoreboard" aria-label="Spielstand der Serie" aria-live="polite" aria-atomic="true" hidden></section><div class="header-right"><span class="header-note" id="header-note"><span class="status-dot"></span>PRIVATE PARTIEN</span><details class="appearance-menu" id="appearance-menu"><summary>Design ' + icon('chevron', '', 12) + '</summary><div class="appearance-panel"><label class="appearance-label" for="skin-select">Dein Design</label><select id="skin-select" aria-describedby="skin-status"><option value="classic">Klassisch</option></select><p class="appearance-status" id="skin-status" role="status">Grafiksets werden geladen …</p><label class="motion-option"><input id="animations-enabled" type="checkbox" checked />Animationen</label><p class="appearance-hint" id="motion-hint">Deine Auswahl gilt für diesen Browser.</p><label class="motion-option"><input id="sounds-enabled" type="checkbox" />Spielsounds</label><p class="appearance-hint">Kurze Retro-Töne für Züge und Kämpfe.</p></div></details><span class="version">v' + esc(__APP_VERSION__) + '</span></div></header>',
   '<div class="intro-row"><div><p class="eyebrow" id="page-eyebrow">DAS TAKTISCHE DUELL FÜR ZWEI</p><h1 class="page-title" id="page-title">Dein Zug beginnt hier.</h1></div><p class="page-subtitle" id="page-subtitle">Figuren verdecken.<br>Gedanken lesen. Flagge holen.</p></div>',
   '<div class="notice" id="notice" role="alert" hidden></div>',
   '<main class="arena-grid"><section class="play-panel" aria-label="Spielbereich">',
@@ -35,7 +35,7 @@ app.innerHTML = [
   '<div class="preview-banner" id="preview-banner">' + icon('unknown', '', 18) + '<span>Ein guter Plan bleibt erst einmal geheim.</span></div></div>',
   '<div class="action-recap" id="action-recap" hidden></div>',
   '<div class="board-footer"><span class="team-key" id="own-team-key" data-team-color="blue"><span class="team-square"></span><span id="own-count">Dein Team</span></span><span class="team-key enemy" id="enemy-team-key" data-team-color="red"><span class="team-square"></span><span id="enemy-count">Gegner</span></span><span class="board-hint" id="board-hint">Erstelle oder betrete einen Raum.</span></div><section id="room-chat" hidden></section></section>',
-  '<aside class="side-column" id="match-sidebar" aria-label="Spielsteuerung"><section class="match-overview" id="match-overview" aria-label="Spielstatus und Punktestand"><div class="match-status"><span class="eyebrow">SPIELSTATUS</span><span class="pill accent" id="board-phase">DEINE ARENA</span></div><section class="series-scoreboard" id="series-scoreboard" aria-label="Spielstand der Serie" aria-live="polite" aria-atomic="true" hidden></section></section><div class="match-controls" id="sidebar"></div></aside><section id="lobby-overlay" class="lobby-overlay" aria-label="Spiel starten"></section></main>',
+  '<aside class="side-column" id="match-sidebar" aria-label="Spielsteuerung"><section class="match-overview" id="match-overview" aria-label="Spielstatus und Punktestand"><div class="match-status"><span class="eyebrow">SPIELSTATUS</span><span class="pill accent" id="board-phase">DEINE ARENA</span></div></section><div class="match-controls" id="sidebar"></div></aside><section id="lobby-overlay" class="lobby-overlay" aria-label="Spiel starten"></section></main>',
   '<footer class="footer"><span>' + icon('info', '', 13) + 'Ein unabhängiges Remake · vorläufige Regeln für Version ' + esc(__APP_VERSION__) + '</span><span>Figur anklicken oder <kbd>↑</kbd><kbd>←</kbd><kbd>↓</kbd><kbd>→</kbd> + <kbd>Enter</kbd></span></footer></div>',
   '<p class="sr-only" id="board-help">Mit den Pfeiltasten ein Feld wählen. Mit Enter oder Leertaste eine eigene Figur und anschließend ein Zielfeld wählen. Escape hebt die Auswahl auf. In der Aufstellung tauschen zwei eigene Figuren die Plätze. Alternativ eine eigene Figur auf eine zweite eigene Figur ziehen. Im Spiel sind markierte Felder erlaubte Ziele.</p>',
   '<p class="sr-only" id="board-focus" aria-live="polite"></p><p class="sr-only" id="announcement" aria-live="polite" aria-atomic="true"></p>',
@@ -50,6 +50,8 @@ let selected: number | null = null;
 let pending = false;
 let pendingTimeout: ReturnType<typeof setTimeout> | undefined;
 let toastTimeout: ReturnType<typeof setTimeout> | undefined;
+let chatNoticeTimeout: ReturnType<typeof setTimeout> | undefined;
+let chatNoticeRoom: string | null = null;
 let name = readSession('rps-arena:name') ?? '';
 let seriesMode = readSeriesMode(readPreference('rps-arena:series-mode'));
 let inputRoom = roomCodeFrom(new URL(location.href).searchParams.get('room') ?? '');
@@ -66,7 +68,12 @@ const reducedMotion = window.matchMedia('(prefers-reduced-motion: reduce)');
 const sounds = new GameSounds();
 let soundsPreferred = readPreference('rps-arena:sounds') === 'on';
 
-const chat: RoomChat = new RoomChat(el('room-chat'), message => connection.send('chat_send', message));
+const chat: RoomChat = new RoomChat(el('room-chat'), message => connection.send('chat_send', message), () => {
+  chatNoticeRoom = view?.roomId ?? null;
+  clearTimeout(chatNoticeTimeout);
+  paintChatNotice();
+  chatNoticeTimeout = setTimeout(() => { chatNoticeRoom = null; paintChatNotice(); }, 2000);
+});
 const connection = new RpsConnection({
   onStatus(status) {
     networkStatus = status;
@@ -78,8 +85,9 @@ const connection = new RpsConnection({
     render();
   },
   onSnapshot(snapshot) {
-    const showPlayPanel = !view || view.series.matchId !== snapshot.series.matchId ||
-      (view.phase === 'setup' && snapshot.phase === 'playing');
+    const enteringRoom = !view || view.roomId !== snapshot.roomId;
+    const showPlayPanel = enteringRoom || view?.series.matchId !== snapshot.series.matchId ||
+      (view?.phase === 'setup' && snapshot.phase === 'playing');
     const action = networkStatus === 'connected' ? freshAction(view, snapshot) : null;
     const victory = networkStatus === 'connected' ? freshVictory(view, snapshot) : null;
     if (action?.kind === 'move') sounds.playAction(action, snapshot.you, 0);
@@ -101,7 +109,8 @@ const connection = new RpsConnection({
     if (showPlayPanel && !chat.hasInputFocus) {
       requestAnimationFrame(() => {
         if (view?.series.matchId === snapshot.series.matchId && !chat.hasInputFocus) {
-          app.querySelector<HTMLElement>('.play-panel')?.scrollIntoView({ block: 'start', behavior: 'instant' });
+          if (enteringRoom) window.scrollTo({ top: 0, left: 0, behavior: 'instant' });
+          else app.querySelector<HTMLElement>('.play-panel')?.scrollIntoView({ block: 'start', behavior: 'instant' });
         }
       });
     }
@@ -389,17 +398,28 @@ function playerMarkup(player: PlayerView | undefined, own: boolean): string {
   return '<div class="player-row ' + (own ? '' : 'enemy') + '" data-team-color="' + color + '"><span class="player-avatar">' + pieceIcon(currentSkin, own ? 'flag' : 'unknown', 23, own ? 'own' : 'enemy', false, color) + '</span><div class="player-info"><p class="player-name">' + esc(player.name) + (own ? '<span class="player-you">du</span>' : '') + '</p><p class="player-state">' + teamColorName(color) + ' · ' + status + '</p></div>' + marker + '</div>';
 }
 
+function chatNoticeMarkup(): string {
+  return '<span class="referee-chat-notice" role="status" aria-label="Neue Nachricht von deinem Gegner"' +
+    (chatNoticeRoom && chatNoticeRoom === view?.roomId ? '' : ' hidden') + '>' + icon('chat', '', 26) + '</span>';
+}
+
+function paintChatNotice(): void {
+  for (const badge of app.querySelectorAll<HTMLElement>('.referee-chat-notice')) {
+    badge.hidden = !chatNoticeRoom || chatNoticeRoom !== view?.roomId;
+  }
+}
+
 function refereeMarkup(size: number): string {
-  if (currentSkin.definition.presentation !== 'retro') return '';
   const state = refereePortrait(currentSkin.definition, view);
   const image = atlasIcon(currentSkin, state.frame, size);
-  return image ? '<span class="referee-portrait" role="img" aria-label="' + esc(state.label) + '" title="' + esc(state.label) + '" data-turn-team="' + (state.team ?? 'neutral') + '" data-turn-direction="' + (state.direction ?? 'neutral') + '">' + image + '</span>' : '';
+  if (!image) return '<span class="referee-chat-fallback">' + chatNoticeMarkup() + '</span>';
+  return image ? '<span class="referee-portrait" role="img" aria-label="' + esc(state.label) + '" title="' + esc(state.label) + '" data-turn-team="' + (state.team ?? 'neutral') + '" data-turn-direction="' + (state.direction ?? 'neutral') + '">' + image + chatNoticeMarkup() + '</span>' : '';
 }
 
 function phaseSection(label: string, title: string, copy: string, controls = '', classes = ''): string {
   const color = phaseTeamColor();
   const referee = view ? refereeMarkup(180) : '';
-  const showTurnWithReferee = referee && view?.phase === 'playing' && !view.paused && networkStatus === 'connected';
+  const showTurnWithReferee = currentSkin.definition.presentation === 'retro' && referee.includes('class="referee-portrait"') && view?.phase === 'playing' && !view.paused && networkStatus === 'connected';
   const heading = showTurnWithReferee
     ? '<h2 class="phase-referee-turn" aria-label="' + esc(title) + '">' + referee + '</h2>'
     : '<h2>' + esc(title) + '</h2>' + (referee ? '<div class="phase-referee">' + referee + '</div>' : '');

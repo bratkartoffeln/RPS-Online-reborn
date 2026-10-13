@@ -1,5 +1,13 @@
 # Änderungen
 
+## 0.4.10
+
+- Raumeintritt scrollt zum Seitenanfang mit sichtbarem Logo.
+- Punktestand mit größeren Namen und Zahlen neben dem Logo; Spielstatus unverändert.
+- Mausrad über dem Spielfeld freigegeben und „Zwei Teams. Ein Ziel.“ entfernt.
+- Chat-Eingabe über dem Verlauf, neueste Nachrichten zuerst und zweisekündige
+  Gegnernachrichten-Anzeige beim Schiri in den Designfarben.
+
 ## 0.4.9
 
 - Undurchsichtiger, vollflächiger Einstieg; das Retro-Logo erscheint nach dem

@@ -1,4 +1,4 @@
-# QNAP: RPS Arena auf Version 0.4.9 aktualisieren
+# QNAP: RPS Arena auf Version 0.4.10 aktualisieren
 
 Diese Anleitung aktualisiert dein bestehendes Projekt **rps-arena** mit dem
 bereits funktionierenden HTTPS über Caddy und dynv6. Sie verwendet deinen
@@ -16,7 +16,7 @@ Docker-Compose-Version **v2.29.1-qnap2** unterstützt die verwendete Konfigurati
 
 ## 1. Vollständige Version übernehmen
 
-1. **RPS-Arena-v0.4.9-komplett.zip** zunächst in einen separaten Ordner entpacken. Die ZIP
+1. **RPS-Arena-v0.4.10-komplett.zip** zunächst in einen separaten Ordner entpacken. Die ZIP
    enthält den vollständigen Projektordner `rps-remake`.
 2. Den vollständigen aktualisierten Quellstand in den vorhandenen Projektordner auf dem
    NAS kopieren und gleichnamige Programmdateien ersetzen. Dabei den vorhandenen
@@ -78,7 +78,7 @@ docker compose -p rps-arena -f compose.yaml -f compose.dns.yaml --profile https 
 docker compose -p rps-arena -f compose.yaml -f compose.dns.yaml --profile https exec -T rps npm run check:online -- https://flusensieb.dns.navy:8443
 ```
 
-Die Prüfung muss **Version 0.4.9** erwarten und mit **„Onlineprüfung bestanden“**
+Die Prüfung muss **Version 0.4.10** erwarten und mit **„Onlineprüfung bestanden“**
 enden. Sie prüft unter anderem die ausgelieferte Oberfläche und Grafik-Map,
 zwei echte Spielverbindungen, verdeckte Figuren, Serienwertung, gemeinsame
 Fortsetzung und Wiederbeitritt mit vorhandenem Punktestand. Dafür erzeugt sie
@@ -86,12 +86,12 @@ eine eigene Testpartie und schließt sie anschließend wieder.
 
 Dieser Schritt bestätigt erst nach dem Update den Betrieb der neuen Version
 auf deinem NAS. Die bisherige Installation allein bestätigt noch nicht das
-Update auf 0.4.9.
+Update auf 0.4.10.
 
 ## 4. Design und neue Funktionen im Browser ansehen
 
 1. [Die Spielseite öffnen](https://flusensieb.dns.navy:8443) und vollständig neu
-   laden. In der Oberfläche muss **v0.4.9** erscheinen.
+   laden. In der Oberfläche muss **v0.4.10** erscheinen.
 2. Unter **Design** im Feld **Dein Design** **ICQ Retro** wählen. Ohne bisher gespeicherte
    Designwahl ist es bereits der Standard. Eine vorhandene Browserwahl bleibt
    erhalten; **Klassisch** und **Arcade** sind weiterhin verfügbar. Die aktive

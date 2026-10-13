@@ -23,18 +23,19 @@ export class RoomChat {
   private connected = false;
   private messages: ChatMessage[] = [];
   private staged: ChatState | null = null;
+  private synced = false;
   private lastAttempt: Attempt | null = null;
   private pending = false;
   private error = '';
   private timer: ReturnType<typeof setTimeout> | undefined;
 
-  constructor(private readonly root: HTMLElement, private readonly send: (message: ChatSendMessage) => boolean) {
+  constructor(private readonly root: HTMLElement, private readonly send: (message: ChatSendMessage) => boolean, private readonly onOpponentMessage: () => void = () => {}) {
     root.classList.add('room-chat');
     root.hidden = true;
     root.setAttribute('aria-labelledby', 'chat-title');
     root.innerHTML = '<header class="chat-header"><h2 id="chat-title">Chat</h2><span>Nur in diesem Spielraum</span></header>' +
-      '<div class="chat-history" id="chat-history" role="log" aria-label="Nachrichten im Spielraum" aria-live="polite" aria-relevant="additions text" tabindex="0"><p class="chat-empty" id="chat-empty">Noch keine Nachrichten. Schreib deinem Gegner!</p><ol id="chat-messages"></ol></div>' +
       '<form class="chat-compose" id="chat-form"><label class="sr-only" for="chat-input">Nachricht an deinen Gegner</label><input type="text" id="chat-input" name="message" placeholder="Deine Nachricht …" autocomplete="off" maxlength="600" enterkeyhint="send" aria-describedby="chat-status" /><button type="submit" class="primary-button" id="chat-send">Senden</button></form>' +
+      '<div class="chat-history" id="chat-history" role="log" aria-label="Nachrichten im Spielraum" aria-live="polite" aria-relevant="additions text" tabindex="0"><p class="chat-empty" id="chat-empty">Noch keine Nachrichten. Schreib deinem Gegner!</p><ol id="chat-messages"></ol></div>' +
       '<p class="chat-status" id="chat-status" role="status" aria-live="polite" hidden></p>';
     this.input = root.querySelector<HTMLInputElement>('#chat-input')!;
     this.button = root.querySelector<HTMLButtonElement>('#chat-send')!;
@@ -60,6 +61,7 @@ export class RoomChat {
       this.clearTimer();
       this.roomId = nextRoom;
       this.messages = [];
+      this.synced = false;
       this.lastAttempt = null;
       this.pending = false;
       this.error = '';
@@ -90,13 +92,18 @@ export class RoomChat {
     const acknowledged = this.lastAttempt && state.messages.some(message =>
       message.playerId === this.playerId && message.requestId === this.lastAttempt!.requestId);
     const history = this.root.querySelector<HTMLElement>('#chat-history')!;
-    const atBottom = history.scrollHeight - history.scrollTop - history.clientHeight < 28;
-    const firstSync = this.messages.length === 0;
+    const atTop = history.scrollTop < 28;
+    const firstSync = !this.synced;
+    const previousHeight = history.scrollHeight;
+    const previousTop = history.scrollTop;
+    const latestId = this.messages.at(-1)?.id ?? 0;
+    const opponentMessage = !firstSync && state.messages.some(message => message.id > latestId && message.playerId !== this.playerId);
     const existing = new Map(Array.from(this.list.children, child => [Number((child as HTMLElement).dataset.messageId), child]));
     const ids = new Set(state.messages.map(message => message.id));
     for (const [id, child] of existing) if (!ids.has(id)) child.remove();
-    for (const message of state.messages) if (!existing.has(message.id)) this.list.append(this.messageRow(message));
+    for (const message of state.messages) if (!existing.has(message.id)) this.list.prepend(this.messageRow(message));
     this.messages = state.messages;
+    this.synced = true;
     this.empty.hidden = this.messages.length > 0;
     if (acknowledged && this.lastAttempt) {
       if (this.input.value === this.lastAttempt.draft) this.input.value = '';
@@ -105,7 +112,9 @@ export class RoomChat {
       this.lastAttempt = null;
       this.error = '';
     }
-    if (atBottom || firstSync || acknowledged) history.scrollTop = history.scrollHeight;
+    if (atTop || firstSync || acknowledged) history.scrollTop = 0;
+    else history.scrollTop = previousTop + history.scrollHeight - previousHeight;
+    if (opponentMessage) this.onOpponentMessage();
     this.paintControls();
   }
 
