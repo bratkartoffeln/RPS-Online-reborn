@@ -99,6 +99,21 @@ test('retro presentation and a static referee are opt-in and validated', () => {
   assert.throws(() => parseSkinDefinition({ ...artwork(), portrait: 'missing' }), /fehlenden Atlas-Frame/);
 });
 
+test('chat notice artwork must reference an existing atlas frame', () => {
+  assert.equal(parseSkinDefinition({ ...artwork(), chatNotice: 'base' }).chatNotice, 'base');
+  assert.throws(() => parseSkinDefinition({ ...artwork(), chatNotice: 'missing' }), /fehlenden Atlas-Frame/);
+  assert.equal(parseSkinDefinition(minimal()).chatNotice, undefined);
+});
+
+test('every bundled style has chat artwork, including the mobile frame', () => {
+  for (const id of ['classic', 'arcade', 'icq-retro']) {
+    const skin = parseSkinDefinition(JSON.parse(readFileSync(new URL(`../public/skins/${id}/skin.json`, import.meta.url), 'utf8')));
+    assert.ok(skin.chatNotice, id);
+    assert.ok(skin.atlas?.frames[skin.chatNotice!], id);
+    if (skin.mobileAtlas) assert.ok(skin.mobileAtlas.frames[skin.chatNotice!], id + ' mobile');
+  }
+});
+
 test('absolute team colors support independent viewing directions and revealed artwork', () => {
   const blueBack = { frame: 'base', revealed: { frame: 'pulse', animations: { win: { frames: ['pulse', 'base'], fps: 4 } } } };
   const blueFront = { frame: 'pulse' };
@@ -316,7 +331,7 @@ test('bundled retro, classic and Arcade packs resolve to existing, correctly bou
   assert.notEqual(retro.colorTurnPortraits.blue, retro.colorTurnPortraits.red);
   assert.notEqual(retro.colorTurnPortraits.blue, retro.portrait);
   assert.notEqual(retro.colorTurnPortraits.red, retro.portrait);
-  assert.equal(Object.keys(retro.atlas!.frames).length, 43);
+  assert.equal(Object.keys(retro.atlas!.frames).length, 44);
   assert.deepEqual(retro.flagVictoryFrames, { blue: 'blue-front-flag-victory', red: 'red-front-flag-victory' });
   assert.deepEqual(retro.directionalTurnPortraits, {
     blue: { top: 'referee-blue-top', bottom: 'referee-blue-turn' },
@@ -366,7 +381,9 @@ test('bundled retro, classic and Arcade packs resolve to existing, correctly bou
   }
   const classic = parseSkinDefinition(JSON.parse(readFileSync(new URL('classic/skin.json', root), 'utf8')));
   assert.deepEqual(classic.palette, DEFAULT_SKIN.palette);
-  assert.equal(classic.atlas, undefined);
+  assert.equal(classic.atlas?.image, 'atlas.svg');
+  validateAtlasDimensions(classic, 96, 96);
+  assert.equal(classic.pieces, undefined, 'Classic pieces retain the built-in vector artwork.');
   const arcade = parseSkinDefinition(JSON.parse(readFileSync(new URL('arcade/skin.json', root), 'utf8')));
   assert.equal(arcade.atlas?.image, 'master.svg');
   assert.equal(arcade.atlas?.fallbackImage, 'atlas.png');
@@ -375,7 +392,7 @@ test('bundled retro, classic and Arcade packs resolve to existing, correctly bou
   const width = png.readUInt32BE(16), height = png.readUInt32BE(20);
   assert.deepEqual([width, height], [1152, 1248]);
   validateAtlasDimensions(arcade, width, height);
-  assert.equal(Object.keys(arcade.atlas!.frames).length, 147);
+  assert.equal(Object.keys(arcade.atlas!.frames).length, 148);
   assert.ok(arcade.board?.light && arcade.board.dark && arcade.logo);
   for (const team of ['own', 'enemy'] as const) {
     for (const kind of ['rock', 'paper', 'scissors', 'flag', 'trap', 'unknown'] as const) {

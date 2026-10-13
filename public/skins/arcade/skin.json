@@ -920,6 +920,12 @@
         "y": 1152,
         "width": 96,
         "height": 96
+      },
+      "chat-notice": {
+        "x": 288,
+        "y": 1152,
+        "width": 96,
+        "height": 96
       }
     }
   },
@@ -1717,5 +1723,6 @@
   "motion": {
     "moveMs": 240,
     "battleMs": 1000
-  }
+  },
+  "chatNotice": "chat-notice"
 }

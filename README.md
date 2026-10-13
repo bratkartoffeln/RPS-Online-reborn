@@ -1,8 +1,8 @@
-# RPS Arena – Version 0.4.11
+# RPS Arena – Version 0.4.12
 
 Ein eigenständiges Browser-Remake des taktischen Stein-Papier-Schere-Prinzips:
 zwei Spieler, verdeckte Figuren, eine Flagge und eine Falle pro Seite. Der
-Spielserver läuft lokal, im LAN und als Container auf dem QNAP. Version 0.4.11
+Spielserver läuft lokal, im LAN und als Container auf dem QNAP. Version 0.4.12
 enthält gemeinsame Spielserien mit Punktestand und das vollständig vektorisierte
 Grafikset „ICQ Retro“. Figuren, Spielfeld, Logo, Schiedsrichter und einzelne
 Waffen stammen jetzt aus einer gemeinsamen SVG-Map. Beide Teams haben Vorder-
@@ -17,6 +17,13 @@ den Zusammenstoß und den Sieger; anschließend hüpft dessen Mannschaft.
 Bei einer Flaggeneroberung zeigt ICQ Retro einen lächelnden Fahnenträger in
 Vorderansicht, und die Gewinnerarmee springt viermal gemeinsam. Unter dem
 Spielfeld können sich die beiden Teilnehmer im Raumchat austauschen.
+
+## Neu in Version 0.4.12
+
+- Neue Chatnachrichten bleiben beim Schiedsrichter markiert, bis du die Sprechblase anklickst oder selbst eine Nachricht sendest. Die Sprechblase führt zum Chat; dort führt „Zurück zum Spielfeld“ wieder nach oben.
+- Alle Designs besitzen passende Atlas-Sprechblasen, inklusive Comicmotiv und mobiler Variante für ICQ Retro. Der Spielstatus zeigt seinen Klappzustand mit einem Pfeil.
+- Unter dem Raumchat bietet ein eigener Fußbereich Abstand zum Rand sowie Links zu Copyright und Impressum.
+- Beide Seiten öffnen separat; Betreiber- und Rechteinhaberangaben sind noch als Platzhalter zu ergänzen.
 
 ## Neu in Version 0.4.11
 
@@ -530,7 +537,7 @@ erstellen. Räume und Sitzungen sind getrennt, benötigen derzeit kein Konto.
 | `client/retro.css` | Am ICQ-Spiel orientierte Oberfläche des Retro-Grafiksets |
 | `client/sound.ts` | Optionale, lokal erzeugte Spielsounds |
 | `public/skins/` | Mitgelieferte Designs, PNG-Atlas, SVG-Master und Konfiguration |
-| `public/skins/icq-retro/` | SVG-Atlas mit 43 Motiven auf 2016 × 2016, passende PNG-Rückfallgrafik und bearbeitbare Waffenquelle |
+| `public/skins/icq-retro/` | SVG-Atlas mit 44 Motiven auf 2016 × 2016, passende PNG-Rückfallgrafik und bearbeitbare Waffenquelle |
 | `scripts/build-retro-atlas.py` | Optionaler gemeinsamer Neubau von SVG, PNG und Grafikmanifest |
 | `scripts/retro_vectorize.py` | Pfadvektorisierung der Figuren mit Pillow und libpotrace |
 | `scripts/build-retro-weapons.mjs` | Kompatibler Aufruf des vollständigen Python-Grafikbuilds |
@@ -611,7 +618,7 @@ TypeScript und Browser-/Serverbuild werden vor der Auslieferung geprüft.
 
 Der LAN-Betrieb auf dem QNAP TS-251D und die bestehende DNS-01-HTTPS-Einrichtung
 unter `https://flusensieb.dns.navy:8443` wurden bereits bestätigt. Die neue
-Version **0.4.11** wird als vollständige ZIP geliefert und anschließend von dir
+Version **0.4.12** wird als vollständige ZIP geliefert und anschließend von dir
 auf dem NAS installiert und mit der Onlineprüfung kontrolliert. Die bisherige
 Installation allein bestätigt noch nicht den Betrieb der neuen Version.
 Die Regeln bleiben die dokumentierten

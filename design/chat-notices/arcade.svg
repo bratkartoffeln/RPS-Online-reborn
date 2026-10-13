@@ -1,0 +1,10 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="96" height="96" viewBox="0 0 96 96">
+  <title>Arcade – neue Chatnachricht</title>
+  <g stroke-linecap="round" stroke-linejoin="round">
+    <polygon points="18,15 75,15 88,28 88,63 76,75 40,75 20,88 20,75 9,64 9,27" fill="#111f27" />
+    <polygon points="19,10 74,10 85,21 85,59 74,70 38,70 18,84 18,70 7,59 7,22" fill="#254850" stroke="#d4f57b" stroke-width="3" />
+    <polygon points="20,15 72,15 79,23 79,35 13,52 13,24" fill="#396d75" />
+    <path d="M26 31H66M26 43H60M26 55H48" fill="none" stroke="#ecffd3" stroke-width="4" />
+    <path d="M74 59H78L74 63Z" fill="#d4f57b" />
+  </g>
+</svg>

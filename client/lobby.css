@@ -35,6 +35,8 @@ body.lobby-open { overflow: hidden; }
 .match-status { display: flex; align-items: center; justify-content: space-between; gap: 10px; }
 .match-overview > summary { cursor: pointer; list-style: none; }
 .match-overview > summary::-webkit-details-marker { display: none; }
+.match-status::after { content: ''; flex: 0 0 auto; width: 8px; height: 8px; border-right: 2px solid currentColor; border-bottom: 2px solid currentColor; transform: rotate(-45deg); }
+.match-overview[open] > .match-status::after { transform: rotate(45deg); }
 .match-status-details { margin-top: 14px; border-top: 1px solid var(--line); padding-top: 12px; }
 .match-team-counts { display: flex; flex-wrap: wrap; justify-content: space-between; gap: 12px; margin-top: 14px; }
 .match-team-counts .board-hint { flex-basis: 100%; max-width: none; margin: 0; }
@@ -60,7 +62,7 @@ body.lobby-open { overflow: hidden; }
   .game-mode .match-overview { grid-row: 1; }
   .game-mode .play-panel { grid-row: 2; }
   .game-mode .match-controls { grid-row: 3; }
-  .match-status { flex-direction: column; align-items: flex-start; gap: 6px; }
+  .match-status { flex-wrap: wrap; gap: 6px; }
   .lobby-mode .arena-grid { gap: 0; }
 }
 
