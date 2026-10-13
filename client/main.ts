@@ -4,6 +4,7 @@ import './series.css';
 import './retro.css';
 import './combat-ui.css';
 import './chat-ui.css';
+import './lobby.css';
 import type { FighterKind, PlayerView, PieceView } from '../shared/game';
 import type { Snapshot } from '../shared/protocol';
 import { ArenaBoard, coordinate, kindName } from './board';
@@ -36,7 +37,7 @@ app.innerHTML = [
   '<div class="preview-banner" id="preview-banner">' + icon('unknown', '', 18) + '<span>Ein guter Plan bleibt erst einmal geheim.</span></div></div>',
   '<div class="action-recap" id="action-recap" hidden></div>',
   '<div class="board-footer"><span class="team-key" id="own-team-key" data-team-color="blue"><span class="team-square"></span><span id="own-count">Dein Team</span></span><span class="team-key enemy" id="enemy-team-key" data-team-color="red"><span class="team-square"></span><span id="enemy-count">Gegner</span></span><span class="board-hint" id="board-hint">Erstelle oder betrete einen Raum.</span></div><section id="room-chat" hidden></section></section>',
-  '<aside class="side-column" id="sidebar" aria-label="Spielsteuerung"></aside></main>',
+  '<aside class="side-column" id="sidebar" aria-label="Spielsteuerung"></aside><section id="lobby-overlay" class="lobby-overlay" aria-label="Spiel starten"></section></main>',
   '<footer class="footer"><span>' + icon('info', '', 13) + 'Ein unabhängiges Remake · vorläufige Regeln für Version ' + esc(__APP_VERSION__) + '</span><span>Figur anklicken oder <kbd>↑</kbd><kbd>←</kbd><kbd>↓</kbd><kbd>→</kbd> + <kbd>Enter</kbd></span></footer></div>',
   '<p class="sr-only" id="board-help">Mit den Pfeiltasten ein Feld wählen. Mit Enter oder Leertaste eine eigene Figur und anschließend ein Zielfeld wählen. Escape hebt die Auswahl auf. In der Aufstellung tauschen zwei eigene Figuren die Plätze. Alternativ eine eigene Figur auf eine zweite eigene Figur ziehen. Im Spiel sind markierte Felder erlaubte Ziele.</p>',
   '<p class="sr-only" id="board-focus" aria-live="polite"></p><p class="sr-only" id="announcement" aria-live="polite" aria-atomic="true"></p>',
@@ -353,15 +354,16 @@ function lobbyMarkup(): string {
   const busy = networkStatus === 'connecting' || networkStatus === 'reconnecting' || networkStatus === 'connected';
   const disabled = busy ? ' disabled' : '';
   return [
-    '<section class="card lobby-card"><div class="lobby-intro"><p class="eyebrow">DEIN PRIVATER SPIELRAUM</p><h2 class="lobby-title">Zwei Plätze.<br>Ein gutes Duell.</h2>',
+    '<section class="lobby-card"><div class="lobby-logo" aria-label="RPS Arena">' + (atlasIcon(currentSkin, currentSkin.definition.logo, currentSkin.definition.presentation === 'retro' ? 148 : 64) ?? icon('rock', '', 48)) + '<span>RPS ARENA</span></div><div class="lobby-intro"><p class="eyebrow">NAME → RAUM → AUFSTELLUNG → DUELL</p><h1 class="lobby-title">Deine nächste Partie.</h1>',
     '<p class="body-copy">' + (sessionEnd ? 'Die vorige Partie ist beendet. Erstelle eine neue Partie oder tritt einem anderen Raum bei.' : inputRoom ? 'Du hast einen Raumcode. Gib deinen Namen ein und tritt der Partie bei.' : 'Erstelle eine Partie und lade jemanden über deinen Link ein.') + '</p></div>',
-    '<form id="create-form"><label class="field"><span>Dein Spielername</span><input id="player-name" name="player-name" autocomplete="nickname" placeholder="Wie heißt du?" maxlength="24" value="' + esc(name) + '"' + disabled + ' /></label>',
+    '<label class="field lobby-name"><span>Dein Spielername</span><input id="player-name" name="player-name" autocomplete="nickname" placeholder="Wie heißt du?" maxlength="24" aria-describedby="name-hint" value="' + esc(name) + '"' + disabled + ' /><small class="input-hint" id="name-hint">Mit diesem Namen spielst du. Kein Konto nötig.</small></label><div class="lobby-options' + (inputRoom ? ' has-invitation' : '') + '">',
+    '<form id="create-form"><h2>Neuen Raum erstellen</h2>',
     '<label class="field series-mode-field"><span>Spielmodus für deinen neuen Raum</span><select id="series-mode" name="series-mode" aria-describedby="series-mode-hint"' + disabled + '>' + (['free', 'best-of-3', 'best-of-5'] as const).map((mode) => '<option value="' + mode + '"' + (mode === seriesMode ? ' selected' : '') + '>' + seriesModeLabel(mode) + (mode === 'free' ? ' – Siege weiterzählen' : mode === 'best-of-3' ? ' – zuerst 2 Siege' : ' – zuerst 3 Siege') + '</option>').join('') + '</select><small class="input-hint" id="series-mode-hint">' + seriesModeDescription(seriesMode) + '</small></label>',
-    '<button class="primary-button full-width action-button" type="submit" id="create-button"' + disabled + '>' + (busy ? '<span class="spinner" aria-hidden="true"></span> Verbinde …' : (sessionEnd ? 'Neue Partie erstellen ' : 'Raum erstellen ') + icon('arrow', 'button-arrow', 18)) + '</button></form>',
-    '<form class="join-form" id="join-form"><div class="form-divider">oder einem Raum beitreten</div><label class="field join-field"><span>Raumcode oder Einladungslink</span><input id="room-input" name="room-code" autocomplete="off" autocapitalize="off" spellcheck="false" placeholder="Code oder Link einfügen" value="' + esc(inputRoom) + '"' + disabled + ' /></label>',
-    '<button class="secondary-button full-width action-button" type="submit" id="join-button"' + disabled + '>' + icon('link', '', 16) + 'Raum beitreten</button></form>',
-    '<p class="trust-note">' + icon('check', '', 13) + 'Kein Konto nötig. Nur dein Name und ein Mitspieler.</p></section>',
-    rulesCard(),
+    '<button class="' + (inputRoom ? 'secondary-button' : 'primary-button') + ' full-width action-button" type="submit" id="create-button"' + disabled + '>' + (busy ? '<span class="spinner" aria-hidden="true"></span> Verbinde …' : (sessionEnd ? 'Neue Partie erstellen ' : 'Raum erstellen ') + icon('arrow', 'button-arrow', 18)) + '</button></form>',
+    '<form class="join-form" id="join-form"><h2>Du hast eine Einladung?</h2><label class="field join-field"><span>Raumcode oder Einladungslink</span><input id="room-input" name="room-code" autocomplete="off" autocapitalize="off" spellcheck="false" placeholder="Code oder Link einfügen" aria-describedby="join-hint" value="' + esc(inputRoom) + '"' + disabled + ' /><small class="input-hint" id="join-hint">Der Spielmodus ist bereits vom Raum vorgegeben.</small></label>',
+    '<button class="' + (inputRoom ? 'primary-button' : 'secondary-button') + ' full-width action-button" type="submit" id="join-button"' + disabled + '>' + (busy ? '<span class="spinner" aria-hidden="true"></span> Verbinde …' : icon('link', '', 16) + 'Raum beitreten') + '</button></form></div>',
+    '<p class="trust-note">' + icon('check', '', 13) + 'Danach stellst du dein Team auf. Wenn beide bereit sind, beginnt die Partie.</p>',
+    '<div class="lobby-notice" role="alert"' + (!notice ? ' hidden' : '') + '>' + esc(notice) + '</div><details class="lobby-rules" id="lobby-rules"><summary>So wird gespielt</summary>' + rulesCard() + '</details></section>',
   ].join('');
 }
 
@@ -451,15 +453,19 @@ function gameMarkup(): string {
   const connected = networkStatus === 'connected';
   const ended = networkStatus === 'ended';
   const connectionLabel = connected ? 'VERBUNDEN' : ended ? 'BEENDET' : networkStatus === 'reconnecting' || networkStatus === 'connecting' ? 'VERBINDE …' : 'GETRENNT';
+  const preparing = view.phase === 'waiting' || view.phase === 'setup';
   return [
+    phaseCard(),
+    '<details class="game-details" id="room-details"' + (preparing ? ' open' : '') + '><summary>Raum & Mitspieler · ' + connectionLabel + '</summary>',
     '<section class="card room-card"><div class="card-heading"><p class="eyebrow">PRIVATER RAUM</p><span class="pill ' + (connected ? 'accent' : 'orange') + '">' + connectionLabel + '</span></div>',
     '<div class="room-code-row"><code class="room-code" title="Raumcode">' + esc(view.roomId) + '</code><button class="icon-button" data-action="copy" id="copy-button" aria-label="Einladungslink kopieren" title="Einladungslink kopieren"' + (ended ? ' disabled' : '') + '>' + icon('copy', '', 17) + '</button></div>',
     '<p class="room-help">' + (ended ? 'Dieser Raum ist beendet. Starte eine neue Partie.' : 'Kopiere den Link und lade deinen Mitspieler ein.') + '</p><div class="players">' + playerMarkup(me(), true) + playerMarkup(opponent(), false) + '</div></section>',
-    phaseCard(),
+    '</details><details class="game-details" id="game-history"><summary>Spielverlauf</summary>',
     '<section class="card history-card"><div class="card-heading"><h2>' + (ended ? 'Die letzte Partie' : 'Was gerade passiert') + '</h2><span class="eyebrow">' + (ended ? 'VERLAUF' : 'LIVE') + '</span></div><ol class="move-log">' + (recent.length ? recent.map((entry) => '<li>' + esc(entry) + '</li>').join('') : '<li>Deine Arena wartet auf den ersten Zug.</li>') + '</ol>' + (older.length ? '<details class="history-details"><summary id="history-toggle">Ältere Ereignisse (' + older.length + ')</summary><p>Die letzten 100 Ereignisse dieser Partie. Neueste zuerst.</p><ol class="move-log history-scroll" id="history-scroll" tabindex="0" aria-label="Ältere Spielereignisse">' + older.map((entry) => '<li>' + esc(entry) + '</li>').join('') + '</ol></details>' : '') + '</section>',
+    '</details><details class="game-details" id="game-rules"><summary>Spielregeln</summary>' + rulesCard() + '</details>',
     '<div class="game-actions"><button class="text-button" data-action="leave" id="leave-button">' + icon('leave', '', 13) + 'Zur Lobby</button>',
     !ended && (view.phase === 'playing' || view.phase === 'duel') ? '<button class="text-button danger" data-action="resign" id="resign-button"' + (!connected || pending ? ' disabled' : '') + '>Partie aufgeben ' + icon('close', '', 12) + '</button>' : '',
-    '</div>', rulesCard(),
+    '</div>',
   ].join('');
 }
 
@@ -513,7 +519,10 @@ function replaceMarkup(target: HTMLElement, markup: string): void {
 
 function render(): void {
   const active = document.activeElement instanceof HTMLElement ? document.activeElement : null;
-  const focusId = active?.closest('#sidebar') ? active.id : '';
+  const focusId = active?.closest('#sidebar, #lobby-overlay') ? active.id : '';
+  const selection = active instanceof HTMLInputElement ? [active.selectionStart, active.selectionEnd] : null;
+  const wasLobby = !el('lobby-overlay').hidden;
+  const openDetails = new Map(Array.from(app.querySelectorAll<HTMLDetailsElement>('.game-details, .lobby-rules')).map(detail => [detail.id, detail.open]));
   const detailsOpen = el('sidebar').querySelector<HTMLDetailsElement>('.rules-details')?.open;
   const historyOpen = el('sidebar').querySelector<HTMLDetailsElement>('.history-details')?.open;
   const oldHistory = el('sidebar').querySelector<HTMLElement>('.history-scroll');
@@ -527,12 +536,29 @@ function render(): void {
     offset: oldRows[anchorIndex].getBoundingClientRect().top - oldTop,
   } : null;
   el('shell').classList.toggle('game-mode', !!view);
-  const retroLogo = currentSkin.definition.presentation === 'retro' ? atlasIcon(currentSkin, currentSkin.definition.logo, 148) : null;
-  const refereeState = refereePortrait(currentSkin.definition, view);
-  const referee = retroLogo && !view ? refereeMarkup(96) : '';
-  const masthead = retroLogo ? '<section class="retro-masthead" aria-label="RPS Arena"><div class="retro-masthead-art">' + retroLogo + referee + '</div><span>' + esc(view ? 'Stein · Papier · Schere' : refereeState.caption) + '</span></section>' : '';
-  replaceMarkup(el('sidebar'), masthead + (view ? gameMarkup() : lobbyMarkup()));
-  if (detailsOpen) el('sidebar').querySelector<HTMLDetailsElement>('.rules-details')!.open = true;
+  el('shell').classList.toggle('lobby-mode', !view);
+  el('shell').classList.toggle('active-match', !!view && (view.phase === 'playing' || view.phase === 'duel'));
+  el('sidebar').hidden = !view;
+  el('lobby-overlay').hidden = !!view;
+  el('board').inert = !view;
+  replaceMarkup(el('sidebar'), view ? gameMarkup() : '');
+  replaceMarkup(el('lobby-overlay'), view ? '' : lobbyMarkup());
+  if (!view && inputRoom) {
+    const options = app.querySelector('.lobby-options');
+    options?.prepend(el('join-form'));
+  }
+  for (const detail of app.querySelectorAll<HTMLDetailsElement>('.game-details, .lobby-rules')) {
+    if (openDetails.has(detail.id)) detail.open = openDetails.get(detail.id)!;
+  }
+  // Invitation controls are useful during setup; collapse them when play begins.
+  if (el('shell').dataset.phase !== view?.phase && view && (view.phase === 'playing' || view.phase === 'duel')) {
+    el<HTMLDetailsElement>('room-details').open = false;
+  }
+  el('shell').dataset.phase = view?.phase ?? 'lobby';
+  if (detailsOpen) {
+    const rules = el('sidebar').querySelector<HTMLDetailsElement>('.rules-details');
+    if (rules) rules.open = true;
+  }
   const historyDetails = el('sidebar').querySelector<HTMLDetailsElement>('.history-details');
   if (historyOpen && historyDetails) {
     historyDetails.open = true;
@@ -545,8 +571,16 @@ function render(): void {
       if (row) list.scrollTop += row.getBoundingClientRect().top - list.getBoundingClientRect().top - anchor.offset;
     }
   }
-  if (focusId) el(focusId)?.focus({ preventScroll: true });
-  el('preview-banner').hidden = !!view;
+  if (focusId) {
+    const next = el<HTMLInputElement>(focusId);
+    next?.focus({ preventScroll: true });
+    if (selection && next instanceof HTMLInputElement) next.setSelectionRange(selection[0], selection[1]);
+  } else if (!view && (!wasLobby || active === document.body)) {
+    el('player-name').focus({ preventScroll: true });
+  } else if (view && wasLobby) {
+    el('board').focus({ preventScroll: true });
+  }
+  el('preview-banner').hidden = true;
   const scores = view ? seriesScoreMarkup(view) : '';
   el('series-scoreboard').hidden = !view;
   if (el('series-scoreboard').innerHTML !== scores) el('series-scoreboard').innerHTML = scores;
@@ -585,7 +619,7 @@ function render(): void {
   const recap = actionRecap();
   el('action-recap').hidden = !recap;
   if (el('action-recap').innerHTML !== recap) el('action-recap').innerHTML = recap;
-  el('notice').hidden = !notice;
+  el('notice').hidden = !notice || !view;
   replaceMarkup(el('notice'), notice ? icon('info', '', 17) + '<span class="notice-content">' + esc(notice) + '</span><button class="notice-button" data-action="dismiss-notice" aria-label="Hinweis schließen">' + icon('close', '', 12) + '</button>' : '');
   chat.updateSession(view, networkStatus === 'connected');
   combat.update(view, currentSkin, { connected: networkStatus === 'connected', pending });
@@ -730,6 +764,12 @@ app.addEventListener('input', (event) => {
   const input = event.target as HTMLInputElement;
   if (input.id === 'player-name') { name = input.value; writeSession('rps-arena:name', name); }
   if (input.id === 'room-input') inputRoom = input.value;
+});
+app.addEventListener('keydown', (event) => {
+  if (event.key === 'Enter' && (event.target as HTMLElement).id === 'player-name') {
+    event.preventDefault();
+    void begin(inputRoom ? 'join' : 'create');
+  }
 });
 app.addEventListener('change', (event) => {
   const select = event.target;

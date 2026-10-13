@@ -1,5 +1,15 @@
 # Änderungen
 
+## 0.4.8
+
+- Zentraler Einstieg mit Logo, Spielername und Raumaktionen auf einem gemeinsamen
+  leicht transparenten Overlay über dem Spielfeld.
+- Name vor der Raumwahl; bei Einladungslinks steht Beitreten vor Erstellen.
+  Der Spielmodus gilt nur für neu erstellte Räume.
+- Einstieg verschwindet beim Raumeintritt; Raumdetails, Verlauf und Regeln sind
+  einklappbar. Einladung bleibt während der Aufstellung direkt sichtbar.
+- Responsive Darstellung, Fehler direkt im Einstieg und erhaltener Tastaturfokus.
+
 ## 0.4.7
 
 ### Flaggensieger und langsamere Kampfpräsentation
