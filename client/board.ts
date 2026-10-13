@@ -609,8 +609,6 @@ class ArenaScene extends Phaser.Scene {
       }
     }
     if (last) this.drawLastDirection(last);
-    this.text(WIDTH / 2, HEIGHT - 16, last ? 'LETZTER ZUG  ' + coordinate(last.from) + ' → ' + coordinate(last.to) :
-      this.view ? '' : 'DEIN TEAM STARTET UNTEN', 9, this.palette.coordinates);
   }
 
   private drawLastDirection(action: GameActionView): void {

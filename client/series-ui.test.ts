@@ -1,7 +1,7 @@
 import assert from 'node:assert/strict';
 import { test } from 'node:test';
 import type { GameView } from '../shared/game';
-import { readSeriesMode, seriesAnnouncement, seriesModeDescription, seriesScoreMarkup, seriesVoteStatus, seriesWinnerText } from './series-ui';
+import { readSeriesMode, seriesAnnouncement, seriesModeDescription, seriesScoreMarkup, seriesInfoMarkup, seriesVoteStatus, seriesWinnerText } from './series-ui';
 
 function snapshot(): GameView {
   return {
@@ -32,7 +32,9 @@ test('mode preferences fall back to a free series and explain wins rather than a
 
 test('a restored series shows authoritative scores, draws and the actual first player', () => {
   const view = snapshot();
-  const html = seriesScoreMarkup(view);
+  const html = seriesScoreMarkup(view) + seriesInfoMarkup(view);
+  assert.doesNotMatch(seriesScoreMarkup(view), /series-info|series-meta|series-winner/);
+  assert.doesNotMatch(seriesInfoMarkup(view), /<details|<summary|series-scores/);
   assert.match(html, /Best of 3 · Serie 1/);
   assert.match(html, /Ziel: 2 Siege/);
   assert.match(html, /aria-label="1 eigene Siege"/);
@@ -48,7 +50,7 @@ test('opponent names and winner announcements cannot inject markup into the scor
   view.players[1].name = '<img src=x onerror="alert(1)"> & Ben';
   view.series.winner = 'ben';
   view.series.winsByPlayer.ben = 2;
-  const html = seriesScoreMarkup(view);
+  const html = seriesScoreMarkup(view) + seriesInfoMarkup(view);
   assert.doesNotMatch(html, /<img|onerror="/);
   assert.match(html, /&lt;img src=x onerror=&quot;alert\(1\)&quot;&gt; &amp; Ben/);
   assert.match(html, /gewinnt die Serie\./);
@@ -61,7 +63,8 @@ test('scores, first player and series winner keep their seat color for either vi
   view.series.winsByPlayer = { ada: 1, ben: 2 };
   view.series.winner = 'ben';
   for (const you of ['ada', 'ben']) {
-    const html = seriesScoreMarkup({ ...view, you, players: [...view.players].reverse() });
+    const perspective = { ...view, you, players: [...view.players].reverse() };
+    const html = seriesScoreMarkup(perspective) + seriesInfoMarkup(perspective);
     const rows = [...html.matchAll(/<div class="series-player(?: enemy)?" data-team-color="(blue|red)">([\s\S]*?)<\/div>/g)];
     assert.equal(rows.length, 2);
     const blue = rows.find((row) => row[1] === 'blue')?.[2] ?? '';
@@ -80,7 +83,7 @@ test('a vacant first-player seat still has the seat color and an unknown winner 
   const view = snapshot();
   view.players = view.players.filter((player) => player.id === 'ada');
   view.series.winner = 'missing';
-  const html = seriesScoreMarkup(view);
+  const html = seriesScoreMarkup(view) + seriesInfoMarkup(view);
   assert.match(html, /class="series-starting-player" data-team-color="red">Erster Zug: Spieler auf Platz 2/);
   assert.match(html, /class="series-winner">Ein Spieler gewinnt die Serie\./);
 });

@@ -7,7 +7,7 @@ nicht eingerichtet. Die Dateien können weiterhin lokal oder im LAN laufen.
 
 ## Der erste Schritt bei dir
 
-Entpacke **RPS-Arena-v0.4.10-komplett.zip** in einen eigenen Ordner, öffne `rps-remake` in VS Code
+Entpacke **RPS-Arena-v0.4.11-komplett.zip** in einen eigenen Ordner, öffne `rps-remake` in VS Code
 und veröffentliche diesen Ordner als **privates GitHub-Repository**.
 Die Datei `render.yaml` muss dabei direkt in der Repository-Wurzel liegen,
 neben `package.json` und `Dockerfile`.
@@ -69,7 +69,7 @@ Partie bei einem Serverneustart oder Deployment.
    Abhängigkeiten, führt die automatisierten Tests aus und baut beide Teile
    der Anwendung. Der Container startet nur den gebauten Server.
 6. Die von Render tatsächlich ausgegebene **HTTPS-Adresse** öffnen. Dort
-   sollte RPS Arena 0.4.10 erscheinen. Diese Adresse für Einladungslinks verwenden.
+   sollte RPS Arena 0.4.11 erscheinen. Diese Adresse für Einladungslinks verwenden.
 
 `autoDeployTrigger: off` verhindert automatische Anwendungsdeploys bei jedem
 Commit. Änderungen an einem Blueprint können dennoch einen neuen Deploy

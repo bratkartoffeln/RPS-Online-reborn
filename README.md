@@ -1,8 +1,8 @@
-# RPS Arena – Version 0.4.10
+# RPS Arena – Version 0.4.11
 
 Ein eigenständiges Browser-Remake des taktischen Stein-Papier-Schere-Prinzips:
 zwei Spieler, verdeckte Figuren, eine Flagge und eine Falle pro Seite. Der
-Spielserver läuft lokal, im LAN und als Container auf dem QNAP. Version 0.4.10
+Spielserver läuft lokal, im LAN und als Container auf dem QNAP. Version 0.4.11
 enthält gemeinsame Spielserien mit Punktestand und das vollständig vektorisierte
 Grafikset „ICQ Retro“. Figuren, Spielfeld, Logo, Schiedsrichter und einzelne
 Waffen stammen jetzt aus einer gemeinsamen SVG-Map. Beide Teams haben Vorder-
@@ -17,6 +17,14 @@ den Zusammenstoß und den Sieger; anschließend hüpft dessen Mannschaft.
 Bei einer Flaggeneroberung zeigt ICQ Retro einen lächelnden Fahnenträger in
 Vorderansicht, und die Gewinnerarmee springt viermal gemeinsam. Unter dem
 Spielfeld können sich die beiden Teilnehmer im Raumchat austauschen.
+
+## Neu in Version 0.4.11
+
+- Kleine Versionsanzeige oben rechts im Login, ohne automatische Scrollaktionen.
+- Aufklappbarer Spielstatus mit Seriendetails und Figurenanzahlen. Die zusätzliche
+  Ereigniszeile unter dem Spielfeld entfällt.
+- Logo und kompakter Punktestand teilen sich eine Kopfzeile in Spielfeldbreite.
+- „Partie aufgeben“ ist ein großer Button im Stil von „Zur Lobby“.
 
 ## Neu in Version 0.4.10
 
@@ -603,7 +611,7 @@ TypeScript und Browser-/Serverbuild werden vor der Auslieferung geprüft.
 
 Der LAN-Betrieb auf dem QNAP TS-251D und die bestehende DNS-01-HTTPS-Einrichtung
 unter `https://flusensieb.dns.navy:8443` wurden bereits bestätigt. Die neue
-Version **0.4.10** wird als vollständige ZIP geliefert und anschließend von dir
+Version **0.4.11** wird als vollständige ZIP geliefert und anschließend von dir
 auf dem NAS installiert und mit der Onlineprüfung kontrolliert. Die bisherige
 Installation allein bestätigt noch nicht den Betrieb der neuen Version.
 Die Regeln bleiben die dokumentierten

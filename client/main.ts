@@ -5,7 +5,7 @@ import './retro.css';
 import './combat-ui.css';
 import './chat-ui.css';
 import './lobby.css';
-import type { FighterKind, PlayerView, PieceView } from '../shared/game';
+import type { FighterKind, PlayerView } from '../shared/game';
 import type { Snapshot } from '../shared/protocol';
 import { ArenaBoard, coordinate, kindName } from './board';
 import { escapeHtml as esc, icon } from './icons';
@@ -15,7 +15,7 @@ import { applyUiPalette, atlasIcon, pieceIcon, weaponIcon } from './skin-ui';
 import type { LoadedSkin, SkinCatalog, SkinEntry, TeamColor } from './skin-types';
 import { freshAction } from './board-motion';
 import { GameSounds } from './sound';
-import { readSeriesMode, seriesAnnouncement, seriesModeDescription, seriesModeLabel, seriesScoreMarkup, seriesVoteStatus, seriesWinnerText } from './series-ui';
+import { readSeriesMode, seriesAnnouncement, seriesModeDescription, seriesModeLabel, seriesScoreMarkup, seriesInfoMarkup, seriesVoteStatus, seriesWinnerText } from './series-ui';
 import { refereePortrait } from './referee-ui';
 import { otherTeamColor, teamColorForPlayer, teamColorName } from './team-ui';
 import { CombatOverlay, COMBAT_TIMING } from './combat-ui';
@@ -25,17 +25,16 @@ import { freshVictory } from './match-victory';
 const app = document.querySelector<HTMLDivElement>('#app')!;
 app.innerHTML = [
   '<div class="app-shell" id="shell">',
-  '<header class="app-header"><a class="brand" href="' + esc(location.pathname) + '" aria-label="RPS Arena Startseite" data-action="home">',
+  '<header class="app-header"><div class="header-arena"><a class="brand" href="' + esc(location.pathname) + '" aria-label="RPS Arena Startseite" data-action="home">',
   '<span class="brand-emblem" id="brand-emblem">' + icon('rock', '', 29) + '</span><span><span class="brand-title">RPS ARENA</span><span class="brand-tagline" style="display:block">Stein. Papier. Schere.</span></span></a>',
-  '<section class="series-scoreboard" id="series-scoreboard" aria-label="Spielstand der Serie" aria-live="polite" aria-atomic="true" hidden></section><div class="header-right"><span class="header-note" id="header-note"><span class="status-dot"></span>PRIVATE PARTIEN</span><details class="appearance-menu" id="appearance-menu"><summary>Design ' + icon('chevron', '', 12) + '</summary><div class="appearance-panel"><label class="appearance-label" for="skin-select">Dein Design</label><select id="skin-select" aria-describedby="skin-status"><option value="classic">Klassisch</option></select><p class="appearance-status" id="skin-status" role="status">Grafiksets werden geladen …</p><label class="motion-option"><input id="animations-enabled" type="checkbox" checked />Animationen</label><p class="appearance-hint" id="motion-hint">Deine Auswahl gilt für diesen Browser.</p><label class="motion-option"><input id="sounds-enabled" type="checkbox" />Spielsounds</label><p class="appearance-hint">Kurze Retro-Töne für Züge und Kämpfe.</p></div></details><span class="version">v' + esc(__APP_VERSION__) + '</span></div></header>',
+  '<section class="series-scoreboard" id="series-scoreboard" aria-label="Spielstand der Serie" aria-live="polite" aria-atomic="true" hidden></section></div><div class="header-right"><span class="header-note" id="header-note"><span class="status-dot"></span>PRIVATE PARTIEN</span><details class="appearance-menu" id="appearance-menu"><summary>Design ' + icon('chevron', '', 12) + '</summary><div class="appearance-panel"><label class="appearance-label" for="skin-select">Dein Design</label><select id="skin-select" aria-describedby="skin-status"><option value="classic">Klassisch</option></select><p class="appearance-status" id="skin-status" role="status">Grafiksets werden geladen …</p><label class="motion-option"><input id="animations-enabled" type="checkbox" checked />Animationen</label><p class="appearance-hint" id="motion-hint">Deine Auswahl gilt für diesen Browser.</p><label class="motion-option"><input id="sounds-enabled" type="checkbox" />Spielsounds</label><p class="appearance-hint">Kurze Retro-Töne für Züge und Kämpfe.</p></div></details><span class="version">v' + esc(__APP_VERSION__) + '</span></div></header>',
   '<div class="intro-row"><div><p class="eyebrow" id="page-eyebrow">DAS TAKTISCHE DUELL FÜR ZWEI</p><h1 class="page-title" id="page-title">Dein Zug beginnt hier.</h1></div><p class="page-subtitle" id="page-subtitle">Figuren verdecken.<br>Gedanken lesen. Flagge holen.</p></div>',
   '<div class="notice" id="notice" role="alert" hidden></div>',
   '<main class="arena-grid"><section class="play-panel" aria-label="Spielbereich">',
   '<div class="board-region"><div class="board-surface"><div id="board" class="canvas-wrap" tabindex="0" role="application" aria-label="Spielfeld mit sieben Spalten und sechs Reihen" aria-describedby="board-help board-focus"></div><div id="combat-overlay" class="combat-overlay" hidden></div></div>',
   '<div class="preview-banner" id="preview-banner">' + icon('unknown', '', 18) + '<span>Ein guter Plan bleibt erst einmal geheim.</span></div></div>',
-  '<div class="action-recap" id="action-recap" hidden></div>',
-  '<div class="board-footer"><span class="team-key" id="own-team-key" data-team-color="blue"><span class="team-square"></span><span id="own-count">Dein Team</span></span><span class="team-key enemy" id="enemy-team-key" data-team-color="red"><span class="team-square"></span><span id="enemy-count">Gegner</span></span><span class="board-hint" id="board-hint">Erstelle oder betrete einen Raum.</span></div><section id="room-chat" hidden></section></section>',
-  '<aside class="side-column" id="match-sidebar" aria-label="Spielsteuerung"><section class="match-overview" id="match-overview" aria-label="Spielstatus und Punktestand"><div class="match-status"><span class="eyebrow">SPIELSTATUS</span><span class="pill accent" id="board-phase">DEINE ARENA</span></div></section><div class="match-controls" id="sidebar"></div></aside><section id="lobby-overlay" class="lobby-overlay" aria-label="Spiel starten"></section></main>',
+  '<section id="room-chat" hidden></section></section>',
+  '<aside class="side-column" id="match-sidebar" aria-label="Spielsteuerung"><details class="match-overview" id="match-overview"><summary class="match-status" title="Spielstatus und Seriendetails"><span class="eyebrow">SPIELSTATUS</span><span class="pill accent" id="board-phase">DEINE ARENA</span></summary><div class="match-status-details"><div id="series-info"></div><div class="match-team-counts"><span class="team-key" id="own-team-key" data-team-color="blue"><span class="team-square"></span><span id="own-count">Dein Team</span></span><span class="team-key enemy" id="enemy-team-key" data-team-color="red"><span class="team-square"></span><span id="enemy-count">Gegner</span></span><span class="board-hint" id="board-hint">Erstelle oder betrete einen Raum.</span></div></div></details><div class="match-controls" id="sidebar"></div></aside><section id="lobby-overlay" class="lobby-overlay" aria-label="Spiel starten"></section></main>',
   '<footer class="footer"><span>' + icon('info', '', 13) + 'Ein unabhängiges Remake · vorläufige Regeln für Version ' + esc(__APP_VERSION__) + '</span><span>Figur anklicken oder <kbd>↑</kbd><kbd>←</kbd><kbd>↓</kbd><kbd>→</kbd> + <kbd>Enter</kbd></span></footer></div>',
   '<p class="sr-only" id="board-help">Mit den Pfeiltasten ein Feld wählen. Mit Enter oder Leertaste eine eigene Figur und anschließend ein Zielfeld wählen. Escape hebt die Auswahl auf. In der Aufstellung tauschen zwei eigene Figuren die Plätze. Alternativ eine eigene Figur auf eine zweite eigene Figur ziehen. Im Spiel sind markierte Felder erlaubte Ziele.</p>',
   '<p class="sr-only" id="board-focus" aria-live="polite"></p><p class="sr-only" id="announcement" aria-live="polite" aria-atomic="true"></p>',
@@ -85,9 +84,6 @@ const connection = new RpsConnection({
     render();
   },
   onSnapshot(snapshot) {
-    const enteringRoom = !view || view.roomId !== snapshot.roomId;
-    const showPlayPanel = enteringRoom || view?.series.matchId !== snapshot.series.matchId ||
-      (view?.phase === 'setup' && snapshot.phase === 'playing');
     const action = networkStatus === 'connected' ? freshAction(view, snapshot) : null;
     const victory = networkStatus === 'connected' ? freshVictory(view, snapshot) : null;
     if (action?.kind === 'move') sounds.playAction(action, snapshot.you, 0);
@@ -106,14 +102,6 @@ const connection = new RpsConnection({
     else if (victory) combat.reset();
     render();
     if (victory && (!action || action.kind === 'move')) board.celebrate(victory);
-    if (showPlayPanel && !chat.hasInputFocus) {
-      requestAnimationFrame(() => {
-        if (view?.series.matchId === snapshot.series.matchId && !chat.hasInputFocus) {
-          if (enteringRoom) window.scrollTo({ top: 0, left: 0, behavior: 'instant' });
-          else app.querySelector<HTMLElement>('.play-panel')?.scrollIntoView({ block: 'start', behavior: 'instant' });
-        }
-      });
-    }
     const latest = snapshot.log.at(-1) ?? '';
     const next = [snapshot.series.id, snapshot.series.matchId, snapshot.phase, snapshot.turnNumber, snapshot.duel?.round ?? 0, latest].join(':');
     if (next !== lastAnnouncement) {
@@ -372,7 +360,7 @@ function lobbyMarkup(): string {
   const busy = networkStatus === 'connecting' || networkStatus === 'reconnecting' || networkStatus === 'connected';
   const disabled = busy ? ' disabled' : '';
   return [
-    '<section class="lobby-card"><div class="lobby-logo" aria-label="RPS Arena">' + (atlasIcon(currentSkin, currentSkin.definition.logo, currentSkin.definition.presentation === 'retro' ? 148 : 64) ?? icon('rock', '', 48)) + '<span>RPS ARENA</span></div><div class="lobby-intro"><p class="eyebrow">NAME → RAUM → AUFSTELLUNG → DUELL</p><h1 class="lobby-title">Deine nächste Partie.</h1>',
+    '<span class="version lobby-version">v' + esc(__APP_VERSION__) + '</span><section class="lobby-card"><div class="lobby-logo" aria-label="RPS Arena">' + (atlasIcon(currentSkin, currentSkin.definition.logo, currentSkin.definition.presentation === 'retro' ? 148 : 64) ?? icon('rock', '', 48)) + '<span>RPS ARENA</span></div><div class="lobby-intro"><p class="eyebrow">NAME → RAUM → AUFSTELLUNG → DUELL</p><h1 class="lobby-title">Deine nächste Partie.</h1>',
     '<p class="body-copy">' + (sessionEnd ? 'Die vorige Partie ist beendet. Erstelle eine neue Partie oder tritt einem anderen Raum bei.' : inputRoom ? 'Du hast einen Raumcode. Gib deinen Namen ein und tritt der Partie bei.' : 'Erstelle eine Partie und lade jemanden über deinen Link ein.') + '</p></div>',
     '<label class="field lobby-name"><span>Dein Spielername</span><input id="player-name" name="player-name" autocomplete="nickname" placeholder="Wie heißt du?" maxlength="24" aria-describedby="name-hint" value="' + esc(name) + '"' + disabled + ' /><small class="input-hint" id="name-hint">Mit diesem Namen spielst du. Kein Konto nötig.</small></label><div class="lobby-options' + (inputRoom ? ' has-invitation' : '') + '">',
     '<form id="create-form"><h2>Neuen Raum erstellen</h2>',
@@ -493,38 +481,9 @@ function gameMarkup(): string {
     '<section class="card history-card"><div class="card-heading"><h2>' + (ended ? 'Die letzte Partie' : 'Was gerade passiert') + '</h2><span class="eyebrow">' + (ended ? 'VERLAUF' : 'LIVE') + '</span></div><ol class="move-log">' + (recent.length ? recent.map((entry) => '<li>' + esc(entry) + '</li>').join('') : '<li>Deine Arena wartet auf den ersten Zug.</li>') + '</ol>' + (older.length ? '<details class="history-details"><summary id="history-toggle">Ältere Ereignisse (' + older.length + ')</summary><p>Die letzten 100 Ereignisse dieser Partie. Neueste zuerst.</p><ol class="move-log history-scroll" id="history-scroll" tabindex="0" aria-label="Ältere Spielereignisse">' + older.map((entry) => '<li>' + esc(entry) + '</li>').join('') + '</ol></details>' : '') + '</section>',
     '</details><details class="game-details" id="game-rules"><summary>Spielregeln</summary>' + rulesCard() + '</details>',
     '<div class="game-actions"><button class="secondary-button full-width lobby-return-button" data-action="leave" id="leave-button">' + icon('leave', '', 20) + 'Zur Lobby</button>',
-    !ended && (view.phase === 'playing' || view.phase === 'duel') ? '<button class="text-button danger" data-action="resign" id="resign-button"' + (!connected || pending ? ' disabled' : '') + '>Partie aufgeben ' + icon('close', '', 12) + '</button>' : '',
+    !ended && (view.phase === 'playing' || view.phase === 'duel') ? '<button class="secondary-button full-width lobby-return-button" data-action="resign" id="resign-button"' + (!connected || pending ? ' disabled' : '') + '>' + icon('leave', '', 20) + 'Partie aufgeben ' + '</button>' : '',
     '</div>',
   ].join('');
-}
-
-function actionRecap(): string {
-  const action = view?.lastAction;
-  if (!action || !view) return '';
-  const ownerName = (piece: PieceView): string => view!.players.find((player) => player.id === piece.owner)?.name ?? 'Spieler';
-  const route = coordinate(action.from) + ' → ' + coordinate(action.to);
-  if (action.kind === 'move') {
-    return '<span class="action-route">' + esc(route) + '</span><div><span class="eyebrow">LETZTER ZUG · ' + action.turnNumber + '</span><p><span class="team-name" data-team-color="' + teamColorForPlayer(view, action.attacker.owner) + '">' + esc(ownerName(action.attacker)) + '</span> hat eine Figur gezogen.</p></div>';
-  }
-  const attacker = action.attacker;
-  const defender = action.defender!;
-  const winner = action.winnerId === attacker.id ? attacker : action.winnerId === defender.id ? defender : null;
-  let title: string;
-  if (action.outcome === 'duel') title = 'Gleiche Figuren: Ein geheimes Duell beginnt.';
-  else if (action.outcome === 'tie') title = 'Gleichstand. Beide wählen erneut.';
-  else if (action.outcome === 'trap') title = 'Die Falle hält stand. Der Angreifer fällt.';
-  else if (action.outcome === 'flag') title = ownerName(attacker) + ' erobert die Flagge.';
-  else title = ownerName(winner!) + ' gewinnt den Kampf.';
-  const figure = (piece: PieceView): string => {
-    const own = piece.owner === view!.you;
-    const color = teamColorForPlayer(view, piece.owner);
-    const removed = action.removedIds.includes(piece.id);
-    return '<span class="recap-piece ' + (own ? 'own' : 'enemy') + (removed ? ' removed' : '') + '" data-team-color="' + color + '">' +
-      pieceIcon(currentSkin, piece.kind ?? 'unknown', 30, own ? 'own' : 'enemy', piece.revealed, color) +
-      '<span>' + esc(kindName(piece.kind)) + (removed ? '<small>entfernt</small>' : winner?.id === piece.id ? '<small>Sieger</small>' : '') + '</span></span>';
-  };
-  return '<div class="recap-fight">' + figure(attacker) + '<span class="recap-versus">vs.</span>' + figure(defender) + '</div>' +
-    '<div class="recap-copy"><span class="eyebrow">' + (action.kind === 'duel' ? 'DUELL · RUNDE ' + action.duelRound : 'KAMPF · ZUG ' + action.turnNumber) + ' · ' + esc(route) + '</span><p' + (winner ? ' class="team-name" data-team-color="' + teamColorForPlayer(view, winner.owner) + '"' : '') + '>' + esc(title) + '</p></div>';
 }
 
 function boardHint(): string {
@@ -554,16 +513,6 @@ function render(): void {
   const openDetails = new Map(Array.from(app.querySelectorAll<HTMLDetailsElement>('.game-details, .lobby-rules')).map(detail => [detail.id, detail.open]));
   const detailsOpen = el('sidebar').querySelector<HTMLDetailsElement>('.rules-details')?.open;
   const historyOpen = el('sidebar').querySelector<HTMLDetailsElement>('.history-details')?.open;
-  const oldHistory = el('sidebar').querySelector<HTMLElement>('.history-scroll');
-  const historyScroll = oldHistory?.scrollTop ?? 0;
-  const oldRows = oldHistory ? Array.from(oldHistory.children) as HTMLElement[] : [];
-  const oldTop = oldHistory?.getBoundingClientRect().top ?? 0;
-  const anchorIndex = oldRows.findIndex((row) => row.getBoundingClientRect().bottom > oldTop);
-  const anchor = historyOpen && historyScroll > 0 && anchorIndex >= 0 ? {
-    text: oldRows[anchorIndex].textContent,
-    next: oldRows[anchorIndex + 1]?.textContent,
-    offset: oldRows[anchorIndex].getBoundingClientRect().top - oldTop,
-  } : null;
   el('shell').classList.toggle('game-mode', !!view);
   el('shell').classList.toggle('lobby-mode', !view);
   el('shell').classList.toggle('active-match', !!view && (view.phase === 'playing' || view.phase === 'duel'));
@@ -594,14 +543,6 @@ function render(): void {
   const historyDetails = el('sidebar').querySelector<HTMLDetailsElement>('.history-details');
   if (historyOpen && historyDetails) {
     historyDetails.open = true;
-    const list = historyDetails.querySelector<HTMLElement>('.history-scroll')!;
-    list.scrollTop = historyScroll;
-    if (anchor) {
-      const rows = Array.from(list.children) as HTMLElement[];
-      const row = rows.find((item, index) => item.textContent === anchor.text &&
-        (anchor.next === undefined || rows[index + 1]?.textContent === anchor.next));
-      if (row) list.scrollTop += row.getBoundingClientRect().top - list.getBoundingClientRect().top - anchor.offset;
-    }
   }
   if (focusId) {
     const next = el<HTMLInputElement>(focusId);
@@ -616,13 +557,10 @@ function render(): void {
   const scores = view ? seriesScoreMarkup(view) : '';
   el('series-scoreboard').hidden = !view;
   if (el('series-scoreboard').innerHTML !== scores) {
-    const infoOpen = el('series-scoreboard').querySelector<HTMLDetailsElement>('.series-info')?.open;
-    const infoFocused = document.activeElement === el('series-scoreboard').querySelector('.series-info > summary');
     el('series-scoreboard').innerHTML = scores;
-    const info = el('series-scoreboard').querySelector<HTMLDetailsElement>('.series-info');
-    if (info && infoOpen) info.open = true;
-    if (infoFocused) info?.querySelector<HTMLElement>('summary')?.focus({ preventScroll: true });
   }
+  const seriesInfo = view ? seriesInfoMarkup(view) : '';
+  if (el('series-info').innerHTML !== seriesInfo) el('series-info').innerHTML = seriesInfo;
   const paused = networkStatus === 'reconnecting' || networkStatus === 'disconnected' || networkStatus === 'ended';
   replaceMarkup(el('header-note'), '<span class="status-dot ' + (paused ? 'offline' : '') + '"></span>' + (networkStatus === 'ended' ? 'PARTIE BEENDET' : view ? networkStatus === 'connected' ? 'VERBUNDEN' : 'VERBINDUNG PAUSIERT' : 'PRIVATE PARTIEN'));
   el('page-title').textContent = view ? networkStatus === 'ended' ? 'Diese Partie ist beendet.' : view.phase === 'waiting' || view.phase === 'setup' ? 'Die Aufstellung zählt.' : view.phase === 'finished' ? view.series.winner ? 'Die Serie ist entschieden.' : 'Die Partie ist entschieden.' : 'Jeder Zug zählt.' : 'Dein Zug beginnt hier.';
@@ -653,9 +591,6 @@ function render(): void {
   el('own-count').textContent = view ? 'Dein Team · ' + teamColorName(ownColor) + ' · ' + view.board.filter((p) => p?.owner === view?.you).length : 'Dein Team';
   el('enemy-count').textContent = view ? 'Gegner · ' + teamColorName(enemyColor) + ' · ' + view.board.filter((p) => p && p.owner !== view?.you).length : 'Gegner';
   el('board-hint').textContent = boardHint();
-  const recap = actionRecap();
-  el('action-recap').hidden = !recap;
-  if (el('action-recap').innerHTML !== recap) el('action-recap').innerHTML = recap;
   el('notice').hidden = !notice || !view;
   replaceMarkup(el('notice'), notice ? icon('info', '', 17) + '<span class="notice-content">' + esc(notice) + '</span><button class="notice-button" data-action="dismiss-notice" aria-label="Hinweis schließen">' + icon('close', '', 12) + '</button>' : '');
   chat.updateSession(view, networkStatus === 'connected');
@@ -680,7 +615,7 @@ function setRoomUrl(roomCode: string | null): void {
 
 function playerName(): string | null {
   name = (el<HTMLInputElement>('player-name')?.value ?? name).trim();
-  if (!name) { toast('Gib bitte zuerst deinen Spielernamen ein.', true); el('player-name').focus(); return null; }
+  if (!name) { toast('Gib bitte zuerst deinen Spielernamen ein.', true); el('player-name').focus({ preventScroll: true }); return null; }
   writeSession('rps-arena:name', name);
   return name;
 }
@@ -693,7 +628,7 @@ async function begin(action: 'create' | 'join'): Promise<void> {
   const code = roomCodeFrom(inputRoom);
   if (action === 'join' && !code) {
     toast('Füge einen gültigen Raumcode oder Einladungslink ein. Groß- und Kleinschreibung bleiben erhalten.', true);
-    el('room-input').focus();
+    el('room-input').focus({ preventScroll: true });
     return;
   }
   notice = '';
@@ -734,7 +669,7 @@ function showLinkDialog(link: string): void {
   lastModalFocus = document.activeElement as HTMLElement | null;
   el('modal-root').innerHTML = '<div class="modal-backdrop"><section class="modal" role="dialog" aria-modal="true" aria-labelledby="modal-title"><h2 id="modal-title">Dein Einladungslink</h2><p>Markiere den Link und kopiere ihn für deinen Mitspieler.</p><label class="field"><span>Link zur Partie</span><input id="share-link" readonly value="' + esc(link) + '" /></label><div class="button-row"><button class="primary-button" data-action="cancel-modal">Fertig</button></div></section></div>';
   const field = el<HTMLInputElement>('share-link');
-  field.focus();
+  field.focus({ preventScroll: true });
   field.select();
 }
 
@@ -742,7 +677,7 @@ function confirm(title: string, text: string, label: string, action: () => void)
   lastModalFocus = document.activeElement as HTMLElement | null;
   confirmAction = action;
   el('modal-root').innerHTML = '<div class="modal-backdrop"><section class="modal" role="dialog" aria-modal="true" aria-labelledby="modal-title" aria-describedby="modal-description"><h2 id="modal-title">' + esc(title) + '</h2><p id="modal-description">' + esc(text) + '</p><div class="button-row"><button class="secondary-button" data-action="cancel-modal" id="cancel-modal">Abbrechen</button><button class="primary-button danger-button" data-action="confirm-modal">' + esc(label) + '</button></div></section></div>';
-  el('cancel-modal').focus();
+  el('cancel-modal').focus({ preventScroll: true });
 }
 
 function closeModal(): void {
@@ -782,7 +717,7 @@ async function newGame(): Promise<void> {
   seriesMode = view?.series.mode ?? seriesMode;
   await leaveRoom();
   name = chosenName;
-  if (!chosenName) { el('player-name').focus(); return; }
+  if (!chosenName) { el('player-name').focus({ preventScroll: true }); return; }
   writeSession('rps-arena:name', chosenName);
   try { await connection.create(chosenName, seriesMode); }
   catch (error) { notice = error instanceof Error ? error.message : 'Der neue Raum konnte nicht erstellt werden. Bitte versuche es erneut.'; render(); }
@@ -853,7 +788,7 @@ document.addEventListener('keydown', (event) => {
   void sounds.unlock();
   if (event.key === 'Escape' && el<HTMLDetailsElement>('appearance-menu').open) {
     el<HTMLDetailsElement>('appearance-menu').open = false;
-    el('appearance-menu').querySelector<HTMLElement>('summary')?.focus();
+    el('appearance-menu').querySelector<HTMLElement>('summary')?.focus({ preventScroll: true });
   }
   const modal = el('modal-root').querySelector<HTMLElement>('.modal');
   if (!modal) return;
@@ -862,8 +797,8 @@ document.addEventListener('keydown', (event) => {
     const targets = Array.from(modal.querySelectorAll<HTMLElement>('button:not([disabled]), input:not([disabled])'));
     const first = targets[0];
     const last = targets.at(-1);
-    if (event.shiftKey && document.activeElement === first) { event.preventDefault(); last?.focus(); }
-    else if (!event.shiftKey && document.activeElement === last) { event.preventDefault(); first?.focus(); }
+    if (event.shiftKey && document.activeElement === first) { event.preventDefault(); last?.focus({ preventScroll: true }); }
+    else if (!event.shiftKey && document.activeElement === last) { event.preventDefault(); first?.focus({ preventScroll: true }); }
   }
 });
 
