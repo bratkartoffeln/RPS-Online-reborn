@@ -1,4 +1,4 @@
-# HTTPS über Standardports – RPS Arena v0.4.8
+# HTTPS über Standardports – RPS Arena v0.4.9
 
 Diese alternative Anleitung verwendet die öffentlichen Ports **80 und 443**.
 **Sie wird für deine eingerichtete Spieladresse auf Port 8443 nicht verwendet.**
@@ -60,7 +60,7 @@ Update-Konfiguration beim DDNS-Anbieter berücksichtigen.
 
 ## 2. Vollständige Version auf dem NAS übernehmen
 
-1. **RPS-Arena-v0.4.8-komplett.zip** separat entpacken. Sie enthält den vollständigen Ordner `rps-remake`.
+1. **RPS-Arena-v0.4.9-komplett.zip** separat entpacken. Sie enthält den vollständigen Ordner `rps-remake`.
 2. Den Inhalt des neuen `rps-remake` in den vorhandenen Projektordner
    übernehmen. Es darf kein zusätzlicher Ordner `rps-remake/rps-remake`
    entstehen. Die vorhandenen Ordner `skins/` und `secrets/` sowie die eigene
@@ -161,7 +161,7 @@ sind dafür nicht erforderlich.
 Auf einem Smartphone **WLAN ausschalten** und über Mobilfunk öffnen:
 
 - **https://flusensieb.dns.navy**: Spiel erscheint ohne Zertifikatswarnung.
-- **https://flusensieb.dns.navy/ready**: `ok: true` und `version: 0.4.8`.
+- **https://flusensieb.dns.navy/ready**: `ok: true` und `version: 0.4.9`.
 - **http://flusensieb.dns.navy**: Weiterleitung auf HTTPS.
 
 `https://NAS-IP:18443` ist kein geeigneter Zertifikatstest: Das öffentliche

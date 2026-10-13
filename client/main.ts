@@ -31,13 +31,11 @@ app.innerHTML = [
   '<div class="intro-row"><div><p class="eyebrow" id="page-eyebrow">DAS TAKTISCHE DUELL FÜR ZWEI</p><h1 class="page-title" id="page-title">Dein Zug beginnt hier.</h1></div><p class="page-subtitle" id="page-subtitle">Figuren verdecken.<br>Gedanken lesen. Flagge holen.</p></div>',
   '<div class="notice" id="notice" role="alert" hidden></div>',
   '<main class="arena-grid"><section class="play-panel" aria-label="Spielbereich">',
-  '<div class="board-topbar"><div><h2 id="board-title">Das Spielfeld</h2><span class="board-subtitle" id="board-subtitle">7 × 6 Felder · Vorschau</span></div><span class="pill accent" id="board-phase">DEINE ARENA</span></div>',
-  '<section class="series-scoreboard" id="series-scoreboard" aria-label="Spielstand der Serie" aria-live="polite" aria-atomic="true" hidden></section>',
   '<div class="board-region"><div class="board-surface"><div id="board" class="canvas-wrap" tabindex="0" role="application" aria-label="Spielfeld mit sieben Spalten und sechs Reihen" aria-describedby="board-help board-focus"></div><div id="combat-overlay" class="combat-overlay" hidden></div></div>',
   '<div class="preview-banner" id="preview-banner">' + icon('unknown', '', 18) + '<span>Ein guter Plan bleibt erst einmal geheim.</span></div></div>',
   '<div class="action-recap" id="action-recap" hidden></div>',
   '<div class="board-footer"><span class="team-key" id="own-team-key" data-team-color="blue"><span class="team-square"></span><span id="own-count">Dein Team</span></span><span class="team-key enemy" id="enemy-team-key" data-team-color="red"><span class="team-square"></span><span id="enemy-count">Gegner</span></span><span class="board-hint" id="board-hint">Erstelle oder betrete einen Raum.</span></div><section id="room-chat" hidden></section></section>',
-  '<aside class="side-column" id="sidebar" aria-label="Spielsteuerung"></aside><section id="lobby-overlay" class="lobby-overlay" aria-label="Spiel starten"></section></main>',
+  '<aside class="side-column" id="match-sidebar" aria-label="Spielsteuerung"><section class="match-overview" id="match-overview" aria-label="Spielstatus und Punktestand"><div class="match-status"><span class="eyebrow">SPIELSTATUS</span><span class="pill accent" id="board-phase">DEINE ARENA</span></div><section class="series-scoreboard" id="series-scoreboard" aria-label="Spielstand der Serie" aria-live="polite" aria-atomic="true" hidden></section></section><div class="match-controls" id="sidebar"></div></aside><section id="lobby-overlay" class="lobby-overlay" aria-label="Spiel starten"></section></main>',
   '<footer class="footer"><span>' + icon('info', '', 13) + 'Ein unabhängiges Remake · vorläufige Regeln für Version ' + esc(__APP_VERSION__) + '</span><span>Figur anklicken oder <kbd>↑</kbd><kbd>←</kbd><kbd>↓</kbd><kbd>→</kbd> + <kbd>Enter</kbd></span></footer></div>',
   '<p class="sr-only" id="board-help">Mit den Pfeiltasten ein Feld wählen. Mit Enter oder Leertaste eine eigene Figur und anschließend ein Zielfeld wählen. Escape hebt die Auswahl auf. In der Aufstellung tauschen zwei eigene Figuren die Plätze. Alternativ eine eigene Figur auf eine zweite eigene Figur ziehen. Im Spiel sind markierte Felder erlaubte Ziele.</p>',
   '<p class="sr-only" id="board-focus" aria-live="polite"></p><p class="sr-only" id="announcement" aria-live="polite" aria-atomic="true"></p>',
@@ -187,7 +185,7 @@ function applySkin(skin: LoadedSkin): void {
   currentSkin = skin;
   applyUiPalette(skin);
   board.setSkin(skin);
-  const logo = atlasIcon(skin, skin.definition.logo, 42);
+  const logo = atlasIcon(skin, skin.definition.logo, skin.definition.presentation === 'retro' ? 76 : 42);
   el('brand-emblem').classList.toggle('custom-logo', !!logo);
   el('brand-emblem').innerHTML = logo ?? icon('rock', '', 29);
   render();
@@ -239,6 +237,17 @@ async function initializeSkins(): Promise<void> {
   } catch (error) {
     showSkinOptions();
     el('skin-status').textContent = 'Arena Klassik ist aktiv. ' + (error instanceof Error ? error.message : 'Die Designauswahl ist nicht erreichbar.');
+  } finally {
+    // loadSkin has decoded every used atlas; the scene must also have installed
+    // its textures and painted before the hidden app becomes visible.
+    await board.whenReady();
+    await new Promise<void>(resolve => requestAnimationFrame(() => requestAnimationFrame(() => resolve())));
+    app.inert = false;
+    app.setAttribute('aria-busy', 'false');
+    delete document.documentElement.dataset.startup;
+    el('startup-screen')?.remove();
+    if (!view) el('player-name').focus({ preventScroll: true });
+    else el('board').focus({ preventScroll: true });
   }
 }
 
@@ -463,7 +472,7 @@ function gameMarkup(): string {
     '</details><details class="game-details" id="game-history"><summary>Spielverlauf</summary>',
     '<section class="card history-card"><div class="card-heading"><h2>' + (ended ? 'Die letzte Partie' : 'Was gerade passiert') + '</h2><span class="eyebrow">' + (ended ? 'VERLAUF' : 'LIVE') + '</span></div><ol class="move-log">' + (recent.length ? recent.map((entry) => '<li>' + esc(entry) + '</li>').join('') : '<li>Deine Arena wartet auf den ersten Zug.</li>') + '</ol>' + (older.length ? '<details class="history-details"><summary id="history-toggle">Ältere Ereignisse (' + older.length + ')</summary><p>Die letzten 100 Ereignisse dieser Partie. Neueste zuerst.</p><ol class="move-log history-scroll" id="history-scroll" tabindex="0" aria-label="Ältere Spielereignisse">' + older.map((entry) => '<li>' + esc(entry) + '</li>').join('') + '</ol></details>' : '') + '</section>',
     '</details><details class="game-details" id="game-rules"><summary>Spielregeln</summary>' + rulesCard() + '</details>',
-    '<div class="game-actions"><button class="text-button" data-action="leave" id="leave-button">' + icon('leave', '', 13) + 'Zur Lobby</button>',
+    '<div class="game-actions"><button class="secondary-button full-width lobby-return-button" data-action="leave" id="leave-button">' + icon('leave', '', 20) + 'Zur Lobby</button>',
     !ended && (view.phase === 'playing' || view.phase === 'duel') ? '<button class="text-button danger" data-action="resign" id="resign-button"' + (!connected || pending ? ' disabled' : '') + '>Partie aufgeben ' + icon('close', '', 12) + '</button>' : '',
     '</div>',
   ].join('');
@@ -538,7 +547,10 @@ function render(): void {
   el('shell').classList.toggle('game-mode', !!view);
   el('shell').classList.toggle('lobby-mode', !view);
   el('shell').classList.toggle('active-match', !!view && (view.phase === 'playing' || view.phase === 'duel'));
-  el('sidebar').hidden = !view;
+  el('match-sidebar').hidden = !view;
+  el('shell').querySelector<HTMLElement>('.app-header')!.inert = !view;
+  el('shell').querySelector<HTMLElement>('.play-panel')!.inert = !view;
+  document.body.classList.toggle('lobby-open', !view);
   el('lobby-overlay').hidden = !!view;
   el('board').inert = !view;
   replaceMarkup(el('sidebar'), view ? gameMarkup() : '');
@@ -583,14 +595,19 @@ function render(): void {
   el('preview-banner').hidden = true;
   const scores = view ? seriesScoreMarkup(view) : '';
   el('series-scoreboard').hidden = !view;
-  if (el('series-scoreboard').innerHTML !== scores) el('series-scoreboard').innerHTML = scores;
+  if (el('series-scoreboard').innerHTML !== scores) {
+    const infoOpen = el('series-scoreboard').querySelector<HTMLDetailsElement>('.series-info')?.open;
+    const infoFocused = document.activeElement === el('series-scoreboard').querySelector('.series-info > summary');
+    el('series-scoreboard').innerHTML = scores;
+    const info = el('series-scoreboard').querySelector<HTMLDetailsElement>('.series-info');
+    if (info && infoOpen) info.open = true;
+    if (infoFocused) info?.querySelector<HTMLElement>('summary')?.focus({ preventScroll: true });
+  }
   const paused = networkStatus === 'reconnecting' || networkStatus === 'disconnected' || networkStatus === 'ended';
   replaceMarkup(el('header-note'), '<span class="status-dot ' + (paused ? 'offline' : '') + '"></span>' + (networkStatus === 'ended' ? 'PARTIE BEENDET' : view ? networkStatus === 'connected' ? 'VERBUNDEN' : 'VERBINDUNG PAUSIERT' : 'PRIVATE PARTIEN'));
   el('page-title').textContent = view ? networkStatus === 'ended' ? 'Diese Partie ist beendet.' : view.phase === 'waiting' || view.phase === 'setup' ? 'Die Aufstellung zählt.' : view.phase === 'finished' ? view.series.winner ? 'Die Serie ist entschieden.' : 'Die Partie ist entschieden.' : 'Jeder Zug zählt.' : 'Dein Zug beginnt hier.';
   el('page-eyebrow').textContent = view ? 'DEINE PRIVATE ARENA' : 'DAS TAKTISCHE DUELL FÜR ZWEI';
   replaceMarkup(el('page-subtitle'), view ? 'Ein Plan. Ein Gegner.<br>Und eine Flagge.' : 'Figuren verdecken.<br>Gedanken lesen. Flagge holen.');
-  el('board-title').textContent = view ? 'Dein Spielfeld' : 'Das Spielfeld';
-  el('board-subtitle').textContent = view ? '7 × 6 Felder · Dein Team startet unten' : '7 × 6 Felder · Vorschau';
   const badge = el('board-phase');
   badge.className = 'pill accent';
   delete badge.dataset.teamColor;
@@ -704,7 +721,7 @@ function showLinkDialog(link: string): void {
 function confirm(title: string, text: string, label: string, action: () => void): void {
   lastModalFocus = document.activeElement as HTMLElement | null;
   confirmAction = action;
-  el('modal-root').innerHTML = '<div class="modal-backdrop"><section class="modal" role="dialog" aria-modal="true" aria-labelledby="modal-title"><h2 id="modal-title">' + esc(title) + '</h2><p>' + esc(text) + '</p><div class="button-row"><button class="secondary-button" data-action="cancel-modal" id="cancel-modal">Weiterspielen</button><button class="primary-button danger-button" data-action="confirm-modal">' + esc(label) + '</button></div></section></div>';
+  el('modal-root').innerHTML = '<div class="modal-backdrop"><section class="modal" role="dialog" aria-modal="true" aria-labelledby="modal-title" aria-describedby="modal-description"><h2 id="modal-title">' + esc(title) + '</h2><p id="modal-description">' + esc(text) + '</p><div class="button-row"><button class="secondary-button" data-action="cancel-modal" id="cancel-modal">Abbrechen</button><button class="primary-button danger-button" data-action="confirm-modal">' + esc(label) + '</button></div></section></div>';
   el('cancel-modal').focus();
 }
 
@@ -728,9 +745,16 @@ async function leaveRoom(): Promise<void> {
 }
 
 function requestLeave(): void {
-  if (networkStatus !== 'ended' && view && (view.phase === 'playing' || view.phase === 'duel')) {
-    confirm('Zur Lobby zurück?', 'Wenn du die laufende Partie verlässt, gewinnt dein Gegner. Du kannst anschließend einen neuen Raum erstellen.', 'Partie verlassen', () => { connection.send('resign'); void leaveRoom(); });
-  } else void leaveRoom();
+  if (!view) return;
+  const playing = networkStatus !== 'ended' && (view.phase === 'playing' || view.phase === 'duel');
+  const preparing = networkStatus !== 'ended' && (view.phase === 'waiting' || view.phase === 'setup');
+  confirm('Zur Lobby zurück?', playing
+    ? 'Bist du sicher? Du brichst die aktuelle Partie ab. Dein Gegner gewinnt.'
+    : preparing ? 'Bist du sicher? Du verlässt den Raum und brichst die aktuelle Spielvorbereitung ab.'
+    : 'Bist du sicher? Du verlässt diesen Raum.', 'Zur Lobby', () => {
+      if (playing) connection.send('resign');
+      void leaveRoom();
+    });
 }
 
 async function newGame(): Promise<void> {

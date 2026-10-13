@@ -1,4 +1,4 @@
-/* Entry and match layouts share the board; only the entry panel has a translucent surface. */
+/* Opaque full-screen entry; a compact status column leaves the board unobstructed. */
 .lobby-mode .intro-row, .game-mode .intro-row,
 .lobby-mode .app-header .brand, .lobby-mode .header-note,
 .lobby-mode .board-topbar, .lobby-mode .board-footer,
@@ -7,8 +7,9 @@
 .lobby-mode .arena-grid { display: grid; grid-template-columns: minmax(0, 1fr); max-width: 980px; margin: 0 auto 24px; }
 .lobby-mode .play-panel, .lobby-mode .lobby-overlay { grid-area: 1 / 1; }
 .lobby-mode .play-panel { align-self: center; }
-.lobby-overlay { position: relative; z-index: 5; align-self: center; padding: 24px; pointer-events: none; }
-.lobby-overlay .lobby-card { pointer-events: auto; width: min(620px, 100%); margin: auto; display: block; padding: 28px; border: 1px solid var(--surface-border); border-radius: 18px; background: color-mix(in srgb, var(--panel) 88%, transparent); box-shadow: 0 20px 65px #0004; }
+body.lobby-open { overflow: hidden; }
+.lobby-overlay { position: fixed; inset: 0; z-index: 50; display: flex; overflow-y: auto; overscroll-behavior: contain; padding: 28px 24px; background: var(--bg); }
+.lobby-overlay .lobby-card { width: min(620px, 100%); flex-shrink: 0; margin: auto; display: block; padding: 28px; border: 1px solid var(--surface-border); border-radius: 18px; background: var(--panel); box-shadow: 0 20px 65px #0004; }
 .lobby-logo { display: flex; align-items: center; justify-content: center; gap: 14px; color: var(--green); margin-bottom: 18px; }
 .lobby-logo > span:last-child { font-size: 25px; font-weight: 850; letter-spacing: .08em; color: var(--text); }
 .lobby-logo .atlas-icon { max-width: 100%; }
@@ -28,19 +29,46 @@
 .lobby-rules .rules-card { background: transparent; border: 0; box-shadow: none; padding: 16px 0 0; }
 .lobby-notice { margin-top: 16px; color: var(--orange); font-size: 12px; line-height: 1.6; }
 .game-mode .app-header { min-height: 68px; margin-bottom: 18px; }
+.match-controls { display: flex; flex-direction: column; gap: 12px; min-width: 0; }
+.match-overview { min-width: 0; border: 1px solid var(--line); border-radius: 10px; padding: 14px 16px; background: var(--panel); }
+.match-status { display: flex; align-items: center; justify-content: space-between; gap: 10px; }
+.match-overview .series-scoreboard { padding: 12px 0 0; border: 0; background: transparent; }
+.match-overview .series-scores { gap: 8px; }
+.match-overview .series-player { gap: 6px; }
+.match-overview .series-player-score { font-size: 24px; }
+.match-overview .series-player-name { font-size: 12px; }
+.match-overview .series-player-name small { font-size: 9px; }
+.series-info { margin-top: 10px; color: var(--muted); font-size: 10px; }
+.series-info summary { cursor: pointer; padding: 4px 0; }
+.series-info .series-heading { margin: 10px 0 0; }
+.match-overview .series-winner { margin-top: 8px; padding: 7px; }
+.game-mode .header-note { display: none; }
+.lobby-return-button { min-height: 50px; font-size: 14px; }
 .game-details { border: 1px solid var(--line); border-radius: 10px; background: var(--panel); padding: 10px 16px; }
 .game-details .card { border: 0; padding: 14px 0 4px; box-shadow: none; }
 .game-mode .game-actions { flex-wrap: wrap; gap: 16px; }
-:root[data-presentation="retro"] .lobby-overlay .lobby-card { border: 2px solid var(--line); border-radius: 4px; background: color-mix(in srgb, var(--panel) 90%, transparent); }
+:root[data-presentation="retro"] .lobby-overlay .lobby-card { border: 2px solid var(--line); border-radius: 4px; background: var(--panel); }
+:root[data-presentation="retro"] .game-mode .app-header { min-height: 86px; margin-bottom: 12px; }
+:root[data-presentation="retro"] .game-mode .brand-emblem.custom-logo { display: block; width: 76px; height: 76px; --logo-scale: 1; }
+:root[data-presentation="retro"] .game-mode .brand:has(.custom-logo) > span:last-child { display: none; }
+:root[data-presentation="retro"] .match-overview { border: 2px solid var(--line); border-radius: 2px; }
+:root[data-presentation="retro"] .game-mode .lobby-return-button { min-height: 50px; font-size: 14px; }
 :root[data-presentation="retro"] .lobby-logo > span:last-child { display: none; }
 :root[data-presentation="retro"] .lobby-mode .app-header { min-height: 50px; border: 0; }
 :root[data-presentation="retro"] .lobby-rules .rules-card { background: transparent; border: 0; box-shadow: none; }
 @media (max-width: 850px) {
-  .game-mode .side-column { display: flex; flex-direction: column; }
+  .game-mode .arena-grid { display: grid; grid-template-columns: minmax(0, 1fr); }
+  .game-mode .side-column { display: contents; }
+  .game-mode .match-overview { grid-row: 1; }
+  .game-mode .play-panel { grid-row: 2; }
+  .game-mode .match-controls { grid-row: 3; }
+  .match-overview { display: grid; grid-template-columns: auto minmax(0, 1fr); align-items: center; gap: 10px 20px; }
+  .match-status { flex-direction: column; align-items: flex-start; gap: 6px; }
+  .match-overview .series-scoreboard { padding: 0; }
   .lobby-mode .arena-grid { gap: 0; }
 }
 @media (max-width: 600px) {
-  .lobby-overlay { padding: 12px 0; }
+  .lobby-overlay { padding: 18px 12px; }
   .lobby-overlay .lobby-card { padding: 22px 18px; border-radius: 12px; }
   .lobby-options { grid-template-columns: 1fr; gap: 20px; }
   .lobby-options form + form { padding-top: 20px; border-top: 1px solid var(--line); }
@@ -49,4 +77,11 @@
   .lobby-mode .board-region, .lobby-mode .board-surface { height: 100%; }
   .lobby-mode .canvas-wrap { position: sticky; top: 12px; }
   .game-mode .board-subtitle, .active-match .header-note, .active-match .version { display: none; }
+  .match-overview { padding: 10px; gap: 12px; }
+  .match-overview .series-player-score { font-size: 21px; }
+  .match-overview .series-player-name { font-size: 11px; }
+  .game-mode .match-status > .eyebrow { display: none; }
+  .game-mode .match-status .pill { white-space: normal; text-align: center; }
+  :root[data-presentation="retro"] .game-mode .app-header { min-height: 74px; }
+  :root[data-presentation="retro"] .game-mode .brand-emblem.custom-logo { width: 64px; height: 64px; --logo-scale: .842; }
 }

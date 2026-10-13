@@ -1,5 +1,5 @@
 <!doctype html>
-<html lang="de">
+<html lang="de" data-startup="loading">
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
@@ -7,9 +7,23 @@
     <meta name="description" content="RPS Arena: ein taktisches Stein-Papier-Schere-Spiel für zwei. Privaten Raum erstellen, Link teilen und gegeneinander spielen." />
     <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Crect width='64' height='64' rx='16' fill='%2314191d'/%3E%3Cpath d='M19 16h21l9 10-9 22H21L13 30z' fill='%23c5f277'/%3E%3Cpath d='m25 24 12 3-6 13' fill='none' stroke='%2314191d' stroke-width='4'/%3E%3C/svg%3E" />
     <title>RPS Arena · Stein. Papier. Schere.</title>
+    <!-- Inline so the very first paint is the loading screen, before JS or theme CSS arrives. -->
+    <style>
+      html[data-startup="loading"], html[data-startup="loading"] body { margin: 0; background: #8aac19; overflow: hidden; }
+      html[data-startup="loading"] #app { visibility: hidden; }
+      .startup-screen { position: fixed; inset: 0; z-index: 10000; display: grid; place-items: center; padding: 24px; background: #8aac19; color: #273d0e; font-family: Tahoma, Verdana, sans-serif; text-align: center; }
+      .startup-screen strong { display: block; font-size: 28px; letter-spacing: .06em; }
+      .startup-screen p { margin: 14px 0 0; font-size: 14px; }
+      .startup-spinner { display: block; width: 30px; height: 30px; margin: 24px auto 0; border: 3px solid #273d0e33; border-top-color: #273d0e; border-radius: 50%; animation: startup-spin .8s linear infinite; }
+      @keyframes startup-spin { to { transform: rotate(360deg); } }
+      @media (prefers-reduced-motion: reduce) { .startup-spinner { animation: none; } }
+    </style>
   </head>
   <body>
-    <div id="app"></div>
+    <div id="startup-screen" class="startup-screen" role="status" aria-live="polite">
+      <div><strong>RPS ARENA</strong><span class="startup-spinner" aria-hidden="true"></span><p>Deine Arena wird geladen …</p><noscript><p>Bitte aktiviere JavaScript, um zu spielen.</p></noscript></div>
+    </div>
+    <div id="app" inert aria-busy="true"></div>
     <script type="module" src="/client/main.ts"></script>
   </body>
 </html>

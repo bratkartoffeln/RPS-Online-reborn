@@ -71,6 +71,17 @@ Die heutigen Raum-, Serien- und Bedienfunktionen bleiben Teil der Oberfläche.
 Seit 0.4.7 ergänzt ein eigener Raumchat unter dem Spielfeld die Partie. Ein
 historischer Countdown wurde weiterhin nicht als Spielfunktion eingeführt.
 
+### Einstieg und Informationsspalte in 0.4.9
+
+Der Einstieg verdeckt die gesamte Ansicht mit einer undurchsichtigen Fläche.
+Nach dem Raumeintritt steht das Logo oben links. Angelehnt an die schmale
+Informationsspalte der Originalaufnahme stehen Status und ein kleiner
+Punktestand rechts neben dem Brett, gefolgt vom Schiedsrichter und den
+phasenabhängigen Aktionen. Auf schmalen Bildschirmen stehen Status und Punkte
+über dem Brett. Die zusätzliche Brettüberschrift entfällt; Seriendetails sind
+aufklappbar. Der große Lobbybutton fragt vor dem Verlassen nach und warnt bei
+einer laufenden Partie vor dem Abbruch und dem Sieg des Gegners.
+
 ### Korrektur in 0.4.2
 
 Die aufgedeckte blaue Steinfigur unten links dient als gemeinsame Vorlage für

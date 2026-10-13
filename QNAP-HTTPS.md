@@ -1,8 +1,8 @@
-# QNAP: HTTPS auf Port 8443 mit dynv6-DNS – RPS Arena v0.4.8
+# QNAP: HTTPS auf Port 8443 mit dynv6-DNS – RPS Arena v0.4.9
 
 **Dein DNS-01-HTTPS ist bereits eingerichtet.** Du hast den erfolgreichen
 Stagingtest und anschließend die öffentliche Onlineprüfung für **Version 0.3.3**
-bestätigt. Für das Spielupdate auf **0.4.8** verwende
+bestätigt. Für das Spielupdate auf **0.4.9** verwende
 [QNAP-UPDATE.md](QNAP-UPDATE.md). Der vorhandene Token und die Zertifikats-Volumes
 bleiben erhalten; Token-Eingabe und Stagingtest müssen für dieses reine
 Spielupdate nicht wiederholt werden.
@@ -41,7 +41,7 @@ Die ursprüngliche Alternative für öffentliche Ports 80 und 443 steht in
 
 ## 1. Vollständige Version übernehmen
 
-1. **RPS-Arena-v0.4.8-komplett.zip** separat entpacken. Sie enthält den vollständigen Ordner `rps-remake`.
+1. **RPS-Arena-v0.4.9-komplett.zip** separat entpacken. Sie enthält den vollständigen Ordner `rps-remake`.
 2. Den neuen Inhalt in den bestehenden Projektordner übernehmen. Es darf kein
    zusätzlicher Unterordner `rps-remake/rps-remake` entstehen. Den vorhandenen
    Ordner `skins/`, die eigene `.env` und den Ordner `secrets/` dabei beibehalten;
@@ -113,7 +113,7 @@ Das Caddy-Image hat einen eigenen, kleinen Build-Kontext ohne diesen Ordner.
 
 Der Stagingtest ist für die erstmalige DNS-Einrichtung oder eine geänderte
 DNS-/Token-Konfiguration gedacht. Für das unveränderte, bereits bestätigte
-HTTPS beim Update auf 0.4.8 genügt [QNAP-UPDATE.md](QNAP-UPDATE.md).
+HTTPS beim Update auf 0.4.9 genügt [QNAP-UPDATE.md](QNAP-UPDATE.md).
 
 **Für DNS-Betrieb immer beide Compose-Dateien in dieser Reihenfolge verwenden:**
 `-f compose.yaml -f compose.dns.yaml --profile https`.
@@ -148,7 +148,7 @@ Zone stimmen meist Token, Zonenberechtigung oder `RPS_DOMAIN` nicht. Bei einem
 DNS-Propagationstimeout die Erreichbarkeit der DNS-Resolver und nach einer kurzen
 Wartezeit einen erneuten Test prüfen. Den Token dabei nicht in Chat oder Logs kopieren.
 
-## 4. Nach bestandenem DNS-Test Version 0.4.8 starten
+## 4. Nach bestandenem DNS-Test Version 0.4.9 starten
 
 Den Versionswechsel zwischen zwei Partien durchführen: Beim Neustart des
 Spielservers enden Partien, Serienwertungen und Chatverläufe, da sie im Arbeitsspeicher liegen.
@@ -177,7 +177,7 @@ erforderlich; kein `down -v` ausführen.
 Aufrufen:
 
 - **https://flusensieb.dns.navy:8443** – Spielseite ohne Zertifikatswarnung.
-- **https://flusensieb.dns.navy:8443/ready** – `ok: true`, Version **0.4.8**.
+- **https://flusensieb.dns.navy:8443/ready** – `ok: true`, Version **0.4.9**.
 
 Danach die bereits bekannte Funktionsprüfung:
 
