@@ -1,4 +1,18 @@
-# Grafiksets für RPS Arena v0.4.11
+# Grafiksets für RPS Arena v0.4.12
+
+Die optionale Manifest-Eigenschaft `chatNotice` verweist auf den Atlas-Frame für
+neue Chatnachrichten. Die drei mitgelieferten Designs enthalten je eine eigene
+Sprechblase; ICQ Retro verwendet eine Comic-Kontur mit cremefarbener Füllung.
+Auch `mobileAtlas.frames` muss diesen Frame enthalten.
+
+Die editierbaren SVG-Vorlagen liegen in `design/chat-notices/`. Nach Änderungen
+oder einer Neuerzeugung der ursprünglichen Atlanten fügt
+`node scripts/update-chat-atlases.mjs` die Motive in freie Atlasplätze ein und
+aktualisiert SVG, PNG-Fallback, mobilen WebP-Atlas und Manifeste gemeinsam. Dieses
+optionale Grafikwerkzeug benötigt `sharp`; alternativ kann als erstes Argument
+der Pfad zu einer vorhandenen `sharp`-Installation übergeben werden. Bestehende
+Frame-Koordinaten bleiben erhalten. Der normale Spielbuild verwendet die
+mitgelieferten Dateien und benötigt dieses Werkzeug nicht.
 
 RPS Arena trennt das Aussehen von den Spielregeln. Ein Grafikset kann Farben,
 Spielfeldkacheln, Figuren, kurze Figurenanimationen, einzelne Waffen, das Logo,
@@ -8,7 +22,7 @@ statische Schiedsrichterposen und optionale Flaggensieger ändern. Drei Sets wer
 | --- | --- |
 | **ICQ Retro** | Am ICQ-Spiel orientiertes Design mit grünem Schachbrett, roten/blauen Figuren und vollständigem SVG-Atlas mit PNG-Rückfallgrafik |
 | **Klassisch** | Bisherige dunkle Oberfläche mit Vektorfiguren; zugleich Rückfall bei einem fehlerhaften Set |
-| **Arcade** | Dunkles Vektorbildset mit primärer `master.svg`, passender PNG-Rückfallgrafik und 147 Frames einschließlich vorhandener Figurenclips |
+| **Arcade** | Dunkles Vektorbildset mit primärer `master.svg`, passender PNG-Rückfallgrafik und 148 Frames einschließlich vorhandener Figurenclips und Sprechblase |
 
 **ICQ Retro ist der neue Standard.** Eine bereits gespeicherte gültige Designwahl
 wird beim Update beibehalten. Wähle **ICQ Retro** unter **Design**, wenn dein
@@ -56,7 +70,7 @@ Die drei gezeichneten Vektorwaffen werden direkt
 
 `atlas.png` wird als **2016 × 2016 Pixel große RGBA-PNG** aus dieser SVG neu
 exportiert. Das Set lädt sie automatisch, wenn die primäre SVG nicht verwendet
-werden kann. Beide Bilder enthalten dieselben Motive in denselben 43 Ausschnitten;
+werden kann. Beide Bilder enthalten dieselben Motive in denselben 44 Ausschnitten;
 ihre gemeinsame Zuordnung steht in `public/skins/icq-retro/skin.json`:
 
 | Ausschnitte | Inhalt | Anzahl |
@@ -71,8 +85,9 @@ ihre gemeinsame Zuordnung steht in `public/skins/icq-retro/skin.json`:
 | `referee-blue-top`, `referee-red-bottom` | Blaue Flagge vorn oben beziehungsweise rote Flagge vorn unten | 2 |
 | `weapon-rock`, `weapon-paper`, `weapon-scissors` | Grauer Stein, helle Papierrolle und silberne Schere mit gelben Griffen | 3 |
 | `blue-front-flag-victory`, `red-front-flag-victory` | Lächelnde Frontposen mit erhobener tatsächlich eroberter Flagge | 2 |
+| `chat-notice` | Comic-Sprechblase für ungelesene Chatnachrichten | 1 |
 
-Das sind **43 statische Ausschnitte**. Die vier unbekannten Figurenbilder
+Mit der Chat-Sprechblase sind das **44 statische Ausschnitte**. Die vier unbekannten Figurenbilder
 zeigen keine Waffe und verraten keinen Figurentyp. Bewegung zwischen Feldern,
 die Kampfanimation und der Mannschaftsjubel bewegen und skalieren diese
 Bilder. Die Flaggeneroberung verwendet zusätzlich ihre beiden statischen Siegerposen.
@@ -300,7 +315,7 @@ damit die Rückfallanzeige dieselben Motive verwendet.
 
 Arcade verwendet seit 0.4.4 `master.svg` als primäres Laufzeitbild und `atlas.png`
 als Rückfallgrafik. Nach Änderungen am Master exportierst du auch dort die PNG
-neu. Bildmaße, 147 Frames und die vorhandenen Animationsclips bleiben erhalten.
+neu. Bildmaße, 148 Frames und die vorhandenen Animationsclips bleiben erhalten.
 
 ## 3. Nur Farben ändern
 

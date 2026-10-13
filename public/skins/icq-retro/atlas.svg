@@ -4717,4 +4717,14 @@
       </g>
     </g>
   </g>
+<g id="chat-notice-artwork" transform="translate(1736 296) scale(2.8333333333333335)"><g stroke="#202218" stroke-width="4" stroke-linecap="round" stroke-linejoin="round">
+    <path d="M13 31C11 12 32 9 52 11C73 9 91 20 87 40C91 61 70 73 44 70L20 85L24 66C12 61 7 46 13 31Z" fill="#526020" stroke="none" transform="translate(2 3)" />
+    <path d="M11 28C9 9 30 6 50 8C71 6 89 17 85 37C89 58 68 70 42 67L18 82L22 63C10 58 5 43 11 28Z" fill="#f7f0ce" />
+    <path d="M16 48C24 63 51 63 68 57C76 54 81 48 83 41C84 57 67 69 42 67L18 82L22 63Z" fill="#d8c88b" stroke="none" />
+    <path d="M21 23C27 15 43 14 57 16" fill="none" stroke="#fffdf0" stroke-width="5" />
+    <path d="M11 28C9 9 30 6 50 8C71 6 89 17 85 37C89 58 68 70 42 67L18 82L22 63C10 58 5 43 11 28Z" fill="none" />
+    <ellipse cx="29" cy="38" rx="4" ry="5" fill="#202218" stroke="none" />
+    <ellipse cx="47" cy="38" rx="4" ry="5" fill="#202218" stroke="none" />
+    <ellipse cx="65" cy="38" rx="4" ry="5" fill="#202218" stroke="none" />
+  </g></g><!-- end-chat-notice -->
 </svg>

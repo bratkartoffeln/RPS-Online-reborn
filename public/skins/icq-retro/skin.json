@@ -297,6 +297,12 @@
         "y": 8,
         "width": 272,
         "height": 272
+      },
+      "chat-notice": {
+        "x": 1736,
+        "y": 296,
+        "width": 272,
+        "height": 272
       }
     }
   },
@@ -752,7 +758,14 @@
         "y": 4,
         "width": 136,
         "height": 136
+      },
+      "chat-notice": {
+        "x": 868,
+        "y": 148,
+        "width": 136,
+        "height": 136
       }
     }
-  }
+  },
+  "chatNotice": "chat-notice"
 }

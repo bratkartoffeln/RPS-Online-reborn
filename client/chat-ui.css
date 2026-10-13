@@ -1,4 +1,10 @@
 .room-chat { padding: 17px 24px 20px; border-top: 1px solid var(--line); color: var(--text); background: var(--panel); }
+.legal-footer { padding: 16px 24px 28px; color: var(--muted); background: var(--panel); }
+.legal-footer nav { display: flex; flex-wrap: wrap; align-items: center; gap: 8px 22px; }
+.legal-footer a { display: inline-flex; align-items: center; min-height: 36px; font-size: 11px; text-underline-offset: 3px; }
+.legal-footer a:hover { color: var(--green); }
+.lobby-card > .legal-footer { margin-top: 18px; padding: 12px 0 0; border-top: 1px solid var(--line); }
+:root[data-presentation="retro"] .play-panel > .legal-footer { padding-inline: 18px; }
 .chat-header { display: flex; align-items: baseline; justify-content: space-between; flex-wrap: wrap; gap: 6px 12px; margin-bottom: 12px; }
 .chat-header h2 { font-size: 14px; font-weight: 700; }
 .chat-header > span { color: var(--muted); font-size: 10px; }
@@ -20,15 +26,20 @@
 .chat-status.chat-error { color: var(--team-red, var(--orange)); }
 .chat-history { overflow-anchor: none; }
 .referee-portrait { position: relative; }
-.referee-chat-notice { display: inline-grid; place-items: center; width: 46px; height: 40px; border: 1px solid var(--accent-border); border-radius: 12px; background: var(--green); color: var(--accent-text); box-shadow: 0 3px 10px #0003; line-height: 1; }
+.referee-chat-notice { display: inline-grid; place-items: center; width: 52px; height: 52px; padding: 2px; border: 0; border-radius: 8px; background: transparent; color: var(--green); line-height: 1; }
+.referee-chat-notice:hover { background: var(--accent-translucent); }
+.chat-navigation { display: flex; justify-content: flex-end; margin-top: 16px; }
+.back-to-board-icon { transform: rotate(-90deg); }
+.room-chat, .canvas-wrap { scroll-margin-top: 16px; }
 .referee-portrait .referee-chat-notice { position: absolute; top: 5%; right: 0; }
 .referee-chat-fallback { display: inline-block; }
 .referee-chat-fallback:has(.referee-chat-notice[hidden]) { display: none; }
-:root[data-presentation="retro"] .referee-chat-notice { border: 2px solid var(--line); border-radius: 3px; box-shadow: 2px 2px 0 var(--line); }
+:root[data-presentation="retro"] .referee-chat-notice { border-radius: 3px; }
 :root[data-presentation="retro"] .room-chat { padding: 12px 18px 16px; }
 :root[data-presentation="retro"] .chat-compose input,
 :root[data-presentation="retro"] .chat-compose button { border-radius: 3px; }
 @media (max-width: 540px) {
+  .play-panel > .legal-footer, :root[data-presentation="retro"] .play-panel > .legal-footer { padding: 12px 10px 24px; }
   .room-chat, :root[data-presentation="retro"] .room-chat { padding: 12px 10px 15px; }
   .chat-history { max-height: 164px; }
   .chat-compose input { padding: 9px; }

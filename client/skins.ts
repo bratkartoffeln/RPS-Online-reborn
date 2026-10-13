@@ -178,7 +178,7 @@ export function parseSkinCatalog(value: unknown): SkinCatalog {
 /** Pure, strict parser; partial optional palettes/artwork retain vector fallbacks. */
 export function parseSkinDefinition(value: unknown): SkinDefinition {
   const source = record(value, 'Grafikset');
-  keys(source, ['version', 'name', 'presentation', 'palette', 'atlas', 'weapons', 'weaponAtlas', 'mobileAtlas', 'board', 'logo', 'portrait', 'turnPortraits', 'colorTurnPortraits', 'directionalTurnPortraits', 'flagVictoryFrames', 'pieces', 'teamPieces', 'motion'], 'Grafikset');
+  keys(source, ['version', 'name', 'presentation', 'palette', 'atlas', 'weapons', 'weaponAtlas', 'mobileAtlas', 'board', 'logo', 'chatNotice', 'portrait', 'turnPortraits', 'colorTurnPortraits', 'directionalTurnPortraits', 'flagVictoryFrames', 'pieces', 'teamPieces', 'motion'], 'Grafikset');
   if (source.version !== 1) invalid('Das Grafikset muss version: 1 verwenden.');
   if (source.presentation !== undefined && source.presentation !== 'modern' && source.presentation !== 'retro') {
     invalid('presentation muss „modern“ oder „retro“ sein.');
@@ -267,6 +267,7 @@ export function parseSkinDefinition(value: unknown): SkinDefinition {
     if (input.dark !== undefined) skin.board.dark = reference(input.dark, 'board.dark');
   }
   if (source.logo !== undefined) skin.logo = reference(source.logo, 'logo');
+  if (source.chatNotice !== undefined) skin.chatNotice = reference(source.chatNotice, 'chatNotice');
   if (source.portrait !== undefined) skin.portrait = reference(source.portrait, 'portrait');
   if (source.turnPortraits !== undefined) {
     const input = record(source.turnPortraits, 'turnPortraits');

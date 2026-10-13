@@ -1,6 +1,7 @@
 import type { ChatMessage, ChatProblem, ChatSendMessage, ChatState, Snapshot } from '../shared/protocol';
 import { CHAT_MAX_LENGTH, normalizeChatText } from '../shared/chat';
 import { teamColorForSeat, teamColorName } from './team-ui';
+import { icon } from './icons';
 
 type Attempt = ChatSendMessage & { draft: string };
 
@@ -29,14 +30,15 @@ export class RoomChat {
   private error = '';
   private timer: ReturnType<typeof setTimeout> | undefined;
 
-  constructor(private readonly root: HTMLElement, private readonly send: (message: ChatSendMessage) => boolean, private readonly onOpponentMessage: () => void = () => {}) {
+  constructor(private readonly root: HTMLElement, private readonly send: (message: ChatSendMessage) => boolean, private readonly onOpponentMessage: () => void = () => {}, private readonly onSent: () => void = () => {}) {
     root.classList.add('room-chat');
     root.hidden = true;
     root.setAttribute('aria-labelledby', 'chat-title');
     root.innerHTML = '<header class="chat-header"><h2 id="chat-title">Chat</h2><span>Nur in diesem Spielraum</span></header>' +
       '<form class="chat-compose" id="chat-form"><label class="sr-only" for="chat-input">Nachricht an deinen Gegner</label><input type="text" id="chat-input" name="message" placeholder="Deine Nachricht …" autocomplete="off" maxlength="600" enterkeyhint="send" aria-describedby="chat-status" /><button type="submit" class="primary-button" id="chat-send">Senden</button></form>' +
       '<div class="chat-history" id="chat-history" role="log" aria-label="Nachrichten im Spielraum" aria-live="polite" aria-relevant="additions text" tabindex="0"><p class="chat-empty" id="chat-empty">Noch keine Nachrichten. Schreib deinem Gegner!</p><ol id="chat-messages"></ol></div>' +
-      '<p class="chat-status" id="chat-status" role="status" aria-live="polite" hidden></p>';
+      '<p class="chat-status" id="chat-status" role="status" aria-live="polite" hidden></p>' +
+      '<div class="chat-navigation"><button type="button" class="subtle-button" data-action="back-to-board">' + icon('chevron', 'back-to-board-icon', 14) + 'Zurück zum Spielfeld</button></div>';
     this.input = root.querySelector<HTMLInputElement>('#chat-input')!;
     this.button = root.querySelector<HTMLButtonElement>('#chat-send')!;
     this.list = root.querySelector<HTMLOListElement>('#chat-messages')!;
@@ -168,6 +170,7 @@ export class RoomChat {
       this.paintControls();
       return;
     }
+    this.onSent();
     this.clearTimer();
     this.timer = setTimeout(() => {
       this.pending = false;

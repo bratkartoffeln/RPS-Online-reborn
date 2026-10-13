@@ -76,6 +76,8 @@ export interface SkinDefinition {
   mobileAtlas?: SkinAtlas;
   board?: { light?: string; dark?: string };
   logo?: string;
+  /** Speech bubble shown for unread room chat messages. */
+  chatNotice?: string;
   /** Optional static host/referee illustration used by the retro masthead. */
   portrait?: string;
   /** Legacy color slots: own is blue/seat 0, enemy is red/seat 1. */

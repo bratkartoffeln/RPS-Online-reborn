@@ -23,6 +23,7 @@ import { RoomChat } from './chat-ui';
 import { freshVictory } from './match-victory';
 
 const app = document.querySelector<HTMLDivElement>('#app')!;
+const legalFooter = '<footer class="legal-footer"><nav aria-label="Rechtliche Informationen"><a href="/copyright.html" target="_blank" rel="noopener">Copyright<span class="sr-only"> (öffnet in neuem Tab)</span></a><a href="/impressum.html" target="_blank" rel="noopener">Impressum<span class="sr-only"> (öffnet in neuem Tab)</span></a></nav></footer>';
 app.innerHTML = [
   '<div class="app-shell" id="shell">',
   '<header class="app-header"><div class="header-arena"><a class="brand" href="' + esc(location.pathname) + '" aria-label="RPS Arena Startseite" data-action="home">',
@@ -33,7 +34,7 @@ app.innerHTML = [
   '<main class="arena-grid"><section class="play-panel" aria-label="Spielbereich">',
   '<div class="board-region"><div class="board-surface"><div id="board" class="canvas-wrap" tabindex="0" role="application" aria-label="Spielfeld mit sieben Spalten und sechs Reihen" aria-describedby="board-help board-focus"></div><div id="combat-overlay" class="combat-overlay" hidden></div></div>',
   '<div class="preview-banner" id="preview-banner">' + icon('unknown', '', 18) + '<span>Ein guter Plan bleibt erst einmal geheim.</span></div></div>',
-  '<section id="room-chat" hidden></section></section>',
+  '<section id="room-chat" hidden></section>' + legalFooter + '</section>',
   '<aside class="side-column" id="match-sidebar" aria-label="Spielsteuerung"><details class="match-overview" id="match-overview"><summary class="match-status" title="Spielstatus und Seriendetails"><span class="eyebrow">SPIELSTATUS</span><span class="pill accent" id="board-phase">DEINE ARENA</span></summary><div class="match-status-details"><div id="series-info"></div><div class="match-team-counts"><span class="team-key" id="own-team-key" data-team-color="blue"><span class="team-square"></span><span id="own-count">Dein Team</span></span><span class="team-key enemy" id="enemy-team-key" data-team-color="red"><span class="team-square"></span><span id="enemy-count">Gegner</span></span><span class="board-hint" id="board-hint">Erstelle oder betrete einen Raum.</span></div></div></details><div class="match-controls" id="sidebar"></div></aside><section id="lobby-overlay" class="lobby-overlay" aria-label="Spiel starten"></section></main>',
   '<footer class="footer"><span>' + icon('info', '', 13) + 'Ein unabhängiges Remake · vorläufige Regeln für Version ' + esc(__APP_VERSION__) + '</span><span>Figur anklicken oder <kbd>↑</kbd><kbd>←</kbd><kbd>↓</kbd><kbd>→</kbd> + <kbd>Enter</kbd></span></footer></div>',
   '<p class="sr-only" id="board-help">Mit den Pfeiltasten ein Feld wählen. Mit Enter oder Leertaste eine eigene Figur und anschließend ein Zielfeld wählen. Escape hebt die Auswahl auf. In der Aufstellung tauschen zwei eigene Figuren die Plätze. Alternativ eine eigene Figur auf eine zweite eigene Figur ziehen. Im Spiel sind markierte Felder erlaubte Ziele.</p>',
@@ -49,7 +50,6 @@ let selected: number | null = null;
 let pending = false;
 let pendingTimeout: ReturnType<typeof setTimeout> | undefined;
 let toastTimeout: ReturnType<typeof setTimeout> | undefined;
-let chatNoticeTimeout: ReturnType<typeof setTimeout> | undefined;
 let chatNoticeRoom: string | null = null;
 let name = readSession('rps-arena:name') ?? '';
 let seriesMode = readSeriesMode(readPreference('rps-arena:series-mode'));
@@ -69,10 +69,8 @@ let soundsPreferred = readPreference('rps-arena:sounds') === 'on';
 
 const chat: RoomChat = new RoomChat(el('room-chat'), message => connection.send('chat_send', message), () => {
   chatNoticeRoom = view?.roomId ?? null;
-  clearTimeout(chatNoticeTimeout);
   paintChatNotice();
-  chatNoticeTimeout = setTimeout(() => { chatNoticeRoom = null; paintChatNotice(); }, 2000);
-});
+}, dismissChatNotice);
 const connection = new RpsConnection({
   onStatus(status) {
     networkStatus = status;
@@ -369,7 +367,7 @@ function lobbyMarkup(): string {
     '<form class="join-form" id="join-form"><h2>Du hast eine Einladung?</h2><label class="field join-field"><span>Raumcode oder Einladungslink</span><input id="room-input" name="room-code" autocomplete="off" autocapitalize="off" spellcheck="false" placeholder="Code oder Link einfügen" aria-describedby="join-hint" value="' + esc(inputRoom) + '"' + disabled + ' /><small class="input-hint" id="join-hint">Der Spielmodus ist bereits vom Raum vorgegeben.</small></label>',
     '<button class="' + (inputRoom ? 'primary-button' : 'secondary-button') + ' full-width action-button" type="submit" id="join-button"' + disabled + '>' + (busy ? '<span class="spinner" aria-hidden="true"></span> Verbinde …' : icon('link', '', 16) + 'Raum beitreten') + '</button></form></div>',
     '<p class="trust-note">' + icon('check', '', 13) + 'Danach stellst du dein Team auf. Wenn beide bereit sind, beginnt die Partie.</p>',
-    '<div class="lobby-notice" role="alert"' + (!notice ? ' hidden' : '') + '>' + esc(notice) + '</div><details class="lobby-rules" id="lobby-rules"><summary>So wird gespielt</summary>' + rulesCard() + '</details></section>',
+    '<div class="lobby-notice" role="alert"' + (!notice ? ' hidden' : '') + '>' + esc(notice) + '</div><details class="lobby-rules" id="lobby-rules"><summary>So wird gespielt</summary>' + rulesCard() + '</details>' + legalFooter + '</section>',
   ].join('');
 }
 
@@ -387,8 +385,19 @@ function playerMarkup(player: PlayerView | undefined, own: boolean): string {
 }
 
 function chatNoticeMarkup(): string {
-  return '<span class="referee-chat-notice" role="status" aria-label="Neue Nachricht von deinem Gegner"' +
-    (chatNoticeRoom && chatNoticeRoom === view?.roomId ? '' : ' hidden') + '>' + icon('chat', '', 26) + '</span>';
+  return '<button type="button" class="referee-chat-notice" data-action="open-chat" aria-label="Neue Nachricht von deinem Gegner – zum Chat springen" title="Neue Nachricht – zum Chat"' +
+    (chatNoticeRoom && chatNoticeRoom === view?.roomId ? '' : ' hidden') + '>' + (atlasIcon(currentSkin, currentSkin.definition.chatNotice, 48) ?? icon('chat', '', 30)) + '</button>';
+}
+
+function dismissChatNotice(): void {
+  chatNoticeRoom = null;
+  paintChatNotice();
+}
+
+function scrollToGameElement(id: string): void {
+  const target = el(id);
+  target.scrollIntoView({ behavior: reducedMotion.matches ? 'instant' : 'smooth', block: 'start' });
+  (id === 'room-chat' ? el('chat-input') : el('board')).focus({ preventScroll: true });
 }
 
 function paintChatNotice(): void {
@@ -401,7 +410,7 @@ function refereeMarkup(size: number): string {
   const state = refereePortrait(currentSkin.definition, view);
   const image = atlasIcon(currentSkin, state.frame, size);
   if (!image) return '<span class="referee-chat-fallback">' + chatNoticeMarkup() + '</span>';
-  return image ? '<span class="referee-portrait" role="img" aria-label="' + esc(state.label) + '" title="' + esc(state.label) + '" data-turn-team="' + (state.team ?? 'neutral') + '" data-turn-direction="' + (state.direction ?? 'neutral') + '">' + image + chatNoticeMarkup() + '</span>' : '';
+  return '<span class="referee-portrait" role="group" aria-label="' + esc(state.label) + '" title="' + esc(state.label) + '" data-turn-team="' + (state.team ?? 'neutral') + '" data-turn-direction="' + (state.direction ?? 'neutral') + '">' + image + chatNoticeMarkup() + '</span>';
 }
 
 function phaseSection(label: string, title: string, copy: string, controls = '', classes = ''): string {
@@ -506,6 +515,7 @@ function replaceMarkup(target: HTMLElement, markup: string): void {
 }
 
 function render(): void {
+  if (chatNoticeRoom !== view?.roomId) chatNoticeRoom = null;
   const active = document.activeElement instanceof HTMLElement ? document.activeElement : null;
   const focusId = active?.closest('#sidebar, #lobby-overlay') ? active.id : '';
   const selection = active instanceof HTMLInputElement ? [active.selectionStart, active.selectionEnd] : null;
@@ -762,6 +772,8 @@ app.addEventListener('click', (event) => {
   if (!button || button instanceof HTMLButtonElement && button.disabled) return;
   const action = button.dataset.action;
   if (action === 'home') { event.preventDefault(); if (view) requestLeave(); return; }
+  if (action === 'open-chat') { dismissChatNotice(); scrollToGameElement('room-chat'); }
+  if (action === 'back-to-board') scrollToGameElement('board');
   if (action === 'copy') void copyInvitation();
   if (action === 'dismiss-notice') { notice = ''; render(); }
   if (action === 'shuffle' && view) { selected = null; send('shuffle', { revision: view.revision }); }

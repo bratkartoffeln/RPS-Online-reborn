@@ -1,5 +1,12 @@
 # Änderungen
 
+## 0.4.12
+
+- Nachrichtenhinweis beim Schiedsrichter bleibt bis zum Klick oder einer eigenen gesendeten Nachricht sichtbar; Klick springt zum Chat, ein Chat-Button zurück zum Spielfeld.
+- Eigene Sprechblasenmotive für Klassisch, Arcade und ICQ Retro in den SVG-Atlanten sowie passenden Raster- und Mobilvarianten; Spielstatus zeigt seinen Klappzustand.
+- Fußbereich unter dem Raumchat mit zusätzlichem Abstand zum Rand und Links zu Copyright und Impressum; dieselben Links sind in der Lobby erreichbar.
+- Separate Copyright- und Impressumsseiten mit gekennzeichneten Platzhaltern für die noch fehlenden Angaben.
+
 ## 0.4.11
 
 - Login zeigt die Version klein oben rechts; automatische Scrollaktionen entfernt.

@@ -1,0 +1,12 @@
+:root { color-scheme: dark; font-family: Inter, "Segoe UI", system-ui, sans-serif; color: #eff2ec; background: #11171a; }
+* { box-sizing: border-box; }
+body { margin: 0; padding: 40px 20px; line-height: 1.65; }
+main { max-width: 720px; margin: 0 auto; padding: 32px; border: 1px solid #303a3f; border-radius: 14px; background: #1a2125; }
+h1 { margin: 20px 0 12px; font-size: 28px; line-height: 1.2; }
+h2 { margin: 28px 0 8px; font-size: 18px; }
+p { margin: 8px 0; }
+a { color: #c5f277; text-underline-offset: 3px; }
+a:focus-visible { outline: 2px solid #c5f277; outline-offset: 4px; }
+nav { display: flex; flex-wrap: wrap; gap: 12px 24px; margin-top: 28px; padding-top: 20px; border-top: 1px solid #303a3f; }
+.placeholder { color: #f09b9b; }
+@media (max-width: 540px) { body { padding: 20px 12px; } main { padding: 24px 18px; } }
