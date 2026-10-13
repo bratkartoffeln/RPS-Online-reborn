@@ -1,8 +1,8 @@
-# RPS Arena – Version 0.4.8
+# RPS Arena – Version 0.4.9
 
 Ein eigenständiges Browser-Remake des taktischen Stein-Papier-Schere-Prinzips:
 zwei Spieler, verdeckte Figuren, eine Flagge und eine Falle pro Seite. Der
-Spielserver läuft lokal, im LAN und als Container auf dem QNAP. Version 0.4.8
+Spielserver läuft lokal, im LAN und als Container auf dem QNAP. Version 0.4.9
 enthält gemeinsame Spielserien mit Punktestand und das vollständig vektorisierte
 Grafikset „ICQ Retro“. Figuren, Spielfeld, Logo, Schiedsrichter und einzelne
 Waffen stammen jetzt aus einer gemeinsamen SVG-Map. Beide Teams haben Vorder-
@@ -17,6 +17,22 @@ den Zusammenstoß und den Sieger; anschließend hüpft dessen Mannschaft.
 Bei einer Flaggeneroberung zeigt ICQ Retro einen lächelnden Fahnenträger in
 Vorderansicht, und die Gewinnerarmee springt viermal gemeinsam. Unter dem
 Spielfeld können sich die beiden Teilnehmer im Raumchat austauschen.
+
+## Neu in Version 0.4.9
+
+- **Vollflächiger Einstieg:** Der undurchsichtige Einstieg verdeckt die gesamte
+  Ansicht. Nach dem Raumeintritt erscheint das Grafikset-Logo oben links.
+- **Kompakte Spielinformationen:** Die Zeile „Dein Spielfeld“ entfällt. Status
+  und Punktestand stehen zusammen neben dem Brett, auf schmalen Bildschirmen
+  darüber. Zusätzliche Seriendaten sind aufklappbar.
+- **Zur Lobby mit Bestätigung:** Ein größerer Button mit Ausgangssymbol fragt
+  vor dem Verlassen nach. Während einer laufenden Partie warnt er vor dem
+  Abbruch und dem Sieg des Gegners. „Abbrechen“ behält die Partie bei.
+- **Ladebildschirm beim Öffnen:** Die Arena bleibt verdeckt, bis das gewählte
+  Design, seine verwendeten Atlasbilder und das Spielfeld bereit sind. Dadurch
+  erscheint beim Standarddesign ICQ Retro kein kurzer klassischer Einstieg mehr.
+  Gespeicherte Designwünsche werden berücksichtigt; bei Ladefehlern bleibt das
+  klassische Ersatzdesign verfügbar.
 
 ## Neu in Version 0.4.8
 
@@ -578,7 +594,7 @@ TypeScript und Browser-/Serverbuild werden vor der Auslieferung geprüft.
 
 Der LAN-Betrieb auf dem QNAP TS-251D und die bestehende DNS-01-HTTPS-Einrichtung
 unter `https://flusensieb.dns.navy:8443` wurden bereits bestätigt. Die neue
-Version **0.4.8** wird als vollständige ZIP geliefert und anschließend von dir
+Version **0.4.9** wird als vollständige ZIP geliefert und anschließend von dir
 auf dem NAS installiert und mit der Onlineprüfung kontrolliert. Die bisherige
 Installation allein bestätigt noch nicht den Betrieb der neuen Version.
 Die Regeln bleiben die dokumentierten

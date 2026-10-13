@@ -1,5 +1,20 @@
 # Änderungen
 
+## 0.4.9
+
+- Undurchsichtiger, vollflächiger Einstieg; das Retro-Logo erscheint nach dem
+  Raumeintritt oben links.
+- Brettüberschrift entfernt; Spielstatus und kompakter Punktestand stehen in
+  der Informationsspalte, mobil über dem Brett. Seriendetails sind aufklappbar.
+- Größerer „Zur Lobby“-Button mit Ausgangssymbol und einer kurzen Bestätigung
+  vor dem Verlassen. Laufende Partien weisen auf Abbruch und Gegnersieg hin.
+- Ladebildschirm bereits im initialen HTML; der klassische Einstieg blitzt vor
+  dem Laden des Standarddesigns ICQ Retro nicht mehr auf.
+- Arena erst nach geladenen und dekodierten Atlasbildern, bereitgestellter
+  Spielfeldszene und einem Renderdurchlauf freigeben; anschließend Tastaturfokus
+  auf den Einstieg beziehungsweise das wiederverbundene Spielfeld setzen.
+- Gespeicherte Designauswahl und Ersatzdesign bei Ladefehlern bleiben verfügbar.
+
 ## 0.4.8
 
 - Zentraler Einstieg mit Logo, Spielername und Raumaktionen auf einem gemeinsamen

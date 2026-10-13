@@ -95,6 +95,8 @@ type Gesture = {
 };
 
 class ArenaScene extends Phaser.Scene {
+  private resolveReady!: () => void;
+  readonly whenReady = new Promise<void>(resolve => { this.resolveReady = resolve; });
   private base!: Phaser.GameObjects.Graphics;
   private tiles!: Phaser.GameObjects.Container;
   private overlay!: Phaser.GameObjects.Graphics;
@@ -146,6 +148,7 @@ class ArenaScene extends Phaser.Scene {
     this.input.on('pointerupoutside', () => this.cancelGesture());
     this.events.once(Phaser.Scenes.Events.SHUTDOWN, () => this.dispose());
     this.paint();
+    this.resolveReady();
   }
 
   private wakeFrame: number | null = null;
@@ -987,6 +990,10 @@ export class ArenaBoard {
 
   setSkin(skin: LoadedSkin): void {
     this.scene.setSkin(skin);
+  }
+
+  whenReady(): Promise<void> {
+    return this.scene.whenReady;
   }
 
   setAnimationsEnabled(enabled: boolean): void {
