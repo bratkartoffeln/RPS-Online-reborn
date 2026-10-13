@@ -66,9 +66,9 @@ test('scores, first player and series winner keep their seat color for either vi
     assert.equal(rows.length, 2);
     const blue = rows.find((row) => row[1] === 'blue')?.[2] ?? '';
     const red = rows.find((row) => row[1] === 'red')?.[2] ?? '';
-    assert.match(blue, /class="series-player-name">Ada<small>Blau/);
+    assert.match(blue, /class="series-player-name">Ada<\/span>/);
     assert.match(blue, /class="series-player-score"[^>]*>1<\/strong>/);
-    assert.match(red, /class="series-player-name">Ben<small>Rot/);
+    assert.match(red, /class="series-player-name">Ben<\/span>/);
     assert.match(red, /class="series-player-score"[^>]*>2<\/strong>/);
     assert.match(html, /class="series-starting-player" data-team-color="red">Erster Zug: Ben/);
     assert.match(html, /class="series-winner" data-team-color="red">/);

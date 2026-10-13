@@ -610,7 +610,7 @@ class ArenaScene extends Phaser.Scene {
     }
     if (last) this.drawLastDirection(last);
     this.text(WIDTH / 2, HEIGHT - 16, last ? 'LETZTER ZUG  ' + coordinate(last.from) + ' → ' + coordinate(last.to) :
-      this.view ? 'ZWEI TEAMS. EIN ZIEL.' : 'DEIN TEAM STARTET UNTEN', 9, this.palette.coordinates);
+      this.view ? '' : 'DEIN TEAM STARTET UNTEN', 9, this.palette.coordinates);
   }
 
   private drawLastDirection(action: GameActionView): void {
@@ -959,7 +959,7 @@ export class ArenaBoard {
       banner: false,
       disableContextMenu: true,
       audio: { noAudio: true },
-      input: { keyboard: false, touch: { capture: false } },
+      input: { keyboard: false, mouse: { preventDefaultWheel: false }, touch: { capture: false } },
       scale: { mode: Phaser.Scale.FIT, autoCenter: Phaser.Scale.CENTER_BOTH },
       scene: [this.scene],
       render: { antialias: true, pixelArt: false, roundPixels: false },

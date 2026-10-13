@@ -1,8 +1,8 @@
-# RPS Arena – Version 0.4.9
+# RPS Arena – Version 0.4.10
 
 Ein eigenständiges Browser-Remake des taktischen Stein-Papier-Schere-Prinzips:
 zwei Spieler, verdeckte Figuren, eine Flagge und eine Falle pro Seite. Der
-Spielserver läuft lokal, im LAN und als Container auf dem QNAP. Version 0.4.9
+Spielserver läuft lokal, im LAN und als Container auf dem QNAP. Version 0.4.10
 enthält gemeinsame Spielserien mit Punktestand und das vollständig vektorisierte
 Grafikset „ICQ Retro“. Figuren, Spielfeld, Logo, Schiedsrichter und einzelne
 Waffen stammen jetzt aus einer gemeinsamen SVG-Map. Beide Teams haben Vorder-
@@ -17,6 +17,15 @@ den Zusammenstoß und den Sieger; anschließend hüpft dessen Mannschaft.
 Bei einer Flaggeneroberung zeigt ICQ Retro einen lächelnden Fahnenträger in
 Vorderansicht, und die Gewinnerarmee springt viermal gemeinsam. Unter dem
 Spielfeld können sich die beiden Teilnehmer im Raumchat austauschen.
+
+## Neu in Version 0.4.10
+
+- Nach dem Raumeintritt beginnt die Ansicht ganz oben beim Logo. Größere Namen
+  und Punktzahlen stehen rechts daneben; der Spielstatus bleibt an seinem Platz.
+- Das Mausrad scrollt auch über dem Spielfeld. Der Spruch unter dem Brett entfällt.
+- Im Chat stehen Eingabe und Senden oben, darunter die neuesten Nachrichten zuerst.
+  Neue Gegnernachrichten zeigen zwei Sekunden lang eine Sprechblase beim Schiri,
+  passend zum gewählten Design.
 
 ## Neu in Version 0.4.9
 
@@ -594,7 +603,7 @@ TypeScript und Browser-/Serverbuild werden vor der Auslieferung geprüft.
 
 Der LAN-Betrieb auf dem QNAP TS-251D und die bestehende DNS-01-HTTPS-Einrichtung
 unter `https://flusensieb.dns.navy:8443` wurden bereits bestätigt. Die neue
-Version **0.4.9** wird als vollständige ZIP geliefert und anschließend von dir
+Version **0.4.10** wird als vollständige ZIP geliefert und anschließend von dir
 auf dem NAS installiert und mit der Onlineprüfung kontrolliert. Die bisherige
 Installation allein bestätigt noch nicht den Betrieb der neuen Version.
 Die Regeln bleiben die dokumentierten
