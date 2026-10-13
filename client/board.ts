@@ -137,6 +137,7 @@ class ArenaScene extends Phaser.Scene {
     this.interaction = this.add.graphics().setDepth(4);
     this.labels = this.add.container().setDepth(5);
     this.sys.game.canvas.setAttribute('aria-hidden', 'true');
+    this.sys.game.canvas.style.touchAction = 'auto';
     this.ready = true;
     this.installTexture();
     this.input.on('pointerdown', (pointer: Phaser.Input.Pointer) => this.pointerDown(pointer));
@@ -372,14 +373,19 @@ class ArenaScene extends Phaser.Scene {
     this.gesture = {
       pointerId: pointer.id, from, pieceId: this.board[from]?.id ?? null,
       start: this.clientPoint(pointer), offset: { x: point.x - position.x, y: point.y - position.y },
-      canDrag: !!this.callbacks.onSwap && this.canArrange(from), dragging: false, revision: this.view.revision,
+      canDrag: !pointer.wasTouch && !!this.callbacks.onSwap && this.canArrange(from), dragging: false, revision: this.view.revision,
     };
   }
 
   private pointerMove(pointer: Phaser.Input.Pointer): void {
     const gesture = this.gesture;
-    if (!gesture || gesture.pointerId !== pointer.id || !gesture.canDrag || !pointer.isDown) return;
+    if (!gesture || gesture.pointerId !== pointer.id || !pointer.isDown) return;
     const now = this.clientPoint(pointer);
+    if (pointer.wasTouch) {
+      if (Math.hypot(now.x - gesture.start.x, now.y - gesture.start.y) > 10) this.cancelGesture();
+      return;
+    }
+    if (!gesture.canDrag) return;
     if (!gesture.dragging && Math.hypot(now.x - gesture.start.x, now.y - gesture.start.y) <= 10) return;
     if (!this.canArrange(gesture.from) || !gesture.pieceId) { this.cancelGesture(); return; }
     gesture.dragging = true;
@@ -403,7 +409,8 @@ class ArenaScene extends Phaser.Scene {
         this.callbacks.onFocus(coordinate(gesture.from) + ' und ' + coordinate(to) + ': Figuren tauschen.');
         this.callbacks.onSwap?.(gesture.from, to);
       }
-    } else if (to === gesture.from) {
+    } else if (to === gesture.from && (!pointer.wasTouch ||
+        Math.hypot(this.clientPoint(pointer).x - gesture.start.x, this.clientPoint(pointer).y - gesture.start.y) <= 10)) {
       this.callbacks.onFocus(this.describe(to));
       this.callbacks.onCell(to);
     }
@@ -949,7 +956,7 @@ export class ArenaBoard {
       banner: false,
       disableContextMenu: true,
       audio: { noAudio: true },
-      input: { keyboard: false },
+      input: { keyboard: false, touch: { capture: false } },
       scale: { mode: Phaser.Scale.FIT, autoCenter: Phaser.Scale.CENTER_BOTH },
       scene: [this.scene],
       render: { antialias: true, pixelArt: false, roundPixels: false },
@@ -958,9 +965,10 @@ export class ArenaBoard {
     this.handleBlur = () => this.scene.onBlur();
     container.addEventListener('keydown', this.handleKeyboard);
     container.addEventListener('blur', this.handleBlur);
+    container.addEventListener('touchcancel', this.handleBlur, { passive: true });
     {
       // Phaser processes native input in its next step, so wake before it queues events.
-      for (const event of ['pointerdown', 'pointermove', 'pointerup', 'pointercancel', 'touchstart', 'touchend', 'keydown']) {
+      for (const event of ['pointerdown', 'pointermove', 'pointerup', 'pointercancel', 'touchstart', 'touchmove', 'touchend', 'touchcancel', 'keydown']) {
         container.addEventListener(event, this.wake, { capture: true, passive: true });
       }
       document.addEventListener('visibilitychange', this.wake);
@@ -992,9 +1000,10 @@ export class ArenaBoard {
   destroy(): void {
     this.container.removeEventListener('keydown', this.handleKeyboard);
     this.container.removeEventListener('blur', this.handleBlur);
+    this.container.removeEventListener('touchcancel', this.handleBlur);
     this.resizeObserver?.disconnect();
     document.removeEventListener('visibilitychange', this.wake);
-    for (const event of ['pointerdown', 'pointermove', 'pointerup', 'pointercancel', 'touchstart', 'touchend', 'keydown']) {
+    for (const event of ['pointerdown', 'pointermove', 'pointerup', 'pointercancel', 'touchstart', 'touchmove', 'touchend', 'touchcancel', 'keydown']) {
       this.container.removeEventListener(event, this.wake, true);
     }
     this.game.destroy(true);
