@@ -1,7 +1,7 @@
-# Grafiksets für RPS Arena v0.4.13
+# Grafiksets für RPS Arena v0.4.14
 
 Die optionale Manifest-Eigenschaft `chatNotice` verweist auf den Atlas-Frame für
-neue Chatnachrichten. Die drei mitgelieferten Designs enthalten je eine eigene
+neue Chatnachrichten. Die mitgelieferten Designs enthalten passende
 Sprechblase; ICQ Retro verwendet eine Comic-Kontur mit cremefarbener Füllung.
 Auch `mobileAtlas.frames` muss diesen Frame enthalten.
 
@@ -16,13 +16,21 @@ mitgelieferten Dateien und benötigt dieses Werkzeug nicht.
 
 RPS Arena trennt das Aussehen von den Spielregeln. Ein Grafikset kann Farben,
 Spielfeldkacheln, Figuren, kurze Figurenanimationen, einzelne Waffen, das Logo,
-statische Schiedsrichterposen und optionale Flaggensieger ändern. Drei Sets werden mitgeliefert:
+statische Schiedsrichterposen und optionale Flaggensieger ändern. Vier Sets werden mitgeliefert:
 
 | Set | Darstellung |
 | --- | --- |
 | **ICQ Retro** | Am ICQ-Spiel orientiertes Design mit grünem Schachbrett, roten/blauen Figuren und vollständigem SVG-Atlas mit PNG-Rückfallgrafik |
+| **ICQ Retro Dark** | Dieselben Figuren und Symbole wie ICQ Retro, mit dunklen Seitenflächen und heller Schrift |
 | **Klassisch** | Bisherige dunkle Oberfläche mit Vektorfiguren; zugleich Rückfall bei einem fehlerhaften Set |
 | **Arcade** | Dunkles Vektorbildset mit primärer `master.svg`, passender PNG-Rückfallgrafik und 148 Frames einschließlich vorhandener Figurenclips und Sprechblase |
+
+Ein Manifest kann mit `"assetPack": "icq-retro"` die Bilddateien dieses lokalen
+Grafiksets wiederverwenden. Die Frame-Definitionen bleiben im eigenen Manifest;
+Hauptatlas, Rasterfallback, Waffenatlas und Mobilatlas werden im angegebenen
+Grafikset gesucht. Erlaubt sind ausschließlich lokale Grafikset-IDs mit kleinen
+Buchstaben, Ziffern, Bindestrich oder Unterstrich, keine Pfade oder URLs.
+ICQ Retro Dark nutzt diese Möglichkeit und benötigt keine kopierten Bilddateien.
 
 **ICQ Retro ist der neue Standard.** Eine bereits gespeicherte gültige Designwahl
 wird beim Update beibehalten. Wähle **ICQ Retro** unter **Design**, wenn dein
@@ -40,7 +48,7 @@ Unter **Design → Spielsounds** kannst du zusätzlich kurze Zug- und Kampftöne
 einschalten. Sie sind anfangs ausgeschaltet, werden lokal erzeugt und benötigen
 keine Audiodateien im Grafikset.
 
-In allen drei mitgelieferten Sets ist **Seat 0 blau und Seat 1 rot**. Diese
+In allen vier mitgelieferten Sets ist **Seat 0 blau und Seat 1 rot**. Diese
 Zuordnung bleibt in beiden Browsern gleich. Die eigene Armee steht weiterhin
 unten; ICQ Retro zeigt sie von hinten und die gegnerische Armee von vorn.
 Teamfarbe und Blickrichtung sind deshalb getrennte Eigenschaften. Die Retro-Fallen

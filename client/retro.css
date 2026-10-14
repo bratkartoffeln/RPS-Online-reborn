@@ -133,3 +133,21 @@
   :root[data-presentation="retro"] .game-mode .retro-masthead { grid-row: 3; }
   :root[data-presentation="retro"] .footer { line-height: 1.5; font-size: 9px; }
 }
+
+/* The dark variant shares every atlas frame; only page surfaces change. */
+:root[data-skin="icq-retro-dark"] .app-shell { box-shadow: inset 0 0 0 1px var(--line), 0 3px 18px #0006; }
+:root[data-skin="icq-retro-dark"] .play-panel,
+:root[data-skin="icq-retro-dark"] .card,
+:root[data-skin="icq-retro-dark"] .retro-masthead { box-shadow: inset 0 0 0 1px #c2e76b12; }
+:root[data-skin="icq-retro-dark"] .field input,
+:root[data-skin="icq-retro-dark"] select,
+:root[data-skin="icq-retro-dark"] select option { background: var(--surface-deep); color: var(--text); color-scheme: dark; accent-color: var(--green); }
+:root[data-skin="icq-retro-dark"] select option:checked,
+:root[data-skin="icq-retro-dark"] select option:hover,
+:root[data-skin="icq-retro-dark"] select option:focus { background: var(--green); color: var(--accent-text); }
+:root[data-skin="icq-retro-dark"] select:focus-visible { outline-color: var(--green); }
+:root[data-skin="icq-retro-dark"] .primary-button { border-color: var(--green); box-shadow: inset 0 1px 0 #fff3; }
+:root[data-skin="icq-retro-dark"] .secondary-button { box-shadow: inset 0 1px 0 #c2e76b20; }
+:root[data-skin="icq-retro-dark"] .preview-banner { background: var(--backdrop); }
+:root[data-skin="icq-retro-dark"] .action-recap,
+:root[data-skin="icq-retro-dark"] .series-scoreboard { background: var(--accent-soft); }

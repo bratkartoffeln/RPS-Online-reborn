@@ -2,6 +2,8 @@ import { chromium } from 'file:///C:/Users/BeQuiet/.cache/codex-runtimes/codex-p
 import { spawn } from 'node:child_process';
 import assert from 'node:assert/strict';
 import { writeFileSync } from 'node:fs';
+import { tmpdir } from 'node:os';
+import path from 'node:path';
 const server=spawn(process.execPath,['node_modules/vite/bin/vite.js','--host','127.0.0.1','--port','5173'],{windowsHide:true,stdio:'ignore'});
 let browser;
 const results=[];
@@ -28,32 +30,42 @@ try {
   assert.equal(before.running,false); if(mobile){assert.equal(after,before.frame);assert.equal(before.image[0],1008);assert.equal(before.canvas[0],680);assert.equal(before.limit,30);}else{assert.equal(after,before.frame);assert.equal(before.canvas[0],1360);}
   const tap=async index=>{const box=await page.locator('canvas').boundingBox();const x=box.x+(49+index%7*84+39)/680*box.width;const y=box.y+(47+Math.floor(index/7)*84+39)/616*box.height;if(mobile)await page.touchscreen.tap(x,y);else await page.mouse.click(x,y);await page.waitForTimeout(100);};
   const pair=await page.evaluate(()=>{const v=qa.g.viewFor(qa.game,'a');for(let from=28;from<35;from++){const to=(v.legalMoves[from]??[]).find(i=>i>=21&&i<28);if(to!==undefined)return [from,to];}throw Error('No legal fixture move');});
-  await tap(pair[0]);await tap(pair[1]);await page.waitForTimeout(400);
+  await tap(pair[0]);assert.deepEqual(await page.evaluate(()=>qa.taps),[pair[0]],"The very first tap selects exactly once after idle");await tap(pair[1]);await page.waitForTimeout(400);
   const moved=await page.evaluate(()=>({taps:qa.taps,turn:qa.game.turnNumber,frame:qa.board.game.loop.frame,running:qa.board.game.loop.running,effect:!!qa.board.scene.effect}));
   assert.deepEqual(moved.taps,pair);assert.equal(moved.turn,1);assert.equal(moved.running,false);assert.equal(moved.effect,false);
   if(mobile){assert.ok(requests.some(x=>x.includes('atlas-mobile.webp')));assert.ok(!requests.some(x=>x.includes('atlas.svg')));await page.setViewportSize({width:320,height:700});await page.waitForTimeout(150);const width=await page.evaluate(()=>qa.board.game.canvas.width);assert.ok(width<=640); const origin=await page.evaluate(()=>{const p=qa.board.scene.cameras.main.getWorldPoint(0,0);return {x:p.x,y:p.y,width:qa.board.scene.cameras.main.width};});assert.ok(Math.abs(origin.x)<1 && Math.abs(origin.y)<1,JSON.stringify(origin));}
   else{assert.ok(requests.some(x=>x.includes('atlas.svg')));}
   const combatResult=await page.evaluate(async()=>{
+    await import('/client/combat-ui.css');
     const {CombatOverlay}=await import('/client/combat-ui.ts');
     const {createGame,addPlayer,readyPlayer,movePiece,viewFor}=qa.g;
     const state=createGame();addPlayer(state,'a','Ada');addPlayer(state,'b','Ben');readyPlayer(state,'a');readyPlayer(state,'b');state.board.fill(null);
     for(const [i,owner,kind] of [[24,'a','rock'],[17,'b','scissors'],[35,'a','paper'],[6,'b','paper'],[41,'a','flag'],[0,'b','flag']])state.board[i]={id:'combat-'+i,owner,kind,revealed:true};
     movePiece(state,'a',24,17);const view={...viewFor(state,'a'),roomId:'qa'};
-    const root=document.createElement('div');document.body.append(root);
+    const root=document.createElement('div');root.style.cssText='position:relative;width:100%;max-width:680px;height:360px';document.body.append(root);
     const overlay=new CombatOverlay(root,{onBusyChange(){},onCelebrate(){}});
     overlay.update(view,qa.board.scene.skin,{connected:true,pending:false});overlay.present(view.lastAction,view);
-    const result={motion:root.dataset.motion,shards:root.querySelectorAll('.combat-shard').length,cloud:root.querySelectorAll('.combat-cloud').length};overlay.reset();root.remove();return result;
+    const stages=[root.dataset.stage];
+    let reachedWinner;
+    const winner=new Promise(resolve=>{reachedWinner=resolve;});
+    const observer=new MutationObserver(()=>{if(stages.at(-1)!==root.dataset.stage)stages.push(root.dataset.stage);if(root.dataset.stage==='winner')reachedWinner();});
+    observer.observe(root,{attributes:true,attributeFilter:['data-stage']});
+    const result={motion:root.dataset.motion,shards:root.querySelectorAll('.combat-shard').length,cloud:root.querySelectorAll('.combat-cloud').length,animation:getComputedStyle(root.querySelector('.combat-art')).animationName,stages};
+    await Promise.race([winner,new Promise((_,reject)=>setTimeout(()=>reject(Error('Battle did not reach winner animation')),10000))]);
+    observer.disconnect();overlay.reset();root.remove();return result;
   });
-  assert.equal(combatResult.motion,mobile?'reduced':'full');assert.equal(combatResult.shards,mobile?0:6);assert.equal(combatResult.cloud,mobile?0:1);
+  assert.equal(combatResult.motion,'full');assert.equal(combatResult.shards,6);assert.equal(combatResult.cloud,1);
+  assert.equal(combatResult.animation,'combat-approach-left');
+  assert.deepEqual(combatResult.stages.filter(Boolean),['approach','impact','shatter','winner']);
   assert.deepEqual(errors,[]);
-  await page.screenshot({path:mobile?'mobile-preview.png':'desktop-preview.png'});
+  await page.screenshot({path:path.join(tmpdir(),mobile?'mobile-preview.png':'desktop-preview.png')});
   await page.goto('http://127.0.0.1:5173/');
   await page.waitForFunction(()=>document.querySelector('#skin-select')?.value==='icq-retro');
   await page.waitForTimeout(350);
   const appCanvas=await page.locator('#board canvas').evaluate(c=>[c.width,c.height,c.getBoundingClientRect().width]);
   assert.deepEqual(errors,[]);
-  await page.screenshot({path:mobile?'mobile-app-preview.png':'desktop-app-preview.png',fullPage:true});
+  await page.screenshot({path:path.join(tmpdir(),mobile?'mobile-app-preview.png':'desktop-app-preview.png'),fullPage:true});
   results.push({mobile,before,after,moved,appCanvas,combatResult,errors});await context.close();
  }
- console.log(JSON.stringify(results,null,2));writeFileSync('browser-mobile-results.json',JSON.stringify(results,null,2));
+ console.log(JSON.stringify(results,null,2));writeFileSync(path.join(tmpdir(),'browser-mobile-results.json'),JSON.stringify(results,null,2));
 } finally {await browser?.close();server.kill();}

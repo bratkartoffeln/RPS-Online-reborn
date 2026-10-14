@@ -178,7 +178,7 @@ export function parseSkinCatalog(value: unknown): SkinCatalog {
 /** Pure, strict parser; partial optional palettes/artwork retain vector fallbacks. */
 export function parseSkinDefinition(value: unknown): SkinDefinition {
   const source = record(value, 'Grafikset');
-  keys(source, ['version', 'name', 'presentation', 'palette', 'atlas', 'weapons', 'weaponAtlas', 'mobileAtlas', 'board', 'logo', 'chatNotice', 'portrait', 'turnPortraits', 'colorTurnPortraits', 'directionalTurnPortraits', 'flagVictoryFrames', 'pieces', 'teamPieces', 'motion'], 'Grafikset');
+  keys(source, ['version', 'name', 'assetPack', 'presentation', 'palette', 'atlas', 'weapons', 'weaponAtlas', 'mobileAtlas', 'board', 'logo', 'chatNotice', 'portrait', 'turnPortraits', 'colorTurnPortraits', 'directionalTurnPortraits', 'flagVictoryFrames', 'pieces', 'teamPieces', 'motion'], 'Grafikset');
   if (source.version !== 1) invalid('Das Grafikset muss version: 1 verwenden.');
   if (source.presentation !== undefined && source.presentation !== 'modern' && source.presentation !== 'retro') {
     invalid('presentation muss „modern“ oder „retro“ sein.');
@@ -201,6 +201,12 @@ export function parseSkinDefinition(value: unknown): SkinDefinition {
     },
   };
 
+  if (source.assetPack !== undefined) {
+    if (typeof source.assetPack !== 'string' || !/^[a-z0-9][a-z0-9_-]{0,47}$/.test(source.assetPack) || RESERVED_NAMES.has(source.assetPack)) {
+      invalid('assetPack muss eine lokale Grafikset-ID mit höchstens 48 Zeichen sein.');
+    }
+    skin.assetPack = source.assetPack;
+  }
   if (source.atlas !== undefined) {
     skin.atlas = parseAtlas(source.atlas, 'atlas');
   }
@@ -483,6 +489,7 @@ export async function loadSkin(entry: SkinEntry): Promise<LoadedSkin> {
   // Validate again even if the caller did not obtain this entry from the catalog.
   const checked = parseEntry(entry);
   const definition = parseSkinDefinition(await fetchJson(`/skins/${checked.file}`, `Das Grafikset „${checked.name}“`));
+  const assetPack = definition.assetPack ?? checked.id;
   if (!definition.atlas) return { id: checked.id, definition, image: null, imageUrl: null };
   const mobile = mobileGraphics();
   const compatibleAtlas = mobile && definition.atlas.fallbackImage
@@ -491,19 +498,19 @@ export async function loadSkin(entry: SkinEntry): Promise<LoadedSkin> {
   let loadedAtlas;
   if (mobile && definition.mobileAtlas) {
     try {
-      loadedAtlas = await loadAtlas(definition.mobileAtlas, checked.id);
+      loadedAtlas = await loadAtlas(definition.mobileAtlas, assetPack);
       definition.atlas = definition.mobileAtlas;
     } catch {
       // Keep a usable board when a custom server omits the optional mobile asset.
-      loadedAtlas = await loadAtlas(compatibleAtlas, checked.id);
+      loadedAtlas = await loadAtlas(compatibleAtlas, assetPack);
     }
   } else {
-    loadedAtlas = await loadAtlas(compatibleAtlas, checked.id);
+    loadedAtlas = await loadAtlas(compatibleAtlas, assetPack);
   }
   const skin: LoadedSkin = { id: checked.id, definition, ...loadedAtlas };
   if (definition.weaponAtlas && !mobile) {
     try {
-      const { image, imageUrl } = await loadAtlas(definition.weaponAtlas, checked.id);
+      const { image, imageUrl } = await loadAtlas(definition.weaponAtlas, assetPack);
       skin.weaponAtlas = { image, imageUrl };
     } catch {
       // The same weapon frames in the main atlas remain usable if this optional image fails.

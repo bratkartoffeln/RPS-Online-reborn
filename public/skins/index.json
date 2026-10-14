@@ -8,6 +8,11 @@
       "file": "icq-retro/skin.json"
     },
     {
+      "id": "icq-retro-dark",
+      "name": "ICQ Retro Dark",
+      "file": "icq-retro-dark/skin.json"
+    },
+    {
       "id": "classic",
       "name": "Klassisch",
       "file": "classic/skin.json"

@@ -316,7 +316,7 @@ test('bundled retro, classic and Arcade packs resolve to existing, correctly bou
   const root = new URL('../public/skins/', import.meta.url);
   const index = parseSkinCatalog(JSON.parse(readFileSync(new URL('index.json', root), 'utf8')));
   assert.equal(index.default, 'icq-retro');
-  assert.deepEqual(index.skins.map((skin) => skin.id), ['icq-retro', 'classic', 'arcade']);
+  assert.deepEqual(index.skins.map((skin) => skin.id), ['icq-retro', 'icq-retro-dark', 'classic', 'arcade']);
   const retro = parseSkinDefinition(JSON.parse(readFileSync(new URL('icq-retro/skin.json', root), 'utf8')));
   assert.equal(retro.atlas?.image, 'atlas.svg');
   assert.equal(retro.atlas?.fallbackImage, 'atlas.png');
@@ -554,6 +554,28 @@ test('weapon SVG loads separately with validated bounds and a fresh same-skin UR
   assert.equal(skin.imageUrl, urls[0]);
   assert.equal(skin.weaponAtlas.imageUrl, urls[1]);
   assert.match(skin.weaponAtlas.imageUrl, /^\/skins\/example\/weapon-atlas\.svg\?skin=/);
+});
+
+test('dark retro retains the complete retro artwork with a dark UI palette and readable board labels', () => {
+  const read = (id: string) => parseSkinDefinition(JSON.parse(readFileSync(new URL(`../public/skins/${id}/skin.json`, import.meta.url), 'utf8')));
+  const retro = read('icq-retro');
+  const dark = read('icq-retro-dark');
+  assert.equal(dark.assetPack, 'icq-retro');
+  assert.notDeepEqual(dark.palette.ui, retro.palette.ui);
+  assert.equal(dark.palette.board.coordinates, dark.palette.ui.muted);
+  assert.deepEqual({ ...dark, name: retro.name, assetPack: undefined, palette: retro.palette }, { ...retro, assetPack: undefined });
+});
+
+test('shared assets load from the validated local source pack while the selected design ID stays intact', async (t) => {
+  t.mock.method(globalThis, 'fetch', async () => jsonResponse({ ...weaponArtwork(), assetPack: 'icq-retro' }));
+  const urls = mockImages(t);
+  const skin = await loadSkin(entry);
+  assert.equal(skin.id, entry.id);
+  assert.equal(urls.length, 2);
+  assert.ok(urls.every(url => url.startsWith('/skins/icq-retro/')));
+  for (const assetPack of ['../icq-retro', '/icq-retro', 'https://example.com', 'a/b', '%2e%2e', '__proto__', 'a'.repeat(49), null]) {
+    assert.throws(() => parseSkinDefinition({ ...minimal(), assetPack }), /assetPack/);
+  }
 });
 
 test('missing optional weapon images keep the selected pack and main-atlas weapon fallback', async (t) => {

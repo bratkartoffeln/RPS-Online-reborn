@@ -19,7 +19,7 @@ import { readSeriesMode, seriesAnnouncement, seriesModeDescription, seriesModeLa
 import { refereePortrait } from './referee-ui';
 import { otherTeamColor, teamColorForPlayer, teamColorName } from './team-ui';
 import { CombatOverlay, COMBAT_TIMING } from './combat-ui';
-import { chatBubbleText, RoomChat } from './chat-ui';
+import { chatBubbleDuration, chatBubbleText, RoomChat } from './chat-ui';
 import { freshVictory } from './match-victory';
 
 const app = document.querySelector<HTMLDivElement>('#app')!;
@@ -53,6 +53,8 @@ let pendingTimeout: ReturnType<typeof setTimeout> | undefined;
 let toastTimeout: ReturnType<typeof setTimeout> | undefined;
 let chatNoticeRoom: string | null = null;
 const chatNotices = new Map<string, ChatMessage>();
+let chatNoticeTimer: ReturnType<typeof setTimeout> | undefined;
+let renderedChatNotice = '';
 let name = readSession('rps-arena:name') ?? '';
 let seriesMode = readSeriesMode(readPreference('rps-arena:series-mode'));
 let inputRoom = roomCodeFrom(new URL(location.href).searchParams.get('room') ?? '');
@@ -68,13 +70,20 @@ const skinPreviews = new Map<string, LoadedSkin>();
 const skinLoads = new Map<string, Promise<LoadedSkin>>();
 let animationsPreferred = readPreference('rps-arena:animations') !== 'off';
 const reducedMotion = window.matchMedia('(prefers-reduced-motion: reduce)');
+const compactLayout = window.matchMedia('(max-width: 600px)');
 const sounds = new GameSounds();
 let soundsPreferred = readPreference('rps-arena:sounds') === 'on';
 
 const chat: RoomChat = new RoomChat(el('room-chat'), message => connection.send('chat_send', message), message => {
+  if (!view || message.playerId === view.you) return;
+  clearTimeout(chatNoticeTimer);
   chatNoticeRoom = view?.roomId ?? null;
   chatNotices.set(message.playerId, message);
   paintChatNotice();
+  chatNoticeTimer = setTimeout(() => {
+    chatNotices.clear();
+    paintChatNotice();
+  }, chatBubbleDuration(message.text));
 });
 const connection = new RpsConnection({
   onStatus(status) {
@@ -286,6 +295,7 @@ el('sounds-enabled').addEventListener('change', () => {
   if (soundsPreferred) void sounds.unlock();
 });
 reducedMotion.addEventListener('change', updateMotion);
+compactLayout.addEventListener('change', render);
 document.addEventListener('pointerdown', (event) => {
   void sounds.unlock();
   if (!(event.target instanceof Node) || el('appearance-menu').contains(event.target)) return;
@@ -418,16 +428,15 @@ function scrollToGameElement(id: string): void {
 }
 
 function paintChatNotice(): void {
-  const notices = view && chatNoticeRoom === view.roomId ? [...chatNotices.values()] : [];
+  const notices = view && chatNoticeRoom === view.roomId ? [...chatNotices.values()].filter(message => message.playerId !== view?.you) : [];
   const markup = notices.map(message => {
     const text = chatBubbleText(message.text);
-    const own = message.playerId === view?.you;
     const color = teamColorForPlayer(view, message.playerId);
-    return '<button type="button" class="board-chat-bubble' + (text ? ' has-text' : '') + '" data-action="dismiss-chat" data-player-id="' + esc(message.playerId) + '" data-position="' + (own ? 'bottom' : 'top') + '" data-team-color="' + color + '" aria-label="' + esc(message.playerName + ': ' + (text ?? 'Neue Chatnachricht') + ' – Sprechblase ausblenden') + '" title="Klicken zum Ausblenden"><strong class="bubble-sender">' + esc(message.playerName) + '</strong>' + (text ? '<span class="bubble-text">' + esc(text) + '</span>' : (atlasIcon(currentSkin, currentSkin.definition.chatNotice, 56) ?? icon('chat', '', 36))) + '</button>';
+    return '<button type="button" class="board-chat-bubble' + (text ? ' has-text' : '') + '" data-action="dismiss-chat" data-player-id="' + esc(message.playerId) + '" data-position="top" data-team-color="' + color + '" aria-label="' + esc(message.playerName + ': ' + (text ?? 'Neue Chatnachricht') + ' – zum Chat springen und Sprechblase ausblenden') + '" title="Nachricht im Chat lesen"><strong class="bubble-sender">' + esc(message.playerName) + '</strong>' + (text ? '<span class="bubble-text">' + esc(text) + '</span>' : (atlasIcon(currentSkin, currentSkin.definition.chatNotice, 56) ?? icon('chat', '', 36))) + '</button>';
   }).join('');
   // Do not replace the focused button or repeat live announcements on every game render.
   const root = el('board-chat-notices');
-  if (root.innerHTML !== markup) root.innerHTML = markup;
+  if (renderedChatNotice !== markup) { root.innerHTML = markup; renderedChatNotice = markup; }
 }
 
 function refereeMarkup(size: number): string {
@@ -440,7 +449,7 @@ function refereeMarkup(size: number): string {
 function phaseSection(label: string, title: string, copy: string, controls = '', classes = ''): string {
   const color = phaseTeamColor();
   const referee = view ? refereeMarkup(180) : '';
-  const showTurnWithReferee = currentSkin.definition.presentation === 'retro' && referee.includes('class="referee-portrait"') && view?.phase === 'playing' && !view.paused && networkStatus === 'connected';
+  const showTurnWithReferee = !compactLayout.matches && currentSkin.definition.presentation === 'retro' && referee.includes('class="referee-portrait"') && view?.phase === 'playing' && !view.paused && networkStatus === 'connected';
   const heading = showTurnWithReferee
     ? '<h2 class="phase-referee-turn" aria-label="' + esc(title) + '">' + referee + '</h2>'
     : '<h2>' + esc(title) + '</h2>' + (referee ? '<div class="phase-referee">' + referee + '</div>' : '');
@@ -539,7 +548,7 @@ function replaceMarkup(target: HTMLElement, markup: string): void {
 }
 
 function render(): void {
-  if (chatNoticeRoom !== view?.roomId) { chatNoticeRoom = null; chatNotices.clear(); }
+  if (chatNoticeRoom !== view?.roomId) { chatNoticeRoom = null; chatNotices.clear(); clearTimeout(chatNoticeTimer); }
   const active = document.activeElement instanceof HTMLElement ? document.activeElement : null;
   const focusId = active?.closest('#sidebar, #lobby-overlay') ? active.id : '';
   const selection = active instanceof HTMLInputElement ? [active.selectionStart, active.selectionEnd] : null;
@@ -588,7 +597,9 @@ function render(): void {
     el('board').focus({ preventScroll: true });
   }
   el('preview-banner').hidden = true;
-  const scores = view ? seriesScoreMarkup(view) : '';
+  const referee = refereePortrait(currentSkin.definition, view);
+  const headerReferee = '<div class="score-referee">' + (refereeMarkup(76) || icon('info', '', 28)) + '<span>' + esc(referee.caption) + '</span></div>';
+  const scores = view ? seriesScoreMarkup(view, headerReferee) : '';
   el('series-scoreboard').hidden = !view;
   if (el('series-scoreboard').innerHTML !== scores) {
     el('series-scoreboard').innerHTML = scores;
@@ -799,9 +810,10 @@ app.addEventListener('click', (event) => {
   if (action === 'home') { event.preventDefault(); if (view) requestLeave(); return; }
   if (action === 'choose-skin' && button.dataset.skin) void chooseSkin(button.dataset.skin);
   if (action === 'dismiss-chat') {
+    clearTimeout(chatNoticeTimer);
     chatNotices.delete(button.dataset.playerId ?? '');
-    el('board').focus({ preventScroll: true });
     paintChatNotice();
+    scrollToGameElement('room-chat');
   }
   if (action === 'back-to-board') scrollToGameElement('board');
   if (action === 'copy') void copyInvitation();

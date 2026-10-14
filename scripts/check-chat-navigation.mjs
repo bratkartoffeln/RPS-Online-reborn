@@ -21,10 +21,10 @@ try {
     for (const page of [reader, sender]) page.on('pageerror', error => errors.push(error.message));
     await Promise.all([reader.goto(server.url), sender.goto(server.url)]);
     await Promise.all([reader, sender].map(page => page.waitForFunction(() => !document.querySelector('#app').inert)));
-    await reader.waitForFunction(() => [...document.querySelectorAll('.design-choice')].length === 3 && [...document.querySelectorAll('.design-choice')].every(button => !button.disabled));
+    await reader.waitForFunction(() => [...document.querySelectorAll('.design-choice')].length === 4 && [...document.querySelectorAll('.design-choice')].every(button => !button.disabled));
     await reader.locator('#player-name').fill('Leser');
     await reader.locator('#room-input').fill('Entwurf');
-    for (const id of ['classic', 'arcade', 'icq-retro']) {
+    for (const id of ['classic', 'arcade', 'icq-retro', 'icq-retro-dark']) {
       await reader.locator('#design-' + id).click();
       await reader.waitForFunction(id => document.documentElement.dataset.skin === id, id);
       assert.equal(await reader.locator('#design-' + id).getAttribute('aria-pressed'), 'true');
@@ -33,7 +33,9 @@ try {
       if (id !== 'classic') assert.equal(await reader.locator('#design-' + id + ' .atlas-icon').count(), 1);
     }
     const boxes = await reader.locator('.design-choice').evaluateAll(elements => elements.map(element => { const r = element.getBoundingClientRect(); return { x: r.x, y: r.y, width: r.width, height: r.height }; }));
-    assert.ok(boxes.every(box => box.y === boxes[0].y && box.width >= 70 && box.height >= 110), 'Large design buttons stay alongside each other');
+    assert.ok(boxes.every(box => box.width >= 70 && box.height >= 110), 'Large design buttons');
+    assert.equal(boxes[0].y, boxes[1].y, 'Design buttons stay alongside each other');
+    if (!mobile) assert.ok(boxes.every(box => box.y === boxes[0].y));
     if (mobile) {
       const forms = await reader.locator('.lobby-options form').evaluateAll(elements => elements.map(element => { const r = element.getBoundingClientRect(); return { x: r.x, width: r.width }; }));
       assert.equal(forms[0].x, forms[1].x, 'Mobile login forms use one column');
@@ -48,6 +50,34 @@ try {
     await sender.locator('#room-input').fill(code);
     await sender.locator('#join-button').click();
     await sender.locator('#room-chat').waitFor({ state: 'visible' });
+    if (mobile) {
+      for (const page of [reader, sender]) {
+        await page.locator('#board').scrollIntoViewIfNeeded();
+        const rect = await page.locator('#board canvas').boundingBox();
+        const x = rect.x + 88 / 680 * rect.width;
+        const y = rect.y + (47 + 4 * 84 + 39) / 616 * rect.height;
+        await page.waitForTimeout(350); // Let the render loop sleep before the first tap.
+        await page.touchscreen.tap(x, y);
+        await page.waitForFunction(() => document.querySelector('.phase-card .body-copy').textContent.includes('ausgewählt'));
+        await page.touchscreen.tap(x, y);
+        await page.waitForFunction(() => !document.querySelector('.phase-card .body-copy').textContent.includes('ausgewählt'));
+      }
+      await reader.locator('#board').scrollIntoViewIfNeeded();
+      const rect = await reader.locator('#board canvas').boundingBox();
+      const beforeScroll = await reader.evaluate(() => scrollY);
+      const cdp = await contexts[0].newCDPSession(reader);
+      const finger = { id: 1, x: rect.x + rect.width / 2, y: rect.y + rect.height * .75 };
+      await cdp.send('Input.dispatchTouchEvent', { type: 'touchStart', touchPoints: [finger] });
+      for (let step = 1; step <= 6; step++) {
+        await cdp.send('Input.dispatchTouchEvent', { type: 'touchMove', touchPoints: [{ ...finger, y: finger.y - step * 16 }] });
+        await reader.waitForTimeout(25);
+      }
+      await cdp.send('Input.dispatchTouchEvent', { type: 'touchEnd', touchPoints: [] });
+      await reader.waitForTimeout(300);
+      assert.ok(await reader.evaluate(() => scrollY) > beforeScroll, 'Swiping the board still scrolls the page');
+      assert.ok(!(await reader.locator('.phase-card .body-copy').innerText()).includes('ausgewählt'), 'Scrolling does not select a figure');
+      await cdp.detach();
+    }
     const send = async (page, text) => {
       await page.waitForTimeout(550); // Server rate limit.
       await page.locator('#chat-input').fill(text);
@@ -56,7 +86,7 @@ try {
     };
     const top = reader.locator('.board-chat-bubble[data-position="top"]');
     const bottom = reader.locator('.board-chat-bubble[data-position="bottom"]');
-    for (const id of ['classic', 'arcade', 'icq-retro']) {
+    for (const id of ['classic', 'arcade', 'icq-retro', 'icq-retro-dark']) {
       await reader.locator('#skin-select').selectOption(id, { force: true });
       await reader.waitForFunction(id => document.documentElement.dataset.skin === id, id);
       await send(sender, 'Gut gespielt, das war knapp!');
@@ -65,13 +95,12 @@ try {
       assert.equal(await top.getAttribute('data-team-color'), 'red');
       assert.ok(await reader.locator('#board-chat-notices').evaluate(element => !!element.closest('.board-surface')));
       await send(reader, 'Danke!');
-      await bottom.waitFor({ state: 'visible' });
-      assert.equal(await bottom.getAttribute('data-team-color'), 'blue');
+      assert.equal(await bottom.count(), 0, 'Own messages do not create a speech bubble');
+      await sender.locator('.board-chat-bubble[data-team-color="blue"]').waitFor({ state: 'visible' });
       assert.equal(await top.count(), 1, 'Own reply keeps the opponent bubble');
       await top.click();
-      assert.equal(await top.count(), 0, 'Click dismisses only that player');
-      assert.equal(await bottom.count(), 1);
-      await bottom.click();
+      assert.equal(await top.count(), 0, 'Click dismisses the opponent bubble');
+      assert.equal(await reader.evaluate(() => document.activeElement.id), 'chat-input');
       assert.equal(await reader.locator('.board-chat-bubble').count(), 0);
       await reader.locator('#board').click({ position: { x: 10, y: 10 } });
       assert.equal(await reader.locator('.board-chat-bubble').count(), 0, 'Game render cannot restore dismissed messages');
@@ -94,9 +123,33 @@ try {
       for (const summary of await summaries.all()) {
         const styles = await summary.evaluate(element => ({ arrow: getComputedStyle(element, '::after').borderRightWidth, radius: getComputedStyle(element.parentElement).borderRadius }));
         assert.equal(styles.arrow, '2px');
-        if (id === 'icq-retro') assert.equal(styles.radius, '0px');
+        if (id.startsWith('icq-retro')) assert.equal(styles.radius, '0px');
+      }
+      if (id === 'icq-retro-dark') {
+        assert.equal(await reader.evaluate(() => document.documentElement.style.colorScheme), 'dark');
+        assert.equal(await reader.locator('.play-panel').evaluate(element => getComputedStyle(element).backgroundColor), 'rgb(32, 44, 35)');
+        if (mobile) {
+          assert.ok(await reader.locator('.score-referee .referee-portrait').isVisible());
+          assert.ok(await reader.locator('.phase-referee').isHidden());
+          const positions = await reader.locator('.header-arena .series-player, .score-referee').evaluateAll(elements => elements.map(element => element.getBoundingClientRect().x));
+          assert.ok(positions[0] < positions[1] && positions[1] < positions[2], 'Referee sits between player scores');
+        }
+        await reader.screenshot({ path: path.join(tmpdir(), `rps-dark-${mobile ? 'mobile' : 'desktop'}.png`), fullPage: true });
       }
       console.log(`${mobile ? 'Mobil' : 'Desktop'} / ${id}: Design, Chattext, Spielerfarben, Absenderposition, Textgrenzen, Ausblenden und Akkordeons OK`);
+    }
+    // Observe actual browser timers once; unit tests cover intermediate reading times.
+    if (mobile) {
+      await send(sender, 'Kurz');
+      await top.waitFor({ state: 'visible' });
+      await reader.waitForTimeout(4200);
+      assert.ok(await top.isVisible(), 'A short notice lasts at least five seconds');
+      await top.waitFor({ state: 'detached', timeout: 2500 });
+      await send(sender, 'a'.repeat(200));
+      await top.waitFor({ state: 'visible' });
+      await reader.waitForTimeout(5200);
+      assert.ok(await top.isVisible(), 'Longer messages receive more reading time');
+      await top.waitFor({ state: 'detached', timeout: 11000 });
     }
     await reader.locator('#ready-button').click();
     await sender.locator('#ready-button').click();

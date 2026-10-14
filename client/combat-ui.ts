@@ -1,4 +1,3 @@
-import { mobileGraphics } from './mobile-graphics';
 import type { FighterKind, GameActionView, PieceView } from '../shared/game';
 import type { Snapshot } from '../shared/protocol';
 import { escapeHtml as esc, icon } from './icons';
@@ -286,7 +285,7 @@ export class CombatOverlay {
     this.clearTimers();
     this.waitingChoice = null;
     this.activeStarted = true;
-    this.activeReduced = mobileGraphics() || !this.animationsEnabled || this.root.ownerDocument.defaultView?.matchMedia?.('(prefers-reduced-motion: reduce)').matches === true;
+    this.activeReduced = !this.animationsEnabled || this.root.ownerDocument.defaultView?.matchMedia?.('(prefers-reduced-motion: reduce)').matches === true;
     this.activeStage = this.activeReduced ? 'result' : 'approach';
     this.mountedChoice = null;
     this.paintBattle();
@@ -365,10 +364,9 @@ export class CombatOverlay {
     const hadFocus = this.root.contains(this.root.ownerDocument.activeElement);
     this.rememberFocus();
     const model = this.active, skin = this.skin;
-    const mobile = mobileGraphics();
     const fighter = (piece: Combatant): string => {
       const art = artwork(skin, piece, 104);
-      const shards = !mobile && piece.result === 'loser' ? '<span class="combat-shards" aria-hidden="true">' + Array.from({ length: 6 }, (_, index) => `<span class="combat-shard combat-shard-${index}">${art}</span>`).join('') + '</span>' : '';
+      const shards = piece.result === 'loser' ? '<span class="combat-shards" aria-hidden="true">' + Array.from({ length: 6 }, (_, index) => `<span class="combat-shard combat-shard-${index}">${art}</span>`).join('') + '</span>' : '';
       return `<div class="combat-fighter" data-piece-id="${esc(piece.id)}" data-owner-id="${esc(piece.ownerId)}" data-team-color="${piece.team}" data-result="${piece.result}"><p class="combat-fighter-role">${piece.role}</p><div class="combat-art"><span class="combat-art-main">${art}</span>${shards}</div><div class="combat-fighter-caption"><strong>${esc(piece.name)}</strong><span>${teamColorName(piece.team)} · ${LABELS[piece.kind ?? 'unknown']}</span><span class="combat-fighter-result">${piece.result === 'winner' ? 'Sieger' : piece.result === 'loser' ? 'Besiegt' : 'Neue Wahl'}</span></div></div>`;
     };
     this.root.hidden = false;
@@ -378,7 +376,7 @@ export class CombatOverlay {
     delete this.root.dataset.transition;
     delete this.root.dataset.duelId;
     delete this.root.dataset.duelRound;
-    this.root.innerHTML = `<section class="combat-stage" data-stage="${this.activeStage}" data-motion="${this.root.dataset.motion}" aria-label="Kampf" tabindex="-1"><header class="combat-heading"><p>${model.round ? 'DUELL · RUNDE ' + model.round : 'KAMPF · ZUG ' + model.turn}</p><h2>${esc(model.heading)}</h2></header><div class="combat-fighters">${fighter(model.attacker)}${fighter(model.defender)}${mobile ? '' : CLOUD}</div><p class="combat-result" role="status" aria-live="polite"></p></section>`;
+    this.root.innerHTML = `<section class="combat-stage" data-stage="${this.activeStage}" data-motion="${this.root.dataset.motion}" aria-label="Kampf" tabindex="-1"><header class="combat-heading"><p>${model.round ? 'DUELL · RUNDE ' + model.round : 'KAMPF · ZUG ' + model.turn}</p><h2>${esc(model.heading)}</h2></header><div class="combat-fighters">${fighter(model.attacker)}${fighter(model.defender)}${CLOUD}</div><p class="combat-result" role="status" aria-live="polite"></p></section>`;
     this.paintedSkin = skin;
     this.setStage(this.activeStage);
     if (hadFocus) this.root.querySelector<HTMLElement>('.combat-stage')?.focus({ preventScroll: true });

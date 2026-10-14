@@ -11,6 +11,11 @@ export function chatBubbleText(text: string): string | null {
   return normalized && Array.from(normalized).length <= 50 && normalized.split(/\s+/u).length <= 5 ? normalized : null;
 }
 
+/** Reading time at roughly ten characters per second, bounded for brief notices. */
+export function chatBubbleDuration(text: string): number {
+  return Math.min(15000, Math.max(5000, Array.from(normalizeChatText(text)).length * 100));
+}
+
 function chatRequestId(): string {
   // getRandomValues also works on the plain HTTP endpoint used inside a LAN.
   const bytes = new Uint8Array(16);

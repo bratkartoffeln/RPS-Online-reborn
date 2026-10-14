@@ -64,6 +64,8 @@ export interface BoardPalette {
 export interface SkinDefinition {
   version: 1;
   name: string;
+  /** Reuse image files from another local pack; frame definitions remain explicit. */
+  assetPack?: string;
   /** Optional interface and board treatment; artwork and rules stay independent. */
   presentation?: 'modern' | 'retro';
   palette: { ui: UiPalette; board: BoardPalette };

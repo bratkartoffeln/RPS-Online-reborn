@@ -1,5 +1,13 @@
 # Änderungen
 
+## 0.4.14
+
+- ICQ Retro Dark mit dunkler Seitenpalette und gemeinsam genutzten ICQ-Retro-Atlanten; optionales, auf lokale Grafikset-IDs begrenztes `assetPack` im Manifest.
+- Nur Gegnernachrichten erzeugen Sprechblasen. Textlänge bestimmt die Anzeigezeit zwischen 5 und 15 Sekunden; Klick führt nach dem Ausblenden zum Chat. Eine neue Gegnernachricht startet die Anzeigezeit neu.
+- Native Touch-Pointer-Verarbeitung wählt Figuren mit einem Tipp, unabhängig vom schlafenden Phaser-Renderloop; Scrollgesten und abgebrochene Berührungen wählen keine Figur aus.
+- Mobile Kopfzeile mit Spielernamen und Punkten beiderseits des Schiedsrichters und aktuellem Zughinweis.
+- Vollständige mobile Kampfanimationen einschließlich Zusammenstoß, Zerfall und Siegeranimation bei aktivierter Bewegung.
+
 ## 0.4.13
 
 - Designauswahl mit großen Figurenvorschauen nebeneinander im unteren Loginbereich.
