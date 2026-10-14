@@ -1,5 +1,12 @@
 # Änderungen
 
+## 0.4.16
+
+- Persistentes Spielende-Overlay mit farbrichtiger Gewinnerfahne beim Schiri sowie jubelndem Sieger und traurigem Verlierer. Eigene, aus den vorhandenen SVG-Figuren abgeleitete Posen; neutrale Szene bei Unentschieden. Wartet auf das Ende der Kampfanimation und bleibt bis zur nächsten Partie bestehen.
+- Verhindert dauerhaft zwischen Flagge und Falle eingeschlossene Eckfiguren bei initialer Aufstellung, Mischen, manuellem Tauschen und Bereitmelden. Zufällige Aufstellungen werden ohne erneutes Würfeln korrigiert; unzulässige manuelle Tauschaktionen verändern den Spielzustand nicht.
+- Gemeinsame Breiten für Kopfzeile, Spielaktionen, Spielbereich und nachfolgende Steuerelemente im kompakten Layout; das Brett selbst bleibt an die Fensterhöhe angepasst.
+- Gleich große Buttonspalten, bündige gestapelte Aktionen, einheitliche Akkordeonköpfe und ausgerichtete Spielernamen/Punkte.
+
 ## 0.4.15
 
 - Eigener ICQ-Retro-Dark-Atlas für SVG, PNG und mobiles WebP mit dunklen Brettfeldern und unveränderten Figuren; reproduzierbarer Export über `scripts/build-dark-retro-atlas.mjs`.

@@ -160,10 +160,10 @@ details[open] > summary::after { transform: rotate(45deg); }
 
 /* Compact mode also applies to narrow desktop windows and short displays. */
 .phase-top-host { min-width: 0; }
-.game-mode:not(.compact-game) .board-region { width: min(100%, calc(var(--board-max-height, 80svh) * 680 / 616)); margin-inline: auto; }
+.game-mode .board-region { width: min(100%, calc(var(--board-max-height, 80svh) * 680 / 616)); margin-inline: auto; }
 :root .compact-game .arena-grid { display: grid; grid-template-columns: minmax(0, 1fr); gap: 10px; }
 .compact-game .phase-top-host { grid-row: 1; width: min(100%, 640px); justify-self: center; }
-.compact-game .play-panel { grid-row: 2; width: min(100%, calc(var(--board-max-height, 60svh) * 680 / 616)); justify-self: center; }
+.compact-game .play-panel { grid-row: 2; width: min(100%, 640px); justify-self: center; }
 .compact-game .side-column { display: flex; flex-direction: column; grid-row: 3; width: min(100%, 640px); justify-self: center; }
 .compact-game .match-overview { grid-row: auto; }
 .compact-game .phase-controls .phase-card { padding: 10px 12px; }
@@ -196,9 +196,36 @@ details[open] > summary::after { transform: rotate(45deg); }
   :root .game-mode.compact-game .app-header { grid-template-columns: minmax(0, 1fr); }
   .compact-game .header-right { justify-self: end; }
 }
+
+/* Shared alignment tracks: equal peers, consistent control insets and accordion heads. */
+.button-row { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); align-items: stretch; }
+.button-row > button { min-width: 0; height: 100%; white-space: normal; }
+.button-row > button:only-child { grid-column: 1 / -1; }
+.game-mode { --control-inset: 16px; }
+.compact-game { --control-inset: 12px; }
+.game-mode .phase-controls .phase-card { padding-inline: var(--control-inset); }
+.compact-game .phase-controls .button-row { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); }
+.game-mode .game-actions { display: grid; grid-template-columns: minmax(0, 1fr); grid-auto-rows: 1fr; padding: 0; gap: 10px; }
+.game-mode .game-actions > button { width: 100%; }
+:root .game-mode .match-overview, :root .game-mode .game-details { padding: 0; width: 100%; }
+.game-mode .match-overview > summary, .game-mode .game-details > summary { min-height: 54px; padding: 12px var(--control-inset); box-sizing: border-box; }
+.game-mode .match-status-details { margin: 0 var(--control-inset) 12px; }
+.game-mode .game-details .card { padding: 12px var(--control-inset); border: 0; box-shadow: none; }
+.room-code-row .icon-button { align-self: stretch; height: auto; min-height: 44px; }
+.lobby-options select, .lobby-options input { min-height: 44px; }
+:root[data-presentation="retro"] .game-details { border-width: 2px; }
+.lobby-options .action-button { width: 100%; min-height: 46px; }
+.design-choices { grid-auto-rows: 1fr; }
+.design-choice { height: 100%; }
+.series-controls { display: grid; grid-template-columns: minmax(0, 1fr); grid-auto-rows: 1fr; align-items: stretch; }
+.players { display: grid; grid-auto-rows: 1fr; }
+.compact-game .phase-controls .series-controls { grid-auto-rows: 1fr; }
+.app-header .series-player { align-self: stretch; }
+.compact-game .header-arena .series-player { justify-content: space-between; }
+:root .compact-game .app-header, :root .compact-game .footer { width: min(100%, 640px); margin-inline: auto; }
 @media (max-height: 500px) {
   .compact-game .phase-controls .body-copy { display: none; }
-  .compact-game .phase-controls .phase-card { padding: 7px 10px; }
+  .compact-game .phase-controls .phase-card { padding: 7px var(--control-inset); }
   .compact-game .phase-controls .button-row > button,
   .compact-game .phase-controls .series-controls > button { min-height: 34px; padding-block: 6px; }
   .compact-game .score-referee .referee-portrait > .atlas-icon { transform: scale(.7); margin-block: -8px; }
