@@ -6,7 +6,7 @@ import './combat-ui.css';
 import './chat-ui.css';
 import './lobby.css';
 import type { FighterKind, PlayerView } from '../shared/game';
-import type { Snapshot } from '../shared/protocol';
+import type { ChatMessage, Snapshot } from '../shared/protocol';
 import { ArenaBoard, coordinate, kindName } from './board';
 import { escapeHtml as esc, icon } from './icons';
 import { RpsConnection, readSession, roomCodeFrom, writeSession, type NetworkStatus, type SessionEnd } from './network';
@@ -19,11 +19,12 @@ import { readSeriesMode, seriesAnnouncement, seriesModeDescription, seriesModeLa
 import { refereePortrait } from './referee-ui';
 import { otherTeamColor, teamColorForPlayer, teamColorName } from './team-ui';
 import { CombatOverlay, COMBAT_TIMING } from './combat-ui';
-import { RoomChat } from './chat-ui';
+import { chatBubbleText, RoomChat } from './chat-ui';
 import { freshVictory } from './match-victory';
 
 const app = document.querySelector<HTMLDivElement>('#app')!;
-const legalFooter = '<footer class="legal-footer"><nav aria-label="Rechtliche Informationen"><a href="/copyright.html" target="_blank" rel="noopener">Copyright<span class="sr-only"> (öffnet in neuem Tab)</span></a><a href="/impressum.html" target="_blank" rel="noopener">Impressum<span class="sr-only"> (öffnet in neuem Tab)</span></a></nav></footer>';
+const legalLinks = '<nav aria-label="Rechtliche Informationen"><a href="/copyright.html" target="_blank" rel="noopener">Copyright<span class="sr-only"> (öffnet in neuem Tab)</span></a><a href="/impressum.html" target="_blank" rel="noopener">Impressum<span class="sr-only"> (öffnet in neuem Tab)</span></a></nav>';
+const legalFooter = '<footer class="legal-footer">' + legalLinks + '</footer>';
 app.innerHTML = [
   '<div class="app-shell" id="shell">',
   '<header class="app-header"><div class="header-arena"><a class="brand" href="' + esc(location.pathname) + '" aria-label="RPS Arena Startseite" data-action="home">',
@@ -32,11 +33,11 @@ app.innerHTML = [
   '<div class="intro-row"><div><p class="eyebrow" id="page-eyebrow">DAS TAKTISCHE DUELL FÜR ZWEI</p><h1 class="page-title" id="page-title">Dein Zug beginnt hier.</h1></div><p class="page-subtitle" id="page-subtitle">Figuren verdecken.<br>Gedanken lesen. Flagge holen.</p></div>',
   '<div class="notice" id="notice" role="alert" hidden></div>',
   '<main class="arena-grid"><section class="play-panel" aria-label="Spielbereich">',
-  '<div class="board-region"><div class="board-surface"><div id="board" class="canvas-wrap" tabindex="0" role="application" aria-label="Spielfeld mit sieben Spalten und sechs Reihen" aria-describedby="board-help board-focus"></div><div id="combat-overlay" class="combat-overlay" hidden></div></div>',
+  '<div class="board-region"><div class="board-surface"><div id="board" class="canvas-wrap" tabindex="0" role="application" aria-label="Spielfeld mit sieben Spalten und sechs Reihen" aria-describedby="board-help board-focus"></div><div id="combat-overlay" class="combat-overlay" hidden></div><div id="board-chat-notices" class="board-chat-notices" aria-live="polite" aria-relevant="additions text"></div></div>',
   '<div class="preview-banner" id="preview-banner">' + icon('unknown', '', 18) + '<span>Ein guter Plan bleibt erst einmal geheim.</span></div></div>',
-  '<section id="room-chat" hidden></section>' + legalFooter + '</section>',
+  '<section id="room-chat" hidden></section></section>',
   '<aside class="side-column" id="match-sidebar" aria-label="Spielsteuerung"><details class="match-overview" id="match-overview"><summary class="match-status" title="Spielstatus und Seriendetails"><span class="eyebrow">SPIELSTATUS</span><span class="pill accent" id="board-phase">DEINE ARENA</span></summary><div class="match-status-details"><div id="series-info"></div><div class="match-team-counts"><span class="team-key" id="own-team-key" data-team-color="blue"><span class="team-square"></span><span id="own-count">Dein Team</span></span><span class="team-key enemy" id="enemy-team-key" data-team-color="red"><span class="team-square"></span><span id="enemy-count">Gegner</span></span><span class="board-hint" id="board-hint">Erstelle oder betrete einen Raum.</span></div></div></details><div class="match-controls" id="sidebar"></div></aside><section id="lobby-overlay" class="lobby-overlay" aria-label="Spiel starten"></section></main>',
-  '<footer class="footer"><span>' + icon('info', '', 13) + 'Ein unabhängiges Remake · vorläufige Regeln für Version ' + esc(__APP_VERSION__) + '</span><span>Figur anklicken oder <kbd>↑</kbd><kbd>←</kbd><kbd>↓</kbd><kbd>→</kbd> + <kbd>Enter</kbd></span></footer></div>',
+  '<footer class="footer"><div class="footer-legal"><span>' + icon('info', '', 13) + 'Ein unabhängiges Remake · vorläufige Regeln für Version ' + esc(__APP_VERSION__) + '</span>' + legalLinks + '</div><span>Figur anklicken oder <kbd>↑</kbd><kbd>←</kbd><kbd>↓</kbd><kbd>→</kbd> + <kbd>Enter</kbd></span></footer></div>',
   '<p class="sr-only" id="board-help">Mit den Pfeiltasten ein Feld wählen. Mit Enter oder Leertaste eine eigene Figur und anschließend ein Zielfeld wählen. Escape hebt die Auswahl auf. In der Aufstellung tauschen zwei eigene Figuren die Plätze. Alternativ eine eigene Figur auf eine zweite eigene Figur ziehen. Im Spiel sind markierte Felder erlaubte Ziele.</p>',
   '<p class="sr-only" id="board-focus" aria-live="polite"></p><p class="sr-only" id="announcement" aria-live="polite" aria-atomic="true"></p>',
   '<div class="toast" id="toast" role="status" aria-live="polite"></div><div id="modal-root"></div>',
@@ -51,6 +52,7 @@ let pending = false;
 let pendingTimeout: ReturnType<typeof setTimeout> | undefined;
 let toastTimeout: ReturnType<typeof setTimeout> | undefined;
 let chatNoticeRoom: string | null = null;
+const chatNotices = new Map<string, ChatMessage>();
 let name = readSession('rps-arena:name') ?? '';
 let seriesMode = readSeriesMode(readPreference('rps-arena:series-mode'));
 let inputRoom = roomCodeFrom(new URL(location.href).searchParams.get('room') ?? '');
@@ -62,15 +64,18 @@ let currentSkin = builtInSkin();
 const fallbackEntry: SkinEntry = { id: 'classic', name: 'Klassisch', file: 'classic/skin.json' };
 let skinCatalog: SkinCatalog = { version: 1, default: 'classic', skins: [fallbackEntry] };
 let skinLoadSequence = 0;
+const skinPreviews = new Map<string, LoadedSkin>();
+const skinLoads = new Map<string, Promise<LoadedSkin>>();
 let animationsPreferred = readPreference('rps-arena:animations') !== 'off';
 const reducedMotion = window.matchMedia('(prefers-reduced-motion: reduce)');
 const sounds = new GameSounds();
 let soundsPreferred = readPreference('rps-arena:sounds') === 'on';
 
-const chat: RoomChat = new RoomChat(el('room-chat'), message => connection.send('chat_send', message), () => {
+const chat: RoomChat = new RoomChat(el('room-chat'), message => connection.send('chat_send', message), message => {
   chatNoticeRoom = view?.roomId ?? null;
+  chatNotices.set(message.playerId, message);
   paintChatNotice();
-}, dismissChatNotice);
+});
 const connection = new RpsConnection({
   onStatus(status) {
     networkStatus = status;
@@ -178,6 +183,7 @@ function updateMotion(): void {
 
 function applySkin(skin: LoadedSkin): void {
   currentSkin = skin;
+  skinPreviews.set(skin.id, skin);
   applyUiPalette(skin);
   board.setSkin(skin);
   const logo = atlasIcon(skin, skin.definition.logo, skin.definition.presentation === 'retro' ? 76 : 42);
@@ -195,13 +201,32 @@ function showSkinOptions(): void {
   ).join('');
 }
 
+function loadSkinPreview(entry: SkinEntry): Promise<LoadedSkin> {
+  let loading = skinLoads.get(entry.id);
+  if (!loading) {
+    loading = loadSkin(entry).then(skin => { skinPreviews.set(entry.id, skin); return skin; });
+    skinLoads.set(entry.id, loading);
+    // Allow a failed pack to be retried from the design menu.
+    void loading.catch(() => skinLoads.delete(entry.id));
+  }
+  return loading;
+}
+
+function lobbyDesigns(): string {
+  const entries = skinCatalog.skins.some(entry => entry.id === 'classic') ? skinCatalog.skins : [fallbackEntry, ...skinCatalog.skins];
+  return '<fieldset class="lobby-designs"><legend>Dein Design</legend><div class="design-choices">' + entries.map(entry => {
+    const skin = skinPreviews.get(entry.id);
+    return '<button type="button" class="design-choice" id="design-' + esc(entry.id) + '" data-action="choose-skin" data-skin="' + esc(entry.id) + '" aria-pressed="' + (currentSkin.id === entry.id) + '"' + (skin ? '' : ' disabled') + '><span class="design-preview"' + (skin ? ' style="--preview-background:' + skin.definition.palette.ui.panel + ';--preview-foreground:' + skin.definition.palette.ui.own + '"' : '') + '>' + (skin ? pieceIcon(skin, 'rock', 76) : icon('unknown', '', 48)) + '</span><span>' + esc(entry.name) + '</span></button>';
+  }).join('') + '</div><p class="appearance-hint">Deine Auswahl gilt für diesen Browser.</p></fieldset>';
+}
+
 async function chooseSkin(id: string): Promise<void> {
   const sequence = ++skinLoadSequence;
   const entry = skinCatalog.skins.find((candidate) => candidate.id === id);
   el('skin-status').textContent = 'Design wird geladen …';
   el('skin-select').setAttribute('aria-busy', 'true');
   try {
-    const loaded = entry ? await loadSkin(entry) : builtInSkin();
+    const loaded = entry ? await loadSkinPreview(entry) : builtInSkin();
     if (sequence !== skinLoadSequence) return;
     applySkin(loaded);
     el<HTMLSelectElement>('skin-select').value = loaded.id;
@@ -229,6 +254,8 @@ async function initializeSkins(): Promise<void> {
       ? saved : skinCatalog.default;
     el<HTMLSelectElement>('skin-select').value = wanted;
     await chooseSkin(wanted);
+    // Each preview uses its own decoded atlas, independent of the active design.
+    void Promise.allSettled(skinCatalog.skins.map(loadSkinPreview)).then(() => { if (!view) render(); });
   } catch (error) {
     showSkinOptions();
     el('skin-status').textContent = 'Arena Klassik ist aktiv. ' + (error instanceof Error ? error.message : 'Die Designauswahl ist nicht erreichbar.');
@@ -367,7 +394,7 @@ function lobbyMarkup(): string {
     '<form class="join-form" id="join-form"><h2>Du hast eine Einladung?</h2><label class="field join-field"><span>Raumcode oder Einladungslink</span><input id="room-input" name="room-code" autocomplete="off" autocapitalize="off" spellcheck="false" placeholder="Code oder Link einfügen" aria-describedby="join-hint" value="' + esc(inputRoom) + '"' + disabled + ' /><small class="input-hint" id="join-hint">Der Spielmodus ist bereits vom Raum vorgegeben.</small></label>',
     '<button class="' + (inputRoom ? 'primary-button' : 'secondary-button') + ' full-width action-button" type="submit" id="join-button"' + disabled + '>' + (busy ? '<span class="spinner" aria-hidden="true"></span> Verbinde …' : icon('link', '', 16) + 'Raum beitreten') + '</button></form></div>',
     '<p class="trust-note">' + icon('check', '', 13) + 'Danach stellst du dein Team auf. Wenn beide bereit sind, beginnt die Partie.</p>',
-    '<div class="lobby-notice" role="alert"' + (!notice ? ' hidden' : '') + '>' + esc(notice) + '</div><details class="lobby-rules" id="lobby-rules"><summary>So wird gespielt</summary>' + rulesCard() + '</details>' + legalFooter + '</section>',
+    '<div class="lobby-notice" role="alert"' + (!notice ? ' hidden' : '') + '>' + esc(notice) + '</div><details class="lobby-rules" id="lobby-rules"><summary>So wird gespielt</summary>' + rulesCard() + '</details>' + lobbyDesigns() + legalFooter + '</section>',
   ].join('');
 }
 
@@ -384,16 +411,6 @@ function playerMarkup(player: PlayerView | undefined, own: boolean): string {
   return '<div class="player-row ' + (own ? '' : 'enemy') + '" data-team-color="' + color + '"><span class="player-avatar">' + pieceIcon(currentSkin, own ? 'flag' : 'unknown', 23, own ? 'own' : 'enemy', false, color) + '</span><div class="player-info"><p class="player-name">' + esc(player.name) + (own ? '<span class="player-you">du</span>' : '') + '</p><p class="player-state">' + teamColorName(color) + ' · ' + status + '</p></div>' + marker + '</div>';
 }
 
-function chatNoticeMarkup(): string {
-  return '<button type="button" class="referee-chat-notice" data-action="open-chat" aria-label="Neue Nachricht von deinem Gegner – zum Chat springen" title="Neue Nachricht – zum Chat"' +
-    (chatNoticeRoom && chatNoticeRoom === view?.roomId ? '' : ' hidden') + '>' + (atlasIcon(currentSkin, currentSkin.definition.chatNotice, 48) ?? icon('chat', '', 30)) + '</button>';
-}
-
-function dismissChatNotice(): void {
-  chatNoticeRoom = null;
-  paintChatNotice();
-}
-
 function scrollToGameElement(id: string): void {
   const target = el(id);
   target.scrollIntoView({ behavior: reducedMotion.matches ? 'instant' : 'smooth', block: 'start' });
@@ -401,16 +418,23 @@ function scrollToGameElement(id: string): void {
 }
 
 function paintChatNotice(): void {
-  for (const badge of app.querySelectorAll<HTMLElement>('.referee-chat-notice')) {
-    badge.hidden = !chatNoticeRoom || chatNoticeRoom !== view?.roomId;
-  }
+  const notices = view && chatNoticeRoom === view.roomId ? [...chatNotices.values()] : [];
+  const markup = notices.map(message => {
+    const text = chatBubbleText(message.text);
+    const own = message.playerId === view?.you;
+    const color = teamColorForPlayer(view, message.playerId);
+    return '<button type="button" class="board-chat-bubble' + (text ? ' has-text' : '') + '" data-action="dismiss-chat" data-player-id="' + esc(message.playerId) + '" data-position="' + (own ? 'bottom' : 'top') + '" data-team-color="' + color + '" aria-label="' + esc(message.playerName + ': ' + (text ?? 'Neue Chatnachricht') + ' – Sprechblase ausblenden') + '" title="Klicken zum Ausblenden"><strong class="bubble-sender">' + esc(message.playerName) + '</strong>' + (text ? '<span class="bubble-text">' + esc(text) + '</span>' : (atlasIcon(currentSkin, currentSkin.definition.chatNotice, 56) ?? icon('chat', '', 36))) + '</button>';
+  }).join('');
+  // Do not replace the focused button or repeat live announcements on every game render.
+  const root = el('board-chat-notices');
+  if (root.innerHTML !== markup) root.innerHTML = markup;
 }
 
 function refereeMarkup(size: number): string {
   const state = refereePortrait(currentSkin.definition, view);
   const image = atlasIcon(currentSkin, state.frame, size);
-  if (!image) return '<span class="referee-chat-fallback">' + chatNoticeMarkup() + '</span>';
-  return '<span class="referee-portrait" role="group" aria-label="' + esc(state.label) + '" title="' + esc(state.label) + '" data-turn-team="' + (state.team ?? 'neutral') + '" data-turn-direction="' + (state.direction ?? 'neutral') + '">' + image + chatNoticeMarkup() + '</span>';
+  if (!image) return '';
+  return '<span class="referee-portrait" role="group" aria-label="' + esc(state.label) + '" title="' + esc(state.label) + '" data-turn-team="' + (state.team ?? 'neutral') + '" data-turn-direction="' + (state.direction ?? 'neutral') + '">' + image + '</span>';
 }
 
 function phaseSection(label: string, title: string, copy: string, controls = '', classes = ''): string {
@@ -515,7 +539,7 @@ function replaceMarkup(target: HTMLElement, markup: string): void {
 }
 
 function render(): void {
-  if (chatNoticeRoom !== view?.roomId) chatNoticeRoom = null;
+  if (chatNoticeRoom !== view?.roomId) { chatNoticeRoom = null; chatNotices.clear(); }
   const active = document.activeElement instanceof HTMLElement ? document.activeElement : null;
   const focusId = active?.closest('#sidebar, #lobby-overlay') ? active.id : '';
   const selection = active instanceof HTMLInputElement ? [active.selectionStart, active.selectionEnd] : null;
@@ -604,6 +628,7 @@ function render(): void {
   el('notice').hidden = !notice || !view;
   replaceMarkup(el('notice'), notice ? icon('info', '', 17) + '<span class="notice-content">' + esc(notice) + '</span><button class="notice-button" data-action="dismiss-notice" aria-label="Hinweis schließen">' + icon('close', '', 12) + '</button>' : '');
   chat.updateSession(view, networkStatus === 'connected');
+  paintChatNotice();
   combat.update(view, currentSkin, { connected: networkStatus === 'connected', pending });
   updateBoardInteraction();
 }
@@ -772,7 +797,12 @@ app.addEventListener('click', (event) => {
   if (!button || button instanceof HTMLButtonElement && button.disabled) return;
   const action = button.dataset.action;
   if (action === 'home') { event.preventDefault(); if (view) requestLeave(); return; }
-  if (action === 'open-chat') { dismissChatNotice(); scrollToGameElement('room-chat'); }
+  if (action === 'choose-skin' && button.dataset.skin) void chooseSkin(button.dataset.skin);
+  if (action === 'dismiss-chat') {
+    chatNotices.delete(button.dataset.playerId ?? '');
+    el('board').focus({ preventScroll: true });
+    paintChatNotice();
+  }
   if (action === 'back-to-board') scrollToGameElement('board');
   if (action === 'copy') void copyInvitation();
   if (action === 'dismiss-notice') { notice = ''; render(); }

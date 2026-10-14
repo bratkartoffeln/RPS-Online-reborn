@@ -5,6 +5,12 @@ import { icon } from './icons';
 
 type Attempt = ChatSendMessage & { draft: string };
 
+/** Count Unicode characters, as the chat transport does, rather than UTF-16 units. */
+export function chatBubbleText(text: string): string | null {
+  const normalized = normalizeChatText(text);
+  return normalized && Array.from(normalized).length <= 50 && normalized.split(/\s+/u).length <= 5 ? normalized : null;
+}
+
 function chatRequestId(): string {
   // getRandomValues also works on the plain HTTP endpoint used inside a LAN.
   const bytes = new Uint8Array(16);
@@ -30,7 +36,7 @@ export class RoomChat {
   private error = '';
   private timer: ReturnType<typeof setTimeout> | undefined;
 
-  constructor(private readonly root: HTMLElement, private readonly send: (message: ChatSendMessage) => boolean, private readonly onOpponentMessage: () => void = () => {}, private readonly onSent: () => void = () => {}) {
+  constructor(private readonly root: HTMLElement, private readonly send: (message: ChatSendMessage) => boolean, private readonly onMessage: (message: ChatMessage) => void = () => {}) {
     root.classList.add('room-chat');
     root.hidden = true;
     root.setAttribute('aria-labelledby', 'chat-title');
@@ -95,7 +101,7 @@ export class RoomChat {
       message.playerId === this.playerId && message.requestId === this.lastAttempt!.requestId);
     const firstSync = !this.synced;
     const latestId = this.messages.at(-1)?.id ?? 0;
-    const opponentMessage = !firstSync && state.messages.some(message => message.id > latestId && message.playerId !== this.playerId);
+    const newMessages = firstSync ? [] : state.messages.filter(message => message.id > latestId);
     const existing = new Map(Array.from(this.list.children, child => [Number((child as HTMLElement).dataset.messageId), child]));
     const ids = new Set(state.messages.map(message => message.id));
     for (const [id, child] of existing) if (!ids.has(id)) child.remove();
@@ -110,7 +116,7 @@ export class RoomChat {
       this.lastAttempt = null;
       this.error = '';
     }
-    if (opponentMessage) this.onOpponentMessage();
+    for (const message of newMessages) this.onMessage(message);
     this.paintControls();
   }
 
@@ -170,7 +176,6 @@ export class RoomChat {
       this.paintControls();
       return;
     }
-    this.onSent();
     this.clearTimer();
     this.timer = setTimeout(() => {
       this.pending = false;

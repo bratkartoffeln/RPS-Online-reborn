@@ -1,5 +1,13 @@
 # Änderungen
 
+## 0.4.13
+
+- Designauswahl mit großen Figurenvorschauen nebeneinander im unteren Loginbereich.
+- Rechtliche Links in gleicher Schriftgröße neben dem Remake-Hinweis am unteren Spielrand; während der Partie sichtbar.
+- Einheitlicher Klapppfeil für alle Akkordeons und eckige Retro-Bereiche.
+- Größere, kräftigere Chattexte auf dezent nach Spielerfarbe getönten Zeilen.
+- Sprechblasen über dem Spielfeld beim jeweiligen Absender, mit direktem Text bei höchstens fünf Wörtern und 50 Unicode-Zeichen; längere Texte behalten das Atlasmotiv. Klick blendet die Blase aus. Historische Nachrichten erzeugen beim Raumeintritt keine Blase.
+
 ## 0.4.12
 
 - Nachrichtenhinweis beim Schiedsrichter bleibt bis zum Klick oder einer eigenen gesendeten Nachricht sichtbar; Klick springt zum Chat, ein Chat-Button zurück zum Spielfeld.
