@@ -57,6 +57,28 @@ try {
   assert.equal(combatResult.motion,'full');assert.equal(combatResult.shards,6);assert.equal(combatResult.cloud,1);
   assert.equal(combatResult.animation,'combat-approach-left');
   assert.deepEqual(combatResult.stages.filter(Boolean),['approach','impact','shatter','winner']);
+  const darkChoice=await page.evaluate(async()=>{
+    const {loadSkin}=await import('/client/skins.ts');
+    const {applyUiPalette}=await import('/client/skin-ui.ts');
+    const {CombatOverlay}=await import('/client/combat-ui.ts');
+    const skin=await loadSkin({id:'icq-retro-dark',name:'ICQ Retro Dark',file:'icq-retro-dark/skin.json'});
+    applyUiPalette(skin);
+    const game=qa.g.createGame();qa.g.addPlayer(game,'a','Ada');qa.g.addPlayer(game,'b','Ben');qa.g.readyPlayer(game,'a');qa.g.readyPlayer(game,'b');game.board.fill(null);
+    for(const [i,owner,kind] of [[24,'a','rock'],[17,'b','rock'],[35,'a','paper'],[6,'b','paper'],[41,'a','flag'],[0,'b','flag']])game.board[i]={id:'choice-'+i,owner,kind,revealed:true};
+    qa.g.movePiece(game,'a',24,17);
+    const root=document.createElement('div');root.id='qa-dark-choice';root.style.cssText='position:relative;width:100%;max-width:390px;height:300px';document.body.append(root);
+    const overlay=new CombatOverlay(root,{onBusyChange(){},onCelebrate(){}});
+    overlay.update({...qa.g.viewFor(game,'a'),roomId:'choice'},skin,{connected:true,pending:false});
+    qa.darkOverlay=overlay;qa.darkRoot=root;
+    const panel=root.querySelector('.combat-choice-panel');
+    return {background:getComputedStyle(panel).backgroundColor,color:getComputedStyle(panel).color,url:skin.imageUrl,panelHeight:panel.getBoundingClientRect().height};
+  });
+  assert.match(darkChoice.url,/\/icq-retro-dark\//);
+  assert.match(darkChoice.background,/24, 35, 26/);
+  assert.equal(darkChoice.color,'rgb(240, 246, 230)');
+  assert.ok(darkChoice.panelHeight<=300);
+  await page.locator('#qa-dark-choice .combat-choice-panel').screenshot({path:path.join(tmpdir(),mobile?'dark-weapon-choice-mobile.png':'dark-weapon-choice-desktop.png')});
+  await page.evaluate(()=>{qa.darkOverlay.reset();qa.darkRoot.remove();});
   assert.deepEqual(errors,[]);
   await page.screenshot({path:path.join(tmpdir(),mobile?'mobile-preview.png':'desktop-preview.png')});
   await page.goto('http://127.0.0.1:5173/');

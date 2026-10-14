@@ -560,10 +560,18 @@ test('dark retro retains the complete retro artwork with a dark UI palette and r
   const read = (id: string) => parseSkinDefinition(JSON.parse(readFileSync(new URL(`../public/skins/${id}/skin.json`, import.meta.url), 'utf8')));
   const retro = read('icq-retro');
   const dark = read('icq-retro-dark');
-  assert.equal(dark.assetPack, 'icq-retro');
+  assert.equal(dark.assetPack, undefined, 'Dark retro owns its images.');
   assert.notDeepEqual(dark.palette.ui, retro.palette.ui);
   assert.equal(dark.palette.board.coordinates, dark.palette.ui.muted);
   assert.deepEqual({ ...dark, name: retro.name, assetPack: undefined, palette: retro.palette }, { ...retro, assetPack: undefined });
+  const root = new URL('../public/skins/', import.meta.url);
+  const original = readFileSync(new URL('icq-retro/atlas.svg', root), 'utf8');
+  const independent = readFileSync(new URL('icq-retro-dark/atlas.svg', root), 'utf8');
+  const withoutBoardColors = (svg: string) => svg.replace(/<linearGradient id="board-(?:light|dark)-fill"[\s\S]*?<\/linearGradient>/g, 'BOARD_GRADIENT');
+  assert.notEqual(independent, original, 'Dark board colors are part of the SVG atlas.');
+  assert.equal(withoutBoardColors(independent), withoutBoardColors(original), 'All figure paths remain identical.');
+  assert.match(independent, /#44563e/);
+  for (const name of ['atlas.png', 'atlas-mobile.webp']) assert.ok(readFileSync(new URL('icq-retro-dark/' + name, root)).length > 1000);
 });
 
 test('shared assets load from the validated local source pack while the selected design ID stays intact', async (t) => {

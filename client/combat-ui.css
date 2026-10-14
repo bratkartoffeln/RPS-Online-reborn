@@ -9,7 +9,7 @@
   pointer-events: auto;
   background: transparent;
   overflow: hidden;
-  container-type: inline-size;
+  container-type: size;
   container-name: combat-board;
 }
 @supports (background: color-mix(in srgb, #000 85%, transparent)) {
@@ -17,6 +17,7 @@
 }
 .combat-overlay[hidden] { display: none; }
 :root[data-presentation="retro"] .combat-overlay { --combat-surface: #e0edb5eb; --combat-outline: #566c3c99; }
+:root[data-skin="icq-retro-dark"] .combat-overlay { --combat-surface: #18231af5; --combat-outline: #8da879; }
 .combat-stage, .combat-choice-panel { width: min(94%, 490px); min-width: 0; padding: 18px; border: 1px solid var(--combat-outline); border-radius: 14px; background: var(--combat-surface); box-shadow: 0 6px 24px #0003; text-align: center; color: var(--text); }
 .combat-heading { margin: 0 auto 15px; max-width: 100%; padding: 0; }
 .combat-heading p { margin: 0 0 5px; font-size: 10px; font-weight: 700; letter-spacing: .075em; }
@@ -112,6 +113,25 @@
   .combat-stage .combat-fighter-caption { padding: 0 2px; gap: 1px; }
   .combat-stage .combat-cloud { width: 150px; height: 112px; top: -8px; }
   .combat-stage .combat-result { margin-top: 7px; min-height: 15px; font-size: 10px; }
+}
+@container combat-board (max-height: 280px) {
+  .combat-stage, .combat-choice-panel { padding: 8px; }
+  .combat-heading { margin-bottom: 6px; }
+  .combat-heading h2 { font-size: 15px; }
+  .combat-heading p { font-size: 8px; margin-bottom: 3px; }
+  .combat-choice { min-height: 90px; gap: 3px; padding: 6px 3px; }
+  .combat-choice-art { width: 48px; height: 48px; }
+  .combat-choice-art > .atlas-icon, .combat-choice-art > svg { scale: .5454545; }
+  .combat-choice > strong { font-size: 11px; }
+  .combat-choice-selected { font-size: 8px; min-height: 12px; }
+  .combat-choice-status, .combat-result { margin-top: 5px; font-size: 10px; }
+  .combat-art { width: 60px; height: 60px; margin-bottom: 4px; }
+  .combat-art-main, .combat-shard > .atlas-icon, .combat-shard > svg { scale: .52; }
+  .combat-fighter-role { display: none; }
+  .combat-fighter-caption { min-width: 0; gap: 1px; }
+  .combat-fighter-caption strong { font-size: 10px; }
+  .combat-fighter-caption > span { font-size: 8px; }
+  .combat-cloud { width: 110px; height: 88px; top: -12px; }
 }
 @keyframes combat-approach-left { from { transform: translateX(-20px) rotate(-12deg); } to { transform: translateX(var(--clash-shift)) rotate(8deg); } }
 @keyframes combat-approach-right { from { transform: translateX(20px) rotate(12deg); } to { transform: translateX(calc(-1 * var(--clash-shift))) rotate(-8deg); } }

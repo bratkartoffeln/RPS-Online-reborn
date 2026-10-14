@@ -157,3 +157,51 @@ details[open] > summary::after { transform: rotate(45deg); }
   :root[data-presentation="retro"] .game-mode .app-header { min-height: 74px; }
   :root[data-presentation="retro"] .game-mode .brand-emblem.custom-logo { width: 64px; height: 64px; --logo-scale: .842; }
 }
+
+/* Compact mode also applies to narrow desktop windows and short displays. */
+.phase-top-host { min-width: 0; }
+.game-mode:not(.compact-game) .board-region { width: min(100%, calc(var(--board-max-height, 80svh) * 680 / 616)); margin-inline: auto; }
+:root .compact-game .arena-grid { display: grid; grid-template-columns: minmax(0, 1fr); gap: 10px; }
+.compact-game .phase-top-host { grid-row: 1; width: min(100%, 640px); justify-self: center; }
+.compact-game .play-panel { grid-row: 2; width: min(100%, calc(var(--board-max-height, 60svh) * 680 / 616)); justify-self: center; }
+.compact-game .side-column { display: flex; flex-direction: column; grid-row: 3; width: min(100%, 640px); justify-self: center; }
+.compact-game .match-overview { grid-row: auto; }
+.compact-game .phase-controls .phase-card { padding: 10px 12px; }
+.compact-game .phase-controls .phase-label { display: none; }
+.compact-game .phase-controls h2 { margin: 0; font-size: 14px; line-height: 1.25; }
+.compact-game .phase-controls .body-copy { margin: 4px 0; font-size: 11px; line-height: 1.35; max-width: none; }
+.compact-game .phase-controls .button-row { margin-top: 8px; display: flex; flex-wrap: wrap; gap: 8px; }
+.compact-game .phase-controls .button-row > button { flex: 1 1 auto; min-height: 40px; }
+.compact-game .phase-controls .series-controls { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); margin-top: 8px; gap: 8px; }
+.compact-game .phase-controls .series-controls > button:only-child { grid-column: 1 / -1; }
+.compact-game .phase-controls .series-controls > button { min-height: 40px; padding: 9px 12px; }
+.compact-game .phase-controls .series-control-hint { display: none; }
+.compact-game .phase-controls .series-vote-status { margin-top: 6px; font-size: 10px; line-height: 1.3; }
+:root .compact-game .phase-referee, :root .compact-game .phase-referee-turn { display: none; }
+:root .game-mode.compact-game .app-header { display: grid; grid-template-columns: minmax(0, 1fr) auto; gap: 8px; padding: 8px 0; min-height: 0; margin-bottom: 10px; }
+.compact-game .header-arena .brand { display: none; }
+.compact-game .header-arena { display: block; width: min(100%, 640px); justify-self: center; }
+.compact-game .header-arena .series-scores { display: grid; grid-template-columns: minmax(0, 1fr) 90px minmax(0, 1fr); align-items: center; gap: 8px; }
+.compact-game .header-arena .series-player,
+.compact-game .header-arena .series-player.enemy { display: flex; flex-direction: column; align-items: center; gap: 4px; text-align: center; min-width: 0; }
+.compact-game .header-arena .series-player.enemy .series-player-name { order: -1; }
+.compact-game .header-arena .series-player-name { max-width: 100%; font-size: 14px; overflow-wrap: anywhere; }
+.compact-game .header-arena .series-player-score { font-size: 32px; line-height: 1; }
+.compact-game .series-score-divider { display: none; }
+.compact-game .score-referee { display: flex; flex-direction: column; align-items: center; gap: 4px; text-align: center; }
+.compact-game .score-referee > span:last-child { color: var(--text); font-size: 10px; font-weight: 650; line-height: 1.3; }
+.compact-game .header-right { align-self: start; }
+.compact-game .header-right .version { display: none; }
+@media (max-width: 600px) {
+  :root .game-mode.compact-game .app-header { grid-template-columns: minmax(0, 1fr); }
+  .compact-game .header-right { justify-self: end; }
+}
+@media (max-height: 500px) {
+  .compact-game .phase-controls .body-copy { display: none; }
+  .compact-game .phase-controls .phase-card { padding: 7px 10px; }
+  .compact-game .phase-controls .button-row > button,
+  .compact-game .phase-controls .series-controls > button { min-height: 34px; padding-block: 6px; }
+  .compact-game .score-referee .referee-portrait > .atlas-icon { transform: scale(.7); margin-block: -8px; }
+  .compact-game .header-arena .series-player-score { font-size: 26px; }
+  .compact-game .header-arena .series-player-name { font-size: 12px; }
+}
