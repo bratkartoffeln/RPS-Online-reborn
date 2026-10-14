@@ -1,4 +1,4 @@
-# Grafiksets für RPS Arena v0.4.12
+# Grafiksets für RPS Arena v0.4.13
 
 Die optionale Manifest-Eigenschaft `chatNotice` verweist auf den Atlas-Frame für
 neue Chatnachrichten. Die drei mitgelieferten Designs enthalten je eine eigene
