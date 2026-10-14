@@ -299,6 +299,7 @@ class ArenaScene extends Phaser.Scene {
   }
 
   onBlur(): void {
+    this.touchTap = null;
     this.finishCelebration();
     this.keyboardFocus = false;
     this.cancelGesture();
@@ -332,10 +333,13 @@ class ArenaScene extends Phaser.Scene {
   }
 
   private cellAt(pointer: Phaser.Input.Pointer): number | null {
+    return this.cellAtPoint(this.boardPoint(pointer));
+  }
+
+  private cellAtPoint(point: Point): number | null {
     // Joined retro squares fill the old gutters, including their hit areas.
     const inset = this.retro ? (PITCH - CELL) / 2 : 0;
     const size = this.retro ? PITCH : CELL;
-    const point = this.boardPoint(pointer);
     const x = point.x - LEFT + inset;
     const y = point.y - TOP + inset;
     if (x < 0 || y < 0 || x % PITCH >= size || y % PITCH >= size) return null;
@@ -362,6 +366,46 @@ class ArenaScene extends Phaser.Scene {
     const view = this.view;
     return !!view && this.enabled && (view.phase === 'waiting' || view.phase === 'setup') &&
       !view.players.find((player) => player.id === view.you)?.ready && view.board[index]?.owner === view.you;
+  }
+
+  private touchTap: { id: number; from: number; start: Point; revision: number; scrollX: number; scrollY: number } | null = null;
+
+  /** Native pointer events keep a quick tap intact even while Phaser's render loop sleeps. */
+  handleTouchPointer(event: PointerEvent): void {
+    if (event.pointerType !== 'touch') return;
+    if (event.type === 'pointercancel') { this.touchTap = null; return; }
+    if (event.type === 'pointermove') {
+      if (this.touchTap?.id === event.pointerId && Math.hypot(event.clientX - this.touchTap.start.x, event.clientY - this.touchTap.start.y) > 10) this.touchTap = null;
+      return;
+    }
+    const bounds = this.sys.game.canvas.getBoundingClientRect();
+    if (!bounds.width || !bounds.height) return;
+    const point = this.cameras.main.getWorldPoint(
+      (event.clientX - bounds.left) * this.scale.width / bounds.width,
+      (event.clientY - bounds.top) * this.scale.height / bounds.height,
+    );
+    const index = this.cellAtPoint(point);
+    if (event.type === 'pointerdown') {
+      // Suppress compatibility mouse clicks; touch-action:auto still permits page scrolling.
+      event.preventDefault();
+      this.finishCelebration();
+      this.touchTap = this.view && this.enabled && index !== null && event.isPrimary ? {
+        id: event.pointerId, from: index, start: { x: event.clientX, y: event.clientY },
+        revision: this.view.revision, scrollX: window.scrollX, scrollY: window.scrollY,
+      } : null;
+      return;
+    }
+    const tap = this.touchTap;
+    if (event.type !== 'pointerup' || tap?.id !== event.pointerId) return;
+    this.touchTap = null;
+    if (!this.view || !this.enabled || this.view.revision !== tap.revision || index !== tap.from ||
+        window.scrollX !== tap.scrollX || window.scrollY !== tap.scrollY ||
+        Math.hypot(event.clientX - tap.start.x, event.clientY - tap.start.y) > 10) return;
+    this.keyboardFocus = false;
+    this.cursor = this.toLogical(index);
+    this.callbacks.onFocus(this.describe(index));
+    this.callbacks.onCell(index);
+    this.paint();
   }
 
   private pointerDown(pointer: Phaser.Input.Pointer): void {
@@ -506,6 +550,7 @@ class ArenaScene extends Phaser.Scene {
   }
 
   private dispose(): void {
+    this.touchTap = null;
     if (this.wakeFrame !== null) cancelAnimationFrame(this.wakeFrame);
     this.wakeFrame = null;
     this.finishCelebration();
@@ -935,6 +980,7 @@ export class ArenaBoard {
   private handleKeyboard: (event: KeyboardEvent) => void;
   private handleBlur: () => void;
   private wake = () => this.scene.requestRender();
+  private touchPointer = (event: PointerEvent) => this.scene.handleTouchPointer(event);
   private resizeObserver?: ResizeObserver;
 
   constructor(private container: HTMLElement, callbacks: BoardCallbacks) {
@@ -957,7 +1003,7 @@ export class ArenaBoard {
       banner: false,
       disableContextMenu: true,
       audio: { noAudio: true },
-      input: { keyboard: false, mouse: { preventDefaultWheel: false }, touch: { capture: false } },
+      input: { keyboard: false, mouse: { preventDefaultWheel: false }, touch: false },
       scale: { mode: Phaser.Scale.FIT, autoCenter: Phaser.Scale.CENTER_BOTH },
       scene: [this.scene],
       render: { antialias: true, pixelArt: false, roundPixels: false },
@@ -967,6 +1013,9 @@ export class ArenaBoard {
     container.addEventListener('keydown', this.handleKeyboard);
     container.addEventListener('blur', this.handleBlur);
     container.addEventListener('touchcancel', this.handleBlur, { passive: true });
+    for (const event of ['pointerdown', 'pointermove', 'pointerup', 'pointercancel']) {
+      container.addEventListener(event, this.touchPointer as EventListener);
+    }
     {
       // Phaser processes native input in its next step, so wake before it queues events.
       for (const event of ['pointerdown', 'pointermove', 'pointerup', 'pointercancel', 'touchstart', 'touchmove', 'touchend', 'touchcancel', 'keydown']) {
@@ -1006,6 +1055,9 @@ export class ArenaBoard {
     this.container.removeEventListener('keydown', this.handleKeyboard);
     this.container.removeEventListener('blur', this.handleBlur);
     this.container.removeEventListener('touchcancel', this.handleBlur);
+    for (const event of ['pointerdown', 'pointermove', 'pointerup', 'pointercancel']) {
+      this.container.removeEventListener(event, this.touchPointer as EventListener);
+    }
     this.resizeObserver?.disconnect();
     document.removeEventListener('visibilitychange', this.wake);
     for (const event of ['pointerdown', 'pointermove', 'pointerup', 'pointercancel', 'touchstart', 'touchmove', 'touchend', 'touchcancel', 'keydown']) {

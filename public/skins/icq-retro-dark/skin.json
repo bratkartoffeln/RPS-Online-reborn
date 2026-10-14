@@ -1,0 +1,772 @@
+{
+  "version": 1,
+  "name": "ICQ Retro Dark",
+  "presentation": "retro",
+  "palette": {
+    "ui": {
+      "background": "#121a16",
+      "panel": "#202c23",
+      "border": "#506443",
+      "text": "#f0f6e6",
+      "muted": "#b9c9a6",
+      "accent": "#c2e76b",
+      "accentText": "#18210d",
+      "own": "#85bbff",
+      "enemy": "#ff9690"
+    },
+    "board": {
+      "light": "#c6de7c",
+      "dark": "#a2c827",
+      "border": "#cce788",
+      "setupOwn": "#b8d967",
+      "setupEnemy": "#aecf41",
+      "selected": "#eaff96",
+      "accent": "#3b6513",
+      "duel": "#8e2520",
+      "coordinates": "#b9c9a6",
+      "shadow": "#2d441a",
+      "dots": "#86a721",
+      "focus": "#174f96",
+      "ownBase": "#1e5dac",
+      "ownEdge": "#12394c",
+      "ownSymbol": "#ffffff",
+      "enemyBase": "#e53426",
+      "enemyEdge": "#7e261a",
+      "enemySymbol": "#ffffff",
+      "revealed": "#ffef53"
+    }
+  },
+  "atlas": {
+    "image": "atlas.svg",
+    "fallbackImage": "atlas.png",
+    "frames": {
+      "blue-back-rock": {
+        "x": 47,
+        "y": 8,
+        "width": 193,
+        "height": 272
+      },
+      "blue-back-paper": {
+        "x": 334,
+        "y": 8,
+        "width": 195,
+        "height": 272
+      },
+      "blue-back-scissors": {
+        "x": 621,
+        "y": 8,
+        "width": 198,
+        "height": 272
+      },
+      "blue-back-flag": {
+        "x": 905,
+        "y": 8,
+        "width": 205,
+        "height": 272
+      },
+      "blue-back-trap": {
+        "x": 1194,
+        "y": 8,
+        "width": 203,
+        "height": 272
+      },
+      "blue-back-unknown": {
+        "x": 1480,
+        "y": 8,
+        "width": 208,
+        "height": 272
+      },
+      "blue-front-rock": {
+        "x": 27,
+        "y": 296,
+        "width": 234,
+        "height": 272
+      },
+      "blue-front-paper": {
+        "x": 314,
+        "y": 296,
+        "width": 236,
+        "height": 272
+      },
+      "blue-front-scissors": {
+        "x": 595,
+        "y": 296,
+        "width": 249,
+        "height": 272
+      },
+      "blue-front-flag": {
+        "x": 877,
+        "y": 296,
+        "width": 261,
+        "height": 272
+      },
+      "blue-front-trap": {
+        "x": 1193,
+        "y": 296,
+        "width": 205,
+        "height": 272
+      },
+      "blue-front-unknown": {
+        "x": 1476,
+        "y": 296,
+        "width": 215,
+        "height": 272
+      },
+      "red-back-rock": {
+        "x": 47,
+        "y": 584,
+        "width": 193,
+        "height": 272
+      },
+      "red-back-paper": {
+        "x": 334,
+        "y": 584,
+        "width": 195,
+        "height": 272
+      },
+      "red-back-scissors": {
+        "x": 621,
+        "y": 584,
+        "width": 198,
+        "height": 272
+      },
+      "red-back-flag": {
+        "x": 905,
+        "y": 584,
+        "width": 205,
+        "height": 272
+      },
+      "red-back-trap": {
+        "x": 1194,
+        "y": 584,
+        "width": 203,
+        "height": 272
+      },
+      "red-back-unknown": {
+        "x": 1480,
+        "y": 584,
+        "width": 208,
+        "height": 272
+      },
+      "red-front-rock": {
+        "x": 27,
+        "y": 872,
+        "width": 234,
+        "height": 272
+      },
+      "red-front-paper": {
+        "x": 314,
+        "y": 872,
+        "width": 236,
+        "height": 272
+      },
+      "red-front-scissors": {
+        "x": 595,
+        "y": 872,
+        "width": 249,
+        "height": 272
+      },
+      "red-front-flag": {
+        "x": 877,
+        "y": 872,
+        "width": 261,
+        "height": 272
+      },
+      "red-front-trap": {
+        "x": 1193,
+        "y": 872,
+        "width": 205,
+        "height": 272
+      },
+      "red-front-unknown": {
+        "x": 1476,
+        "y": 872,
+        "width": 215,
+        "height": 272
+      },
+      "blue-back-rock-revealed": {
+        "x": 14,
+        "y": 1160,
+        "width": 259,
+        "height": 272
+      },
+      "blue-back-paper-revealed": {
+        "x": 316,
+        "y": 1160,
+        "width": 231,
+        "height": 272
+      },
+      "blue-back-scissors-revealed": {
+        "x": 585,
+        "y": 1160,
+        "width": 270,
+        "height": 272
+      },
+      "red-back-rock-revealed": {
+        "x": 878,
+        "y": 1160,
+        "width": 259,
+        "height": 272
+      },
+      "red-back-paper-revealed": {
+        "x": 1180,
+        "y": 1160,
+        "width": 231,
+        "height": 272
+      },
+      "red-back-scissors-revealed": {
+        "x": 1449,
+        "y": 1160,
+        "width": 270,
+        "height": 272
+      },
+      "board-light": {
+        "x": 8,
+        "y": 1448,
+        "width": 272,
+        "height": 272
+      },
+      "board-dark": {
+        "x": 296,
+        "y": 1448,
+        "width": 272,
+        "height": 272
+      },
+      "logo": {
+        "x": 601,
+        "y": 1448,
+        "width": 237,
+        "height": 272
+      },
+      "referee-blue-turn": {
+        "x": 872,
+        "y": 1482,
+        "width": 272,
+        "height": 204
+      },
+      "referee-red-turn": {
+        "x": 1160,
+        "y": 1482,
+        "width": 272,
+        "height": 204
+      },
+      "referee-neutral": {
+        "x": 1448,
+        "y": 1482,
+        "width": 272,
+        "height": 204
+      },
+      "weapon-rock": {
+        "x": 8,
+        "y": 1736,
+        "width": 272,
+        "height": 272
+      },
+      "weapon-paper": {
+        "x": 296,
+        "y": 1736,
+        "width": 272,
+        "height": 272
+      },
+      "weapon-scissors": {
+        "x": 584,
+        "y": 1736,
+        "width": 272,
+        "height": 272
+      },
+      "referee-blue-top": {
+        "x": 872,
+        "y": 1770,
+        "width": 272,
+        "height": 204
+      },
+      "referee-red-bottom": {
+        "x": 1160,
+        "y": 1770,
+        "width": 272,
+        "height": 204
+      },
+      "blue-front-flag-victory": {
+        "x": 1448,
+        "y": 1736,
+        "width": 272,
+        "height": 272
+      },
+      "red-front-flag-victory": {
+        "x": 1736,
+        "y": 8,
+        "width": 272,
+        "height": 272
+      },
+      "chat-notice": {
+        "x": 1736,
+        "y": 296,
+        "width": 272,
+        "height": 272
+      }
+    }
+  },
+  "board": {
+    "light": "board-light",
+    "dark": "board-dark"
+  },
+  "logo": "logo",
+  "portrait": "referee-neutral",
+  "pieces": {
+    "own": {
+      "rock": {
+        "frame": "blue-back-rock",
+        "revealed": {
+          "frame": "blue-back-rock-revealed"
+        }
+      },
+      "paper": {
+        "frame": "blue-back-paper",
+        "revealed": {
+          "frame": "blue-back-paper-revealed"
+        }
+      },
+      "scissors": {
+        "frame": "blue-back-scissors",
+        "revealed": {
+          "frame": "blue-back-scissors-revealed"
+        }
+      },
+      "flag": {
+        "frame": "blue-back-flag"
+      },
+      "trap": {
+        "frame": "blue-back-trap"
+      },
+      "unknown": {
+        "frame": "blue-back-unknown"
+      }
+    },
+    "enemy": {
+      "rock": {
+        "frame": "red-front-rock"
+      },
+      "paper": {
+        "frame": "red-front-paper"
+      },
+      "scissors": {
+        "frame": "red-front-scissors"
+      },
+      "flag": {
+        "frame": "red-front-flag"
+      },
+      "trap": {
+        "frame": "red-front-trap"
+      },
+      "unknown": {
+        "frame": "red-front-unknown"
+      }
+    }
+  },
+  "motion": {
+    "moveMs": 220,
+    "battleMs": 900
+  },
+  "turnPortraits": {
+    "own": "referee-blue-turn",
+    "enemy": "referee-red-turn"
+  },
+  "weapons": {
+    "rock": "weapon-rock",
+    "paper": "weapon-paper",
+    "scissors": "weapon-scissors"
+  },
+  "teamPieces": {
+    "blue": {
+      "own": {
+        "rock": {
+          "frame": "blue-back-rock",
+          "revealed": {
+            "frame": "blue-back-rock-revealed"
+          }
+        },
+        "paper": {
+          "frame": "blue-back-paper",
+          "revealed": {
+            "frame": "blue-back-paper-revealed"
+          }
+        },
+        "scissors": {
+          "frame": "blue-back-scissors",
+          "revealed": {
+            "frame": "blue-back-scissors-revealed"
+          }
+        },
+        "flag": {
+          "frame": "blue-back-flag"
+        },
+        "trap": {
+          "frame": "blue-back-trap"
+        },
+        "unknown": {
+          "frame": "blue-back-unknown"
+        }
+      },
+      "enemy": {
+        "rock": {
+          "frame": "blue-front-rock"
+        },
+        "paper": {
+          "frame": "blue-front-paper"
+        },
+        "scissors": {
+          "frame": "blue-front-scissors"
+        },
+        "flag": {
+          "frame": "blue-front-flag"
+        },
+        "trap": {
+          "frame": "blue-front-trap"
+        },
+        "unknown": {
+          "frame": "blue-front-unknown"
+        }
+      }
+    },
+    "red": {
+      "own": {
+        "rock": {
+          "frame": "red-back-rock",
+          "revealed": {
+            "frame": "red-back-rock-revealed"
+          }
+        },
+        "paper": {
+          "frame": "red-back-paper",
+          "revealed": {
+            "frame": "red-back-paper-revealed"
+          }
+        },
+        "scissors": {
+          "frame": "red-back-scissors",
+          "revealed": {
+            "frame": "red-back-scissors-revealed"
+          }
+        },
+        "flag": {
+          "frame": "red-back-flag"
+        },
+        "trap": {
+          "frame": "red-back-trap"
+        },
+        "unknown": {
+          "frame": "red-back-unknown"
+        }
+      },
+      "enemy": {
+        "rock": {
+          "frame": "red-front-rock"
+        },
+        "paper": {
+          "frame": "red-front-paper"
+        },
+        "scissors": {
+          "frame": "red-front-scissors"
+        },
+        "flag": {
+          "frame": "red-front-flag"
+        },
+        "trap": {
+          "frame": "red-front-trap"
+        },
+        "unknown": {
+          "frame": "red-front-unknown"
+        }
+      }
+    }
+  },
+  "colorTurnPortraits": {
+    "blue": "referee-blue-turn",
+    "red": "referee-red-turn"
+  },
+  "directionalTurnPortraits": {
+    "blue": {
+      "top": "referee-blue-top",
+      "bottom": "referee-blue-turn"
+    },
+    "red": {
+      "top": "referee-red-turn",
+      "bottom": "referee-red-bottom"
+    }
+  },
+  "flagVictoryFrames": {
+    "blue": "blue-front-flag-victory",
+    "red": "red-front-flag-victory"
+  },
+  "mobileAtlas": {
+    "image": "atlas-mobile.webp",
+    "frames": {
+      "blue-back-rock": {
+        "x": 24,
+        "y": 4,
+        "width": 96,
+        "height": 136
+      },
+      "blue-back-paper": {
+        "x": 167,
+        "y": 4,
+        "width": 97,
+        "height": 136
+      },
+      "blue-back-scissors": {
+        "x": 310,
+        "y": 4,
+        "width": 100,
+        "height": 136
+      },
+      "blue-back-flag": {
+        "x": 452,
+        "y": 4,
+        "width": 103,
+        "height": 136
+      },
+      "blue-back-trap": {
+        "x": 597,
+        "y": 4,
+        "width": 101,
+        "height": 136
+      },
+      "blue-back-unknown": {
+        "x": 740,
+        "y": 4,
+        "width": 104,
+        "height": 136
+      },
+      "blue-front-rock": {
+        "x": 14,
+        "y": 148,
+        "width": 116,
+        "height": 136
+      },
+      "blue-front-paper": {
+        "x": 157,
+        "y": 148,
+        "width": 118,
+        "height": 136
+      },
+      "blue-front-scissors": {
+        "x": 298,
+        "y": 148,
+        "width": 124,
+        "height": 136
+      },
+      "blue-front-flag": {
+        "x": 438,
+        "y": 148,
+        "width": 131,
+        "height": 136
+      },
+      "blue-front-trap": {
+        "x": 596,
+        "y": 148,
+        "width": 103,
+        "height": 136
+      },
+      "blue-front-unknown": {
+        "x": 738,
+        "y": 148,
+        "width": 108,
+        "height": 136
+      },
+      "red-back-rock": {
+        "x": 24,
+        "y": 292,
+        "width": 96,
+        "height": 136
+      },
+      "red-back-paper": {
+        "x": 167,
+        "y": 292,
+        "width": 97,
+        "height": 136
+      },
+      "red-back-scissors": {
+        "x": 310,
+        "y": 292,
+        "width": 100,
+        "height": 136
+      },
+      "red-back-flag": {
+        "x": 452,
+        "y": 292,
+        "width": 103,
+        "height": 136
+      },
+      "red-back-trap": {
+        "x": 597,
+        "y": 292,
+        "width": 101,
+        "height": 136
+      },
+      "red-back-unknown": {
+        "x": 740,
+        "y": 292,
+        "width": 104,
+        "height": 136
+      },
+      "red-front-rock": {
+        "x": 14,
+        "y": 436,
+        "width": 116,
+        "height": 136
+      },
+      "red-front-paper": {
+        "x": 157,
+        "y": 436,
+        "width": 118,
+        "height": 136
+      },
+      "red-front-scissors": {
+        "x": 298,
+        "y": 436,
+        "width": 124,
+        "height": 136
+      },
+      "red-front-flag": {
+        "x": 438,
+        "y": 436,
+        "width": 131,
+        "height": 136
+      },
+      "red-front-trap": {
+        "x": 596,
+        "y": 436,
+        "width": 103,
+        "height": 136
+      },
+      "red-front-unknown": {
+        "x": 738,
+        "y": 436,
+        "width": 108,
+        "height": 136
+      },
+      "blue-back-rock-revealed": {
+        "x": 7,
+        "y": 580,
+        "width": 129,
+        "height": 136
+      },
+      "blue-back-paper-revealed": {
+        "x": 158,
+        "y": 580,
+        "width": 116,
+        "height": 136
+      },
+      "blue-back-scissors-revealed": {
+        "x": 292,
+        "y": 580,
+        "width": 136,
+        "height": 136
+      },
+      "red-back-rock-revealed": {
+        "x": 439,
+        "y": 580,
+        "width": 129,
+        "height": 136
+      },
+      "red-back-paper-revealed": {
+        "x": 590,
+        "y": 580,
+        "width": 116,
+        "height": 136
+      },
+      "red-back-scissors-revealed": {
+        "x": 724,
+        "y": 580,
+        "width": 136,
+        "height": 136
+      },
+      "board-light": {
+        "x": 4,
+        "y": 724,
+        "width": 136,
+        "height": 136
+      },
+      "board-dark": {
+        "x": 148,
+        "y": 724,
+        "width": 136,
+        "height": 136
+      },
+      "logo": {
+        "x": 300,
+        "y": 724,
+        "width": 119,
+        "height": 136
+      },
+      "referee-blue-turn": {
+        "x": 436,
+        "y": 741,
+        "width": 136,
+        "height": 102
+      },
+      "referee-red-turn": {
+        "x": 580,
+        "y": 741,
+        "width": 136,
+        "height": 102
+      },
+      "referee-neutral": {
+        "x": 724,
+        "y": 741,
+        "width": 136,
+        "height": 102
+      },
+      "weapon-rock": {
+        "x": 4,
+        "y": 868,
+        "width": 136,
+        "height": 136
+      },
+      "weapon-paper": {
+        "x": 148,
+        "y": 868,
+        "width": 136,
+        "height": 136
+      },
+      "weapon-scissors": {
+        "x": 292,
+        "y": 868,
+        "width": 136,
+        "height": 136
+      },
+      "referee-blue-top": {
+        "x": 436,
+        "y": 885,
+        "width": 136,
+        "height": 102
+      },
+      "referee-red-bottom": {
+        "x": 580,
+        "y": 885,
+        "width": 136,
+        "height": 102
+      },
+      "blue-front-flag-victory": {
+        "x": 724,
+        "y": 868,
+        "width": 136,
+        "height": 136
+      },
+      "red-front-flag-victory": {
+        "x": 868,
+        "y": 4,
+        "width": 136,
+        "height": 136
+      },
+      "chat-notice": {
+        "x": 868,
+        "y": 148,
+        "width": 136,
+        "height": 136
+      }
+    }
+  },
+  "chatNotice": "chat-notice",
+  "assetPack": "icq-retro"
+}

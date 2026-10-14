@@ -1,8 +1,8 @@
-# RPS Arena – Version 0.4.13
+# RPS Arena – Version 0.4.14
 
 Ein eigenständiges Browser-Remake des taktischen Stein-Papier-Schere-Prinzips:
 zwei Spieler, verdeckte Figuren, eine Flagge und eine Falle pro Seite. Der
-Spielserver läuft lokal, im LAN und als Container auf dem QNAP. Version 0.4.13
+Spielserver läuft lokal, im LAN und als Container auf dem QNAP. Version 0.4.14
 enthält gemeinsame Spielserien mit Punktestand und das vollständig vektorisierte
 Grafikset „ICQ Retro“. Figuren, Spielfeld, Logo, Schiedsrichter und einzelne
 Waffen stammen jetzt aus einer gemeinsamen SVG-Map. Beide Teams haben Vorder-
@@ -17,6 +17,14 @@ den Zusammenstoß und den Sieger; anschließend hüpft dessen Mannschaft.
 Bei einer Flaggeneroberung zeigt ICQ Retro einen lächelnden Fahnenträger in
 Vorderansicht, und die Gewinnerarmee springt viermal gemeinsam. Unter dem
 Spielfeld können sich die beiden Teilnehmer im Raumchat austauschen.
+
+## Neu in Version 0.4.14
+
+- Zusätzliches **ICQ Retro Dark** mit dunklen Seitenflächen und denselben Figuren, Symbolen und Atlanten wie ICQ Retro.
+- Sprechblasen erscheinen nur für neue Gegnernachrichten. Sie verschwinden nach 5 bis 15 Sekunden abhängig von der Textlänge; ein Klick blendet sie aus und springt zum Chat.
+- Mobile Figurenwahl mit einem Tipp, auch wenn das Spielfeld zuvor im Ruhezustand war. Wischbewegungen scrollen weiterhin die Seite.
+- Auf dem Handy stehen die Spielernamen und Punkte links und rechts neben einem kompakten Schiedsrichter samt Zughinweis.
+- Mobile Kämpfe zeigen bei eingeschalteten Animationen wieder den vollständigen Ablauf; die Systemeinstellung für reduzierte Bewegung bleibt wirksam.
 
 ## Neu in Version 0.4.13
 

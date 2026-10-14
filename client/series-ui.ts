@@ -31,7 +31,7 @@ export function seriesAnnouncement(view: GameView): string {
     view.series.draws + ' Remis.' + (view.series.winner ? ' ' + seriesWinnerText(view) : '');
 }
 
-export function seriesScoreMarkup(view: GameView): string {
+export function seriesScoreMarkup(view: GameView, refereeMarkup = ''): string {
   const series = view.series;
   const own = view.players.find((player) => player.id === view.you);
   const other = view.players.find((player) => player.id !== view.you);
@@ -42,7 +42,7 @@ export function seriesScoreMarkup(view: GameView): string {
   const nameMarkup = (name: string) => '<span class="series-player-name">' + esc(name) + '</span>';
   return [
     '<div class="series-scores"><div class="series-player" data-team-color="' + ownColor + '">' + nameMarkup(own?.name ?? 'Du') + '<strong class="series-player-score" aria-label="' + ownWins + ' eigene Siege">' + ownWins + '</strong></div>',
-    '<span class="series-score-divider" aria-hidden="true">:</span>',
+    '<span class="series-score-divider" aria-hidden="true">:</span>' + refereeMarkup,
     '<div class="series-player enemy" data-team-color="' + otherColor + '"><strong class="series-player-score" aria-label="' + otherWins + ' gegnerische Siege">' + otherWins + '</strong>' + nameMarkup(other?.name ?? 'Platz noch frei') + '</div></div>',
   ].join('');
 }

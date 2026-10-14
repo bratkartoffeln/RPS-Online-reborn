@@ -62,7 +62,7 @@ details[open] > summary::after { transform: rotate(45deg); }
 :root[data-presentation="retro"] .appearance-panel { border-radius: 0; }
 .lobby-designs { min-width: 0; margin: 22px 0 0; padding: 16px 0 0; border: 0; border-top: 1px solid var(--line); }
 .lobby-designs legend { padding: 0 8px 0 0; color: var(--text); font-size: 13px; font-weight: 700; }
-.design-choices { display: flex; align-items: stretch; gap: 10px; }
+.design-choices { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); align-items: stretch; gap: 10px; }
 .design-choice { display: flex; flex: 1 1 0; min-width: 0; flex-direction: column; align-items: center; justify-content: flex-start; gap: 9px; padding: 10px 6px; border: 2px solid var(--surface-border); border-radius: 9px; background: var(--surface-deep); color: var(--text); font: inherit; font-size: 12px; font-weight: 650; cursor: pointer; overflow-wrap: anywhere; }
 .design-choice:hover { border-color: var(--green); background: var(--surface-hover); }
 .design-choice[aria-pressed="true"] { border-color: var(--green); box-shadow: inset 0 0 0 1px var(--green); background: var(--accent-soft); }
@@ -76,6 +76,7 @@ details[open] > summary::after { transform: rotate(45deg); }
 .footer-legal > span { gap: 6px; }
 .footer-legal a { color: inherit; font-size: inherit; text-underline-offset: 3px; }
 .footer-legal a:hover { color: var(--text); }
+.score-referee { display: none; }
 @media (max-width: 850px) {
   .game-mode .arena-grid { display: grid; grid-template-columns: minmax(0, 1fr); }
   .game-mode .side-column { display: contents; }
@@ -127,6 +128,19 @@ details[open] > summary::after { transform: rotate(45deg); }
   .app-header .series-player-name { font-size: 14px; }
 }
 @media (max-width: 600px) {
+  .game-mode .header-arena .brand { display: none; }
+  .game-mode .header-arena { display: block; width: 100%; }
+  .game-mode .header-arena .series-scores { display: grid; grid-template-columns: minmax(0, 1fr) 90px minmax(0, 1fr); align-items: center; gap: 8px; }
+  .game-mode .header-arena .series-player,
+  .game-mode .header-arena .series-player.enemy { display: flex; flex-direction: column; align-items: center; gap: 4px; text-align: center; min-width: 0; }
+  .game-mode .header-arena .series-player.enemy .series-player-name { order: -1; }
+  .game-mode .header-arena .series-player-name { max-width: 100%; font-size: 14px; overflow-wrap: anywhere; }
+  .game-mode .header-arena .series-player-score { font-size: 36px; line-height: 1; }
+  .game-mode .series-score-divider { display: none; }
+  .game-mode .score-referee { display: flex; flex-direction: column; align-items: center; gap: 4px; text-align: center; }
+  .score-referee > span:last-child { color: var(--text); font-size: 10px; font-weight: 650; line-height: 1.3; }
+  :root .game-mode .phase-referee, :root .game-mode .phase-referee-turn { display: none; }
+  .design-choices { grid-template-columns: repeat(2, minmax(0, 1fr)); }
   .lobby-overlay { padding: 18px 12px; }
   .lobby-overlay .lobby-card { padding: 22px 18px; border-radius: 12px; }
   .lobby-options { grid-template-columns: 1fr; gap: 20px; }
