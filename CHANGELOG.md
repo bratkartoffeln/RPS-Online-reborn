@@ -1,5 +1,13 @@
 # Änderungen
 
+## 0.4.15
+
+- Eigener ICQ-Retro-Dark-Atlas für SVG, PNG und mobiles WebP mit dunklen Brettfeldern und unveränderten Figuren; reproduzierbarer Export über `scripts/build-dark-retro-atlas.mjs`.
+- Kontrastreiche dunkle Waffenwahl- und Kampf-Overlays.
+- Kompaktes Layout auch bei schmalen Desktopfenstern oder geringer Höhe: Schiri neben den Punkten, Spielaktionen oberhalb des Bretts, Brettgröße anhand der verbleibenden Fensterhöhe.
+- Mischen, Bereitmelden und Fortsetzungsbuttons werden ohne doppelte Bedienelemente zwischen Seitenleiste und oberem Bereich umgeordnet.
+- Leicht transparente Sprechblasen mit je einer Sekunde Ein- und Ausblendzeit; neue Nachrichten ersetzen auch ausblendende Hinweise zuverlässig.
+
 ## 0.4.14
 
 - ICQ Retro Dark mit dunkler Seitenpalette und gemeinsam genutzten ICQ-Retro-Atlanten; optionales, auf lokale Grafikset-IDs begrenztes `assetPack` im Manifest.

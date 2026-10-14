@@ -15,16 +15,16 @@
       "enemy": "#ff9690"
     },
     "board": {
-      "light": "#c6de7c",
-      "dark": "#a2c827",
-      "border": "#cce788",
+      "light": "#44563e",
+      "dark": "#27362a",
+      "border": "#728866",
       "setupOwn": "#b8d967",
       "setupEnemy": "#aecf41",
-      "selected": "#eaff96",
-      "accent": "#3b6513",
+      "selected": "#d4f18a",
+      "accent": "#c2e76b",
       "duel": "#8e2520",
       "coordinates": "#b9c9a6",
-      "shadow": "#2d441a",
+      "shadow": "#0a100c",
       "dots": "#86a721",
       "focus": "#174f96",
       "ownBase": "#1e5dac",
@@ -767,6 +767,5 @@
       }
     }
   },
-  "chatNotice": "chat-notice",
-  "assetPack": "icq-retro"
+  "chatNotice": "chat-notice"
 }

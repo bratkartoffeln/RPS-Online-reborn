@@ -32,7 +32,7 @@ app.innerHTML = [
   '<section class="series-scoreboard" id="series-scoreboard" aria-label="Spielstand der Serie" aria-live="polite" aria-atomic="true" hidden></section></div><div class="header-right"><span class="header-note" id="header-note"><span class="status-dot"></span>PRIVATE PARTIEN</span><details class="appearance-menu" id="appearance-menu"><summary>Design ' + icon('chevron', '', 12) + '</summary><div class="appearance-panel"><label class="appearance-label" for="skin-select">Dein Design</label><select id="skin-select" aria-describedby="skin-status"><option value="classic">Klassisch</option></select><p class="appearance-status" id="skin-status" role="status">Grafiksets werden geladen …</p><label class="motion-option"><input id="animations-enabled" type="checkbox" checked />Animationen</label><p class="appearance-hint" id="motion-hint">Deine Auswahl gilt für diesen Browser.</p><label class="motion-option"><input id="sounds-enabled" type="checkbox" />Spielsounds</label><p class="appearance-hint">Kurze Retro-Töne für Züge und Kämpfe.</p></div></details><span class="version">v' + esc(__APP_VERSION__) + '</span></div></header>',
   '<div class="intro-row"><div><p class="eyebrow" id="page-eyebrow">DAS TAKTISCHE DUELL FÜR ZWEI</p><h1 class="page-title" id="page-title">Dein Zug beginnt hier.</h1></div><p class="page-subtitle" id="page-subtitle">Figuren verdecken.<br>Gedanken lesen. Flagge holen.</p></div>',
   '<div class="notice" id="notice" role="alert" hidden></div>',
-  '<main class="arena-grid"><section class="play-panel" aria-label="Spielbereich">',
+  '<main class="arena-grid"><section id="phase-top-host" class="phase-top-host" aria-label="Spielaktionen" hidden><div id="phase-controls" class="phase-controls"></div></section><section class="play-panel" aria-label="Spielbereich">',
   '<div class="board-region"><div class="board-surface"><div id="board" class="canvas-wrap" tabindex="0" role="application" aria-label="Spielfeld mit sieben Spalten und sechs Reihen" aria-describedby="board-help board-focus"></div><div id="combat-overlay" class="combat-overlay" hidden></div><div id="board-chat-notices" class="board-chat-notices" aria-live="polite" aria-relevant="additions text"></div></div>',
   '<div class="preview-banner" id="preview-banner">' + icon('unknown', '', 18) + '<span>Ein guter Plan bleibt erst einmal geheim.</span></div></div>',
   '<section id="room-chat" hidden></section></section>',
@@ -44,6 +44,10 @@ app.innerHTML = [
 ].join('');
 
 const el = <T extends HTMLElement = HTMLElement>(id: string) => document.getElementById(id) as T;
+const phaseControls = el('phase-controls');
+const phaseSidebarHost = document.createElement('div');
+phaseSidebarHost.className = 'phase-sidebar-host';
+el('match-sidebar').insertBefore(phaseSidebarHost, el('sidebar'));
 let view: Snapshot | null = null;
 let networkStatus: NetworkStatus = 'idle';
 let sessionEnd: SessionEnd | null = null;
@@ -54,6 +58,9 @@ let toastTimeout: ReturnType<typeof setTimeout> | undefined;
 let chatNoticeRoom: string | null = null;
 const chatNotices = new Map<string, ChatMessage>();
 let chatNoticeTimer: ReturnType<typeof setTimeout> | undefined;
+let chatNoticeExitTimer: ReturnType<typeof setTimeout> | undefined;
+let chatNoticeLeaving = false;
+let chatNoticeOpacity = '.9';
 let renderedChatNotice = '';
 let name = readSession('rps-arena:name') ?? '';
 let seriesMode = readSeriesMode(readPreference('rps-arena:series-mode'));
@@ -70,20 +77,20 @@ const skinPreviews = new Map<string, LoadedSkin>();
 const skinLoads = new Map<string, Promise<LoadedSkin>>();
 let animationsPreferred = readPreference('rps-arena:animations') !== 'off';
 const reducedMotion = window.matchMedia('(prefers-reduced-motion: reduce)');
-const compactLayout = window.matchMedia('(max-width: 600px)');
+const compactLayout = window.matchMedia('(max-width: 1000px), (max-height: 800px)');
 const sounds = new GameSounds();
 let soundsPreferred = readPreference('rps-arena:sounds') === 'on';
 
 const chat: RoomChat = new RoomChat(el('room-chat'), message => connection.send('chat_send', message), message => {
   if (!view || message.playerId === view.you) return;
   clearTimeout(chatNoticeTimer);
+  clearTimeout(chatNoticeExitTimer);
+  chatNoticeLeaving = false;
   chatNoticeRoom = view?.roomId ?? null;
   chatNotices.set(message.playerId, message);
   paintChatNotice();
-  chatNoticeTimer = setTimeout(() => {
-    chatNotices.clear();
-    paintChatNotice();
-  }, chatBubbleDuration(message.text));
+  // The final second belongs to the fade-out, within the 5–15 second reading window.
+  chatNoticeTimer = setTimeout(hideChatNotice, chatBubbleDuration(message.text) - 1000);
 });
 const connection = new RpsConnection({
   onStatus(status) {
@@ -296,6 +303,10 @@ el('sounds-enabled').addEventListener('change', () => {
 });
 reducedMotion.addEventListener('change', updateMotion);
 compactLayout.addEventListener('change', render);
+window.addEventListener('resize', fitBoardToViewport);
+const layoutObserver = new ResizeObserver(fitBoardToViewport);
+layoutObserver.observe(el('shell').querySelector<HTMLElement>('.app-header')!);
+layoutObserver.observe(phaseControls);
 document.addEventListener('pointerdown', (event) => {
   void sounds.unlock();
   if (!(event.target instanceof Node) || el('appearance-menu').contains(event.target)) return;
@@ -427,12 +438,36 @@ function scrollToGameElement(id: string): void {
   (id === 'room-chat' ? el('chat-input') : el('board')).focus({ preventScroll: true });
 }
 
+function hideChatNotice(): void {
+  if (chatNoticeLeaving) return;
+  clearTimeout(chatNoticeTimer);
+  const bubble = el('board-chat-notices').querySelector<HTMLElement>('.board-chat-bubble');
+  chatNoticeOpacity = bubble ? getComputedStyle(bubble).opacity : '.9';
+  chatNoticeLeaving = true;
+  paintChatNotice();
+  chatNoticeExitTimer = setTimeout(() => {
+    chatNotices.clear();
+    chatNoticeLeaving = false;
+    paintChatNotice();
+  }, 1000);
+}
+
+function fitBoardToViewport(): void {
+  if (!view) return;
+  const top = el('board').getBoundingClientRect().top + window.scrollY;
+  const available = Math.max(120, Math.floor(window.innerHeight - top - 14));
+  const shell = el('shell');
+  if (shell.style.getPropertyValue('--board-max-height') !== available + 'px') {
+    shell.style.setProperty('--board-max-height', available + 'px');
+  }
+}
+
 function paintChatNotice(): void {
   const notices = view && chatNoticeRoom === view.roomId ? [...chatNotices.values()].filter(message => message.playerId !== view?.you) : [];
   const markup = notices.map(message => {
     const text = chatBubbleText(message.text);
     const color = teamColorForPlayer(view, message.playerId);
-    return '<button type="button" class="board-chat-bubble' + (text ? ' has-text' : '') + '" data-action="dismiss-chat" data-player-id="' + esc(message.playerId) + '" data-position="top" data-team-color="' + color + '" aria-label="' + esc(message.playerName + ': ' + (text ?? 'Neue Chatnachricht') + ' – zum Chat springen und Sprechblase ausblenden') + '" title="Nachricht im Chat lesen"><strong class="bubble-sender">' + esc(message.playerName) + '</strong>' + (text ? '<span class="bubble-text">' + esc(text) + '</span>' : (atlasIcon(currentSkin, currentSkin.definition.chatNotice, 56) ?? icon('chat', '', 36))) + '</button>';
+    return '<button type="button" class="board-chat-bubble' + (text ? ' has-text' : '') + (chatNoticeLeaving ? ' is-leaving' : '') + '" style="--bubble-start-opacity:' + chatNoticeOpacity + '" data-message-id="' + message.id + '" data-action="dismiss-chat" data-player-id="' + esc(message.playerId) + '" data-position="top" data-team-color="' + color + '" aria-label="' + esc(message.playerName + ': ' + (text ?? 'Neue Chatnachricht') + ' – zum Chat springen und Sprechblase ausblenden') + '" title="Nachricht im Chat lesen"><strong class="bubble-sender">' + esc(message.playerName) + '</strong>' + (text ? '<span class="bubble-text">' + esc(text) + '</span>' : (atlasIcon(currentSkin, currentSkin.definition.chatNotice, 56) ?? icon('chat', '', 36))) + '</button>';
   }).join('');
   // Do not replace the focused button or repeat live announcements on every game render.
   const root = el('board-chat-notices');
@@ -514,7 +549,6 @@ function gameMarkup(): string {
   const connectionLabel = connected ? 'VERBUNDEN' : ended ? 'BEENDET' : networkStatus === 'reconnecting' || networkStatus === 'connecting' ? 'VERBINDE …' : 'GETRENNT';
   const preparing = view.phase === 'waiting' || view.phase === 'setup';
   return [
-    phaseCard(),
     '<details class="game-details" id="room-details"' + (preparing ? ' open' : '') + '><summary>Raum & Mitspieler · ' + connectionLabel + '</summary>',
     '<section class="card room-card"><div class="card-heading"><p class="eyebrow">PRIVATER RAUM</p><span class="pill ' + (connected ? 'accent' : 'orange') + '">' + connectionLabel + '</span></div>',
     '<div class="room-code-row"><code class="room-code" title="Raumcode">' + esc(view.roomId) + '</code><button class="icon-button" data-action="copy" id="copy-button" aria-label="Einladungslink kopieren" title="Einladungslink kopieren"' + (ended ? ' disabled' : '') + '>' + icon('copy', '', 17) + '</button></div>',
@@ -548,9 +582,11 @@ function replaceMarkup(target: HTMLElement, markup: string): void {
 }
 
 function render(): void {
-  if (chatNoticeRoom !== view?.roomId) { chatNoticeRoom = null; chatNotices.clear(); clearTimeout(chatNoticeTimer); }
+  if (chatNoticeRoom !== view?.roomId) {
+    chatNoticeRoom = null; chatNotices.clear(); clearTimeout(chatNoticeTimer); clearTimeout(chatNoticeExitTimer); chatNoticeLeaving = false;
+  }
   const active = document.activeElement instanceof HTMLElement ? document.activeElement : null;
-  const focusId = active?.closest('#sidebar, #lobby-overlay') ? active.id : '';
+  const focusId = active?.closest('#sidebar, #phase-controls, #lobby-overlay') ? active.id : '';
   const selection = active instanceof HTMLInputElement ? [active.selectionStart, active.selectionEnd] : null;
   const wasLobby = !el('lobby-overlay').hidden;
   const openDetails = new Map(Array.from(app.querySelectorAll<HTMLDetailsElement>('.game-details, .lobby-rules')).map(detail => [detail.id, detail.open]));
@@ -558,6 +594,7 @@ function render(): void {
   const historyOpen = el('sidebar').querySelector<HTMLDetailsElement>('.history-details')?.open;
   el('shell').classList.toggle('game-mode', !!view);
   el('shell').classList.toggle('lobby-mode', !view);
+  el('shell').classList.toggle('compact-game', !!view && compactLayout.matches);
   el('shell').classList.toggle('active-match', !!view && (view.phase === 'playing' || view.phase === 'duel'));
   el('match-sidebar').hidden = !view;
   el('shell').querySelector<HTMLElement>('.app-header')!.inert = !view;
@@ -565,6 +602,12 @@ function render(): void {
   document.body.classList.toggle('lobby-open', !view);
   el('lobby-overlay').hidden = !!view;
   el('board').inert = !view;
+  const topHost = el('phase-top-host');
+  topHost.hidden = !view || !compactLayout.matches;
+  phaseSidebarHost.hidden = !view || compactLayout.matches;
+  const phaseHost = compactLayout.matches ? topHost : phaseSidebarHost;
+  if (phaseControls.parentElement !== phaseHost) phaseHost.append(phaseControls);
+  replaceMarkup(phaseControls, view ? phaseCard() : '');
   replaceMarkup(el('sidebar'), view ? gameMarkup() : '');
   replaceMarkup(el('lobby-overlay'), view ? '' : lobbyMarkup());
   if (!view && inputRoom) {
@@ -642,6 +685,7 @@ function render(): void {
   paintChatNotice();
   combat.update(view, currentSkin, { connected: networkStatus === 'connected', pending });
   updateBoardInteraction();
+  fitBoardToViewport();
 }
 
 function toast(message: string, error = false): void {
@@ -810,9 +854,7 @@ app.addEventListener('click', (event) => {
   if (action === 'home') { event.preventDefault(); if (view) requestLeave(); return; }
   if (action === 'choose-skin' && button.dataset.skin) void chooseSkin(button.dataset.skin);
   if (action === 'dismiss-chat') {
-    clearTimeout(chatNoticeTimer);
-    chatNotices.delete(button.dataset.playerId ?? '');
-    paintChatNotice();
+    hideChatNotice();
     scrollToGameElement('room-chat');
   }
   if (action === 'back-to-board') scrollToGameElement('board');

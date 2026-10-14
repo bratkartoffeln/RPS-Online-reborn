@@ -1,4 +1,4 @@
-# Grafiksets für RPS Arena v0.4.14
+# Grafiksets für RPS Arena v0.4.15
 
 Die optionale Manifest-Eigenschaft `chatNotice` verweist auf den Atlas-Frame für
 neue Chatnachrichten. Die mitgelieferten Designs enthalten passende
@@ -21,7 +21,7 @@ statische Schiedsrichterposen und optionale Flaggensieger ändern. Vier Sets wer
 | Set | Darstellung |
 | --- | --- |
 | **ICQ Retro** | Am ICQ-Spiel orientiertes Design mit grünem Schachbrett, roten/blauen Figuren und vollständigem SVG-Atlas mit PNG-Rückfallgrafik |
-| **ICQ Retro Dark** | Dieselben Figuren und Symbole wie ICQ Retro, mit dunklen Seitenflächen und heller Schrift |
+| **ICQ Retro Dark** | Eigene Atlanten mit dunklen Brettfeldern, denselben Figuren und Symbolen wie ICQ Retro sowie dunklen Seitenflächen und Overlays |
 | **Klassisch** | Bisherige dunkle Oberfläche mit Vektorfiguren; zugleich Rückfall bei einem fehlerhaften Set |
 | **Arcade** | Dunkles Vektorbildset mit primärer `master.svg`, passender PNG-Rückfallgrafik und 148 Frames einschließlich vorhandener Figurenclips und Sprechblase |
 
@@ -30,7 +30,12 @@ Grafiksets wiederverwenden. Die Frame-Definitionen bleiben im eigenen Manifest;
 Hauptatlas, Rasterfallback, Waffenatlas und Mobilatlas werden im angegebenen
 Grafikset gesucht. Erlaubt sind ausschließlich lokale Grafikset-IDs mit kleinen
 Buchstaben, Ziffern, Bindestrich oder Unterstrich, keine Pfade oder URLs.
-ICQ Retro Dark nutzt diese Möglichkeit und benötigt keine kopierten Bilddateien.
+ICQ Retro Dark verwendet eigene Bilddateien. Mit
+`node scripts/build-dark-retro-atlas.mjs` lassen sich SVG, PNG und mobiles WebP
+aus dem hellen Original neu erzeugen. Das Werkzeug benötigt optional `sharp`
+(bei Bedarf dessen Modulpfad als erstes Argument übergeben). Nur die beiden
+Brettkacheln werden abgedunkelt; die übrigen Figurenpixel und Vektorpfade bleiben
+erhalten. Nach Änderungen am Originalatlas den Dark-Export erneut ausführen.
 
 **ICQ Retro ist der neue Standard.** Eine bereits gespeicherte gültige Designwahl
 wird beim Update beibehalten. Wähle **ICQ Retro** unter **Design**, wenn dein

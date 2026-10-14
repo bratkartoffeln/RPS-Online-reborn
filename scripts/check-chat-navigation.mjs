@@ -15,7 +15,7 @@ try {
   browser = await chromium.launch({ headless: true, channel: 'msedge' });
   for (const mobile of [false, true]) {
     const errors = [];
-    const settings = { viewport: mobile ? { width: 390, height: 844 } : { width: 1280, height: 900 }, isMobile: mobile, hasTouch: mobile, reducedMotion: 'reduce' };
+    const settings = { viewport: mobile ? { width: 390, height: 844 } : { width: 1280, height: 900 }, isMobile: mobile, hasTouch: mobile, reducedMotion: 'no-preference' };
     const contexts = await Promise.all([browser.newContext(settings), browser.newContext(settings)]);
     const [reader, sender] = await Promise.all(contexts.map(context => context.newPage()));
     for (const page of [reader, sender]) page.on('pageerror', error => errors.push(error.message));
@@ -91,6 +91,7 @@ try {
       await reader.waitForFunction(id => document.documentElement.dataset.skin === id, id);
       await send(sender, 'Gut gespielt, das war knapp!');
       await top.waitFor({ state: 'visible' });
+      assert.equal(await top.evaluate(element=>getComputedStyle(element).animationDuration),'1s');
       assert.equal(await top.locator('.bubble-text').innerText(), 'Gut gespielt, das war knapp!');
       assert.equal(await top.getAttribute('data-team-color'), 'red');
       assert.ok(await reader.locator('#board-chat-notices').evaluate(element => !!element.closest('.board-surface')));
@@ -99,6 +100,8 @@ try {
       await sender.locator('.board-chat-bubble[data-team-color="blue"]').waitFor({ state: 'visible' });
       assert.equal(await top.count(), 1, 'Own reply keeps the opponent bubble');
       await top.click();
+      assert.ok(await top.evaluate(element=>element.classList.contains('is-leaving')), 'Click starts a fade-out');
+      await top.waitFor({ state: 'detached', timeout: 2000 });
       assert.equal(await top.count(), 0, 'Click dismisses the opponent bubble');
       assert.equal(await reader.evaluate(() => document.activeElement.id), 'chat-input');
       assert.equal(await reader.locator('.board-chat-bubble').count(), 0);
@@ -115,6 +118,7 @@ try {
       assert.equal(await top.locator('b').count(), 0, 'Message text cannot inject markup');
       await top.screenshot({ path: path.join(tmpdir(), `rps-chat-${id}-${mobile ? 'mobile' : 'desktop'}.png`) });
       await top.click();
+      await top.waitFor({ state: 'detached', timeout: 2000 });
       const textStyle = await reader.locator('.chat-text').first().evaluate(element => { const s = getComputedStyle(element); return { size: parseFloat(s.fontSize), weight: Number(s.fontWeight) }; });
       assert.ok(textStyle.size >= 15 && textStyle.weight >= 600);
       const backgrounds = await reader.locator('.chat-message').evaluateAll(elements => Object.fromEntries(elements.map(element => [element.dataset.teamColor, getComputedStyle(element).backgroundColor])));

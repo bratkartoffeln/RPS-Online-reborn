@@ -37,6 +37,10 @@
 .board-chat-bubble:hover { box-shadow: 0 3px 16px #0005; }
 .bubble-sender { max-width: 100%; font-size: 11px; overflow-wrap: anywhere; }
 .bubble-text { font-size: 17px; font-weight: 650; line-height: 1.35; overflow-wrap: anywhere; }
+.board-chat-bubble { opacity: .9; animation: chat-bubble-enter 1s ease both; }
+.board-chat-bubble.is-leaving { animation: chat-bubble-exit 1s ease both; pointer-events: none; }
+@keyframes chat-bubble-enter { from { opacity: 0; } to { opacity: .9; } }
+@keyframes chat-bubble-exit { from { opacity: var(--bubble-start-opacity, .9); } to { opacity: 0; } }
 .chat-navigation { display: flex; justify-content: flex-end; margin-top: 16px; }
 .back-to-board-icon { transform: rotate(-90deg); }
 .room-chat, .canvas-wrap { scroll-margin-top: 16px; }
