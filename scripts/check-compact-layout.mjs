@@ -29,36 +29,50 @@ try {
   await page.bringToFront();
   const viewports = [[1280, 900], [1280, 850], [1024, 768], [900, 700], [768, 1024], [390, 844], [320, 568], [844, 390], [1280, 900]];
   async function check(phase) {
-    let initialBoardWidth;
-    for (const [width, height] of viewports) {
-      await page.setViewportSize({ width, height });
-      await page.evaluate(() => scrollTo(0, 0));
-      await page.waitForTimeout(500);
-      const compact = width <= 1000 || height <= 800;
-      const rects = await page.evaluate(() => {
-        const rect = element => { const r = element.getBoundingClientRect(); return { top: r.top, bottom: r.bottom, width: r.width, height: r.height }; };
-        return { board: rect(document.querySelector('#board')), actions: [...document.querySelectorAll('#phase-controls button')].map(rect), overflow: document.documentElement.scrollWidth > innerWidth, shell: document.querySelector('#shell').className, media: matchMedia('(max-width: 1000px), (max-height: 800px)').matches, referee: getComputedStyle(document.querySelector('.score-referee')).display };
-      });
-      assert.equal(rects.overflow, false, `${width}x${height}: no horizontal overflow`);
-      if ((await page.locator('.score-referee').isVisible()) !== compact) console.log(JSON.stringify({ width, height, rects, errors }));
-      assert.equal(await page.locator('.score-referee').isVisible(), compact);
-      assert.equal(await page.locator('#phase-top-host').isVisible(), compact);
-      if (width === 1280 && height === 900) {
-        if (initialBoardWidth === undefined) initialBoardWidth = rects.board.width;
-        else assert.ok(Math.abs(initialBoardWidth - rects.board.width) < 2, 'Board grows back after returning from a small viewport');
-      }
-      assert.ok(rects.board.bottom <= height + 1, `${phase} ${width}x${height}: board fits: ${JSON.stringify(rects)}`);
-      if (compact) {
-        assert.ok(rects.board.height >= 119, JSON.stringify(rects));
+    for (const skin of ['classic', 'arcade', 'icq-retro', 'icq-retro-dark']) {
+      await page.locator('#skin-select').selectOption(skin, { force: true });
+      await page.waitForFunction(id => document.documentElement.dataset.skin === id, skin);
+      let initialBoardWidth;
+      for (const [width, height] of viewports) {
+        await page.setViewportSize({ width, height });
+        await page.evaluate(() => scrollTo(0, 0));
+        await page.waitForTimeout(500);
+        const compact = width <= 1000 || height <= 800;
+        const rects = await page.evaluate(() => {
+          const rect = element => { const r = element.getBoundingClientRect(); return { left: r.left, right: r.right, top: r.top, bottom: r.bottom, width: r.width, height: r.height }; };
+          return { board: rect(document.querySelector('#board')), actions: [...document.querySelectorAll('#phase-controls button')].map(rect), overflow: document.documentElement.scrollWidth > innerWidth, shell: document.querySelector('#shell').className, media: matchMedia('(max-width: 1000px), (max-height: 800px)').matches, referee: getComputedStyle(document.querySelector('.score-referee')).display };
+        });
+        assert.equal(rects.overflow, false, `${width}x${height}: no horizontal overflow`);
+        const alignment = await page.evaluate(() => {
+          const rect = element => { const r = element.getBoundingClientRect(); return { left: r.left, width: r.width, height: r.height }; };
+          const compact = document.querySelector('#shell').classList.contains('compact-game');
+          const peers = compact ? '.app-header, #phase-top-host, .play-panel, #match-sidebar, .footer' : '#match-overview, .phase-sidebar-host, .game-details, .game-actions';
+          return { peers: [...document.querySelectorAll(peers)].map(rect), heads: [...document.querySelectorAll('#match-overview > summary, .game-details > summary')].map(rect), buttons: [...document.querySelectorAll('#phase-controls button')].map(rect), room: [...document.querySelectorAll('.room-code-row > *')].map(rect) };
+        });
+        assert.ok(alignment.peers.every(rect => Math.abs(rect.left - alignment.peers[0].left) < 1 && Math.abs(rect.width - alignment.peers[0].width) < 1), `${skin} ${phase} ${width}x${height}: common section edges: ${JSON.stringify(alignment)}`);
+        assert.ok(alignment.heads.every(rect => Math.abs(rect.height - alignment.heads[0].height) < 1), 'Accordion headers have equal heights');
+        assert.ok(alignment.buttons.every(rect => Math.abs(rect.width - alignment.buttons[0].width) < 1 && Math.abs(rect.height - alignment.buttons[0].height) < 1), 'Primary action buttons have equal dimensions');
+        if (phase === 'setup') assert.ok(alignment.room.every(rect => Math.abs(rect.height - alignment.room[0].height) < 1), 'Room code and copy button have equal heights');
+        if ((await page.locator('.score-referee').isVisible()) !== compact) console.log(JSON.stringify({ width, height, rects, errors }));
+        assert.equal(await page.locator('.score-referee').isVisible(), compact);
+        assert.equal(await page.locator('#phase-top-host').isVisible(), compact);
+        if (width === 1280 && height === 900) {
+          if (initialBoardWidth === undefined) initialBoardWidth = rects.board.width;
+          else assert.ok(Math.abs(initialBoardWidth - rects.board.width) < 2, 'Board grows back after returning from a small viewport');
+        }
         assert.ok(rects.board.bottom <= height + 1, `${phase} ${width}x${height}: board fits: ${JSON.stringify(rects)}`);
-        assert.ok(rects.actions.every(button => button.top >= 0 && button.bottom <= rects.board.top), `${phase}: all primary actions above board`);
-        assert.ok(await page.locator('.phase-referee').isHidden());
-      } else {
-        assert.ok(await page.locator('.phase-sidebar-host .phase-card').isVisible());
+        if (compact) {
+          assert.ok(rects.board.height >= 119, JSON.stringify(rects));
+          assert.ok(rects.board.bottom <= height + 1, `${phase} ${width}x${height}: board fits: ${JSON.stringify(rects)}`);
+          assert.ok(rects.actions.every(button => button.top >= 0 && button.bottom <= rects.board.top), `${phase}: all primary actions above board`);
+          assert.ok(await page.locator('.phase-referee').isHidden());
+        } else {
+          assert.ok(await page.locator('.phase-sidebar-host .phase-card').isVisible());
+        }
+        assert.equal(await page.locator(phase === 'setup' ? '#ready-button' : '#restart-button').count(), 1, 'No duplicated action IDs after resize');
+        if (skin === 'icq-retro-dark' && (width === 390 || width === 900)) await page.screenshot({ path: path.join(tmpdir(), `rps-layout-${phase}-${width}.png`), fullPage: true });
+        console.log(`${skin} / ${phase}: ${width}x${height} OK`);
       }
-      assert.equal(await page.locator(phase === 'setup' ? '#ready-button' : '#restart-button').count(), 1, 'No duplicated action IDs after resize');
-      if (width === 390 || width === 900) await page.screenshot({ path: path.join(tmpdir(), `rps-layout-${phase}-${width}.png`), fullPage: true });
-      console.log(`${phase}: ${width}x${height} OK`);
     }
   }
   await check('setup');

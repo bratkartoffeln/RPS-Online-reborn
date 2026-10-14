@@ -1,0 +1,16 @@
+.endgame-overlay { position: absolute; inset: 0; z-index: 9; display: grid; align-items: end; pointer-events: none; container-type: size; }
+.endgame-overlay[hidden] { display: none; }
+.endgame-result { width: 100%; min-width: 0; padding: 12px 8px 8px; background: var(--panel); background: color-mix(in srgb, var(--panel) 92%, transparent); border-top: 2px solid var(--accent-border); color: var(--text); text-align: center; }
+.endgame-result h2 { margin: 0 0 6px; font-size: clamp(16px, 4cqw, 29px); line-height: 1.2; overflow-wrap: anywhere; }
+.endgame-cast { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1.25fr) minmax(0, 1fr); align-items: end; height: clamp(110px, 40cqw, 290px); }
+.endgame-cast figure { position: relative; min-width: 0; height: 100%; margin: 0; display: flex; flex-direction: column; align-items: center; justify-content: flex-end; }
+.endgame-cast img { display: block; width: 100%; flex: 1 1 0; min-height: 0; object-fit: contain; }
+.endgame-cast .endgame-referee { z-index: 1; padding-bottom: 10px; }
+.endgame-referee img { width: 135%; max-width: none; }
+.endgame-player figcaption { width: 100%; padding: 2px 3px; min-height: 20px; font-size: clamp(10px, 2.4cqw, 16px); font-weight: 700; line-height: 1.2; overflow-wrap: anywhere; color: var(--team-color); }
+@container (max-height: 220px) {
+  .endgame-result { padding: 5px 5px 2px; }
+  .endgame-result h2 { font-size: 14px; margin-bottom: 2px; }
+  .endgame-cast { height: 90px; }
+  .endgame-player figcaption { font-size: 9px; min-height: 13px; }
+}

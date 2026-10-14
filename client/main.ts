@@ -5,6 +5,7 @@ import './retro.css';
 import './combat-ui.css';
 import './chat-ui.css';
 import './lobby.css';
+import './endgame-ui.css';
 import type { FighterKind, PlayerView } from '../shared/game';
 import type { ChatMessage, Snapshot } from '../shared/protocol';
 import { ArenaBoard, coordinate, kindName } from './board';
@@ -21,6 +22,7 @@ import { otherTeamColor, teamColorForPlayer, teamColorName } from './team-ui';
 import { CombatOverlay, COMBAT_TIMING } from './combat-ui';
 import { chatBubbleDuration, chatBubbleText, RoomChat } from './chat-ui';
 import { freshVictory } from './match-victory';
+import { EndgameOverlay } from './endgame-ui';
 
 const app = document.querySelector<HTMLDivElement>('#app')!;
 const legalLinks = '<nav aria-label="Rechtliche Informationen"><a href="/copyright.html" target="_blank" rel="noopener">Copyright<span class="sr-only"> (öffnet in neuem Tab)</span></a><a href="/impressum.html" target="_blank" rel="noopener">Impressum<span class="sr-only"> (öffnet in neuem Tab)</span></a></nav>';
@@ -33,7 +35,7 @@ app.innerHTML = [
   '<div class="intro-row"><div><p class="eyebrow" id="page-eyebrow">DAS TAKTISCHE DUELL FÜR ZWEI</p><h1 class="page-title" id="page-title">Dein Zug beginnt hier.</h1></div><p class="page-subtitle" id="page-subtitle">Figuren verdecken.<br>Gedanken lesen. Flagge holen.</p></div>',
   '<div class="notice" id="notice" role="alert" hidden></div>',
   '<main class="arena-grid"><section id="phase-top-host" class="phase-top-host" aria-label="Spielaktionen" hidden><div id="phase-controls" class="phase-controls"></div></section><section class="play-panel" aria-label="Spielbereich">',
-  '<div class="board-region"><div class="board-surface"><div id="board" class="canvas-wrap" tabindex="0" role="application" aria-label="Spielfeld mit sieben Spalten und sechs Reihen" aria-describedby="board-help board-focus"></div><div id="combat-overlay" class="combat-overlay" hidden></div><div id="board-chat-notices" class="board-chat-notices" aria-live="polite" aria-relevant="additions text"></div></div>',
+  '<div class="board-region"><div class="board-surface"><div id="board" class="canvas-wrap" tabindex="0" role="application" aria-label="Spielfeld mit sieben Spalten und sechs Reihen" aria-describedby="board-help board-focus"></div><div id="combat-overlay" class="combat-overlay" hidden></div><div id="endgame-overlay" hidden></div><div id="board-chat-notices" class="board-chat-notices" aria-live="polite" aria-relevant="additions text"></div></div>',
   '<div class="preview-banner" id="preview-banner">' + icon('unknown', '', 18) + '<span>Ein guter Plan bleibt erst einmal geheim.</span></div></div>',
   '<section id="room-chat" hidden></section></section>',
   '<aside class="side-column" id="match-sidebar" aria-label="Spielsteuerung"><details class="match-overview" id="match-overview"><summary class="match-status" title="Spielstatus und Seriendetails"><span class="eyebrow">SPIELSTATUS</span><span class="pill accent" id="board-phase">DEINE ARENA</span></summary><div class="match-status-details"><div id="series-info"></div><div class="match-team-counts"><span class="team-key" id="own-team-key" data-team-color="blue"><span class="team-square"></span><span id="own-count">Dein Team</span></span><span class="team-key enemy" id="enemy-team-key" data-team-color="red"><span class="team-square"></span><span id="enemy-count">Gegner</span></span><span class="board-hint" id="board-hint">Erstelle oder betrete einen Raum.</span></div></div></details><div class="match-controls" id="sidebar"></div></aside><section id="lobby-overlay" class="lobby-overlay" aria-label="Spiel starten"></section></main>',
@@ -161,8 +163,9 @@ const board = new ArenaBoard(el('board'), {
   onCancel() { selected = null; render(); },
   onFocus(description) { el('board-focus').textContent = description; },
 });
+const endgame = new EndgameOverlay(el('endgame-overlay'));
 const combat = new CombatOverlay(el('combat-overlay'), {
-  onBusyChange() { updateBoardInteraction(); },
+  onBusyChange(busy) { updateBoardInteraction(); endgame.update(view, busy); },
   onCelebrate(ownerId) { board.celebrate(ownerId); },
   onBattleStart(action) {
     if (view) sounds.playAction(action, view.you, animationsPreferred && !reducedMotion.matches ? COMBAT_TIMING.shatter : 0);
@@ -684,6 +687,7 @@ function render(): void {
   chat.updateSession(view, networkStatus === 'connected');
   paintChatNotice();
   combat.update(view, currentSkin, { connected: networkStatus === 'connected', pending });
+  endgame.update(view, combat.busy);
   updateBoardInteraction();
   fitBoardToViewport();
 }

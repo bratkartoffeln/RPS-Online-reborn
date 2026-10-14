@@ -270,6 +270,29 @@ function shuffled<T>(values: T[], random: () => number): T[] {
   return output;
 }
 
+/** Other fighters can move away later; only the two immobile allies seal an outer corner. */
+function trappedSetupCorner(board: readonly (Piece | null)[], owner: string): number | null {
+  for (const corner of [0, BOARD_COLS - 1, BOARD_SIZE - BOARD_COLS, BOARD_SIZE - 1]) {
+    const piece = board[corner];
+    if (piece?.owner !== owner || !isFighter(piece.kind)) continue;
+    const beside = corner + (corner % BOARD_COLS === 0 ? 1 : -1);
+    const ahead = corner + (corner < BOARD_COLS ? BOARD_COLS : -BOARD_COLS);
+    if ([beside, ahead].every(cell => board[cell]?.owner === owner && !isFighter(board[cell]!.kind))) return corner;
+  }
+  return null;
+}
+
+const TRAPPED_SETUP_MESSAGE = 'Eine Figur wäre in der Ecke zwischen Flagge und Falle eingeklemmt. Lass mindestens einen Weg ins Spielfeld frei.';
+
+/** Repair a random layout in bounded time, even with a deterministic random source. */
+function freeSetupCorner(game: GameState, player: PlayerView): void {
+  const corner = trappedSetupCorner(game.board, player.id);
+  if (corner === null) return;
+  const blocker = corner + (corner % BOARD_COLS === 0 ? 1 : -1);
+  const target = homeCells(player.seat).find(cell => cell % BOARD_COLS >= 2 && cell % BOARD_COLS <= BOARD_COLS - 3 && isFighter(game.board[cell]?.kind))!;
+  [game.board[blocker], game.board[target]] = [game.board[target]!, game.board[blocker]!];
+}
+
 function placeArmy(game: GameState, player: PlayerView): void {
   const kinds: PieceKind[] = [
     'rock', 'rock', 'rock', 'rock',
@@ -283,6 +306,7 @@ function placeArmy(game: GameState, player: PlayerView): void {
       id: source.idGenerator(), owner: player.id, kind: army[index]!, revealed: false,
     };
   });
+  freeSetupCorner(game, player);
 }
 
 function legalMovesFor(game: GameState, id: string): Record<number, number[]> {
@@ -432,6 +456,7 @@ export function shuffleSetup(game: GameState, id: string): ActionResult {
   const cells = homeCells(player.seat);
   const army = shuffled(cells.map((cell) => game.board[cell]!), generators(game).random);
   cells.forEach((cell, index) => { game.board[cell] = army[index]!; });
+  freeSetupCorner(game, player);
   return ok(game);
 }
 
@@ -445,6 +470,9 @@ export function swapSetup(game: GameState, id: string, fromIndex: number, toInde
       game.board[fromIndex]?.owner !== id || game.board[toIndex]?.owner !== id) {
     return fail('Du kannst nur zwei eigene Figuren in deinen Startreihen tauschen.');
   }
+  const candidate = [...game.board];
+  [candidate[fromIndex], candidate[toIndex]] = [candidate[toIndex]!, candidate[fromIndex]!];
+  if (trappedSetupCorner(candidate, id) !== null) return fail(TRAPPED_SETUP_MESSAGE);
   [game.board[fromIndex], game.board[toIndex]] = [game.board[toIndex]!, game.board[fromIndex]!];
   return ok(game);
 }
@@ -452,6 +480,7 @@ export function swapSetup(game: GameState, id: string, fromIndex: number, toInde
 export function readyPlayer(game: GameState, id: string): ActionResult {
   const player = setupPlayer(game, id);
   if ('ok' in player) return player;
+  if (trappedSetupCorner(game.board, id) !== null) return fail(TRAPPED_SETUP_MESSAGE);
   player.ready = true;
   log(game, `${player.name} ist bereit.`);
   startIfReady(game);

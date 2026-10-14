@@ -1,4 +1,11 @@
-# Grafiksets für RPS Arena v0.4.15
+# Grafiksets für RPS Arena v0.4.16
+
+Das Spielende verwendet eigenständige SVG-Posen in `public/endgame/`, abgeleitet
+aus den vorhandenen ICQ-Retro-Figuren. `scripts/build-endgame-art.py` exportiert
+die Sieger-, Verlierer- und neutralen Figuren sowie die Schiedsrichter mit
+farbrichtiger Gewinnerfahne aus den editierbaren Vorlagen in
+`design/icq-retro-source/`. Dafür genügt Python ohne zusätzliche Grafikmodule.
+Die Szene passt ihren Hintergrund und ihre Schrift an das aktive Design an.
 
 Die optionale Manifest-Eigenschaft `chatNotice` verweist auf den Atlas-Frame für
 neue Chatnachrichten. Die mitgelieferten Designs enthalten passende

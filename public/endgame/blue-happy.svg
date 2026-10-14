@@ -1,0 +1,59 @@
+<?xml version='1.0' encoding='utf-8'?>
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 35 230 270" width="230" height="270" role="img">
+  <title>blue: happy</title>
+  <defs>
+    <radialGradient id="hero-skin" cx=".35" cy=".25" r=".9">
+      <stop stop-color="#ffe0b5" />
+      <stop offset=".68" stop-color="#ffd09b" />
+      <stop offset="1" stop-color="#f0b175" />
+    </radialGradient>
+    <linearGradient id="hero-blue" x1=".15" y1="0" x2=".9" y2="1">
+      <stop stop-color="#1674ff" />
+      <stop offset=".48" stop-color="#0754ef" />
+      <stop offset="1" stop-color="#0034c4" />
+    </linearGradient>
+    <linearGradient id="hero-red" x1=".15" y1="0" x2=".9" y2="1">
+      <stop stop-color="#ff3436" />
+      <stop offset=".48" stop-color="#f71120" />
+      <stop offset="1" stop-color="#cf0011" />
+    </linearGradient>
+    <linearGradient id="hero-blue-cloth" x1="0" y1="0" x2="1" y2=".85">
+      <stop stop-color="#126dff" />
+      <stop offset=".6" stop-color="#084bfb" />
+      <stop offset="1" stop-color="#0437d1" />
+    </linearGradient>
+    <linearGradient id="hero-red-cloth" x1="0" y1="0" x2="1" y2=".85">
+      <stop stop-color="#ff3440" />
+      <stop offset=".6" stop-color="#fb0b22" />
+      <stop offset="1" stop-color="#cf0018" />
+    </linearGradient>
+  </defs>
+  <g id="blue-happy" stroke="#080908" stroke-width="7" stroke-linecap="round" stroke-linejoin="round">
+    <ellipse cx="115" cy="295" rx="84" ry="12" fill="#0b0c0a" stroke="none" />
+    <path d="M77 248 73 281Q65 295 99 290L112 265 118 264 126 290Q161 296 159 284L149 247Z" fill="url(#hero-blue)" />
+    <path d="M82 278 97 278M132 278 147 280" fill="none" stroke="#3382ff" stroke-width="4" />
+    <path d="M81 210Q62 214 57 232L48 241 34 220 48 200 64 215 84 215Z" fill="url(#hero-blue)" />
+    <path d="M42 218C34 222 24 215 24 207L18 194Q17 186 24 186L31 192 30 181Q33 174 39 180L45 190Q52 182 56 188L60 199 52 212Z" fill="url(#hero-skin)" stroke-width="6" />
+    <path d="M28 198 34 204M38 191 42 199" fill="none" stroke="#c58755" stroke-width="3" />
+    <path d="M149 213 171 186 185 153 203 157 194 195 175 232 151 232Z" fill="url(#hero-blue)" />
+    <path d="M179 178 184 164 194 167" fill="none" stroke="#4c91ff" stroke-width="4" />
+    <path d="M88 205Q112 216 137 204L158 225 156 251Q112 269 71 251L76 226Z" fill="url(#hero-blue)" />
+    <path d="M85 225Q110 239 146 223M83 246Q113 255 144 246" fill="none" stroke="#2079ff" stroke-width="4" />
+    <path d="M104 207 112 219 125 208" fill="url(#hero-skin)" stroke-width="5" />
+    <ellipse cx="43" cy="170" rx="17" ry="24" fill="url(#hero-skin)" />
+    <ellipse cx="187" cy="170" rx="17" ry="24" fill="url(#hero-skin)" />
+    <path d="M44 146Q47 110 114 108 181 110 188 147L189 177Q184 214 146 224 112 233 79 219 42 207 42 176Z" fill="url(#hero-skin)" />
+    <path d="M39 148Q44 111 80 99 114 84 151 100 184 114 190 149L169 138Q113 171 63 137Z" fill="url(#hero-blue)" />
+    <path d="M58 127Q78 107 97 107M130 106Q154 110 166 121" fill="none" stroke="#368aff" stroke-width="6" stroke-opacity=".7" />
+    <path d="M104 91C97 82 91 68 97 58 104 44 126 43 137 54 148 64 136 82 128 91Q117 99 104 91Z" fill="url(#hero-blue)" />
+    <path d="M107 58Q119 51 129 58" fill="none" stroke="#378dff" stroke-width="5" />
+    <path d="M67 177Q81 157 97 174M132 174Q147 157 163 177" fill="none" stroke-width="6" />
+    <ellipse cx="68" cy="188" rx="10" ry="5" fill="#ed9876" fill-opacity=".52" stroke="none" />
+    <ellipse cx="160" cy="188" rx="10" ry="5" fill="#ed9876" fill-opacity=".52" stroke="none" />
+    <path d="M108 184Q115 188 122 184" fill="none" stroke-width="3" />
+    <path d="M83 194Q114 209 145 193C140 215 127 222 113 221 99 221 88 210 83 194Z" fill="#331b19" stroke-width="5" />
+    <path d="M90 199Q113 209 137 198L133 206Q115 215 94 205Z" fill="#fffdf2" stroke="none" />
+    <path d="M107 216Q119 207 128 216Q117 221 107 216Z" fill="#ee7d79" stroke="none" />
+    <path d="M185 153C180 145 184 137 190 136L194 127Q200 123 204 129 211 125 216 131L215 143Q220 148 215 155L204 165Q188 166 185 153Z" fill="url(#hero-skin)" stroke-width="6" />
+  </g>
+</svg>
