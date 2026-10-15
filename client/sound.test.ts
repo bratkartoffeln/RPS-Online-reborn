@@ -92,6 +92,9 @@ test('every shipped design owns complete audio, licenses, artwork and correctly 
       assert.match(redYawn, /class="yawn-hand"/);
       assert.match(redYawn, /fill="url\(#ref-red\)"/);
       assert.doesNotMatch(redYawn, /url\(#ref-blue\)/);
+      for (const frame of ['blue-turn', 'blue-top', 'red-turn', 'red-bottom', 'neutral']) {
+        assert.match(readFileSync(directory + 'speech/referee-' + frame + '.svg', 'utf8'), /class="speech-mouth"/);
+      }
       assert.equal(skin.audio!.win!.file, skin.audio!.youWin!.file);
       assert.equal(skin.audio!.lose!.file, skin.audio!.youLose!.file);
       for (const cue of ['move', 'moveBlue', 'moveRed', 'rock', 'paper', 'scissors', 'flag', 'gong', 'win', 'lose', 'youWin', 'youLose', 'blueTurn', 'redTurn'] as const) {
@@ -161,6 +164,8 @@ test('sample playback caches decoded buffers, respects mute, cancels pending loa
   const flush = () => new Promise(resolve => setImmediate(resolve));
   const skin = { ...builtInSkin(), id: 'custom', definition: parseSkinDefinition({ version: 1, name: 'Custom', audio: {
     gong: { file: 'audio/gong.ogg', rate: 1.2 }, blueTurn: { file: 'audio/late.wav' },
+    redTurn: { file: 'audio/speech.wav' }, youWin: { file: 'audio/speech.wav' }, youLose: { file: 'audio/speech.wav' },
+    win: { file: 'audio/speech.wav' }, lose: { file: 'audio/speech.wav' },
     moveBlue: { file: 'audio/blue1.ogg', variants: ['audio/blue2.ogg'] }, moveRed: { file: 'audio/red1.ogg' },
   } }) };
   const sounds = new GameSounds();
@@ -196,4 +201,16 @@ test('sample playback caches decoded buffers, respects mute, cancels pending loa
   sounds.setEnabled(false); sounds.playStartGong(0); await flush();
   assert.equal(starts.length, 7);
   assert.ok(stops.length >= 1, 'Mute/skin changes stop scheduled sources');
+  const speech: Array<string | null> = [];
+  sounds.onSpeechChange = cue => { speech.push(cue); };
+  sounds.setEnabled(true); await sounds.unlock(); await flush();
+  for (const cue of ['blueTurn', 'redTurn', 'youWin', 'youLose', 'win', 'lose'] as const) {
+    const playback = sounds.playCue(cue); await flush();
+    assert.equal(speech.at(-1), cue, 'Speech animation begins with the decoded audio source');
+    sources.at(-1)!.onended?.(); await playback;
+    assert.equal(speech.at(-1), null, 'Speech animation stops when its own source ends');
+  }
+  sounds.playCue('redTurn'); await flush();
+  sounds.setEnabled(false);
+  assert.equal(speech.at(-1), null, 'Muting also closes the referee mouth');
 });

@@ -33,7 +33,7 @@ test('overlays follow public front artwork; visible traps and rear views never r
   }
 });
 
-test('referee yawns once after ten seconds; either player activity or pause resets the clock', () => {
+test('referee starts yawning after ten seconds; either player activity or pause resets the clock', () => {
   const idle = new RefereeInactivity();
   idle.update('start', true, 0);
   assert.equal(idle.update('start', true, 9999), false);
@@ -41,7 +41,7 @@ test('referee yawns once after ten seconds; either player activity or pause rese
   assert.equal(idle.yawning, true);
   idle.update('start', true, 12400);
   assert.equal(idle.yawning, false);
-  assert.equal(idle.update('start', true, 90000), false);
+  assert.equal(idle.update('start', true, 90000), true);
   idle.update('blue-move', true, 90001);
   idle.update('red-move', true, 95000);
   assert.equal(idle.update('red-move', true, 100001), false);
@@ -51,4 +51,22 @@ test('referee yawns once after ten seconds; either player activity or pause rese
   assert.equal(idle.update('red-move', true, 120000), true);
   idle.update('next-move', true, 120100);
   assert.equal(idle.yawning, false);
+});
+
+test('continued inactivity repeats yawns after a fresh random five-to-ten-second pause', () => {
+  for (const random of [0, .5, 1]) {
+    const idle = new RefereeInactivity(() => random);
+    idle.update('start', true, 0);
+    idle.update('start', true, 10000);
+    assert.equal(idle.yawning, true);
+    idle.update('start', true, 12400);
+    assert.equal(idle.yawning, false);
+    const next = 12400 + 5000 + random * 5000;
+    assert.equal(idle.update('start', true, next - 1), false);
+    assert.equal(idle.update('start', true, next), true);
+    assert.equal(idle.yawning, true);
+    idle.update('start', true, next + 2400);
+    assert.equal(idle.yawning, false);
+    assert.equal(idle.update('start', true, next + 2400 + 5000 + random * 5000), true);
+  }
 });

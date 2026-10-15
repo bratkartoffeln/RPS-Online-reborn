@@ -85,6 +85,8 @@ let shuffleSoundPending = false;
 const refereeDelay = new RefereeDelay();
 const refereeInactivity = new RefereeInactivity();
 let yawnSequence = 0;
+let refereeSpeech: SoundCue | null = null;
+let refereeSpeechSequence = 0;
 
 function updateRefereeInactivity(): void {
   const active = !!view && (view.phase === 'playing' || view.phase === 'duel') && !view.paused &&
@@ -137,6 +139,11 @@ let animationsPreferred = readPreference('rps-arena:animations') !== 'off';
 const reducedMotion = window.matchMedia('(prefers-reduced-motion: reduce)');
 const compactLayout = window.matchMedia('(max-width: 1000px), (max-height: 800px)');
 const sounds = new GameSounds();
+sounds.onSpeechChange = cue => {
+  refereeSpeech = cue;
+  refereeSpeechSequence++;
+  render();
+};
 let soundsPreferred = readPreference('rps-arena:sounds') !== 'off';
 
 const chat: RoomChat = new RoomChat(el('room-chat'), message => connection.send('chat_send', message), message => {
@@ -169,8 +176,10 @@ const connection = new RpsConnection({
   onSnapshot(snapshot) {
     const start = networkStatus === 'connected' && freshMatchStart(view, snapshot);
     const refereeCue = networkStatus === 'connected' ? freshRefereeCue(view, snapshot) : null;
-    if (!view || snapshot.paused || snapshot.series.matchId !== view.series.matchId ||
-        ((snapshot.phase === 'waiting' || snapshot.phase === 'setup') && snapshot.phase !== view.phase) || snapshot.revision > view.revision + 1) {
+    const sameFinishedResult = view?.phase === 'finished' && snapshot.phase === 'finished' &&
+      view.series.id === snapshot.series.id && view.series.matchId === snapshot.series.matchId && view.winner === snapshot.winner;
+    if (!sameFinishedResult && (!view || snapshot.paused || snapshot.series.matchId !== view.series.matchId ||
+        ((snapshot.phase === 'waiting' || snapshot.phase === 'setup') && snapshot.phase !== view.phase) || snapshot.revision > view.revision + 1)) {
       cancelReferee();
       sounds.cancel();
     }
@@ -218,7 +227,7 @@ const connection = new RpsConnection({
     setRoomUrl(snapshot.roomId);
     if (action && action.kind !== 'move') combat.present(action, snapshot);
     else if (victory) combat.reset();
-    if (refereeCue) {
+    if (refereeCue && refereeCue !== 'youWin' && refereeCue !== 'youLose') {
       cancelReferee();
       pendingRefereeCue = refereeCue;
     }
@@ -266,13 +275,17 @@ const board = new ArenaBoard(el('board'), {
   onCancel() { selected = null; render(); },
   onFocus(description) { el('board-focus').textContent = description; },
 });
-const endgame = new EndgameOverlay(el('endgame-overlay'));
+const endgame = new EndgameOverlay(el('endgame-overlay'), result => {
+  if (networkStatus === 'connected' && result.winner) {
+    void sounds.playCue(result.winner === result.you ? 'youWin' : 'youLose');
+  }
+});
 const combat = new CombatOverlay(el('combat-overlay'), {
-  onBusyChange(busy) { updateBoardInteraction(); endgame.update(view, busy, currentSkin); if (!busy) announceReferee(); },
+  onBusyChange(busy) { board.setCombatOverlayBusy(busy); updateBoardInteraction(); endgame.update(view, busy, currentSkin, refereeIsSpeaking()); if (!busy) announceReferee(); },
   onCelebrate(ownerId) { board.celebrate(ownerId); },
   beforeBattle() { return board.whenEffectsComplete(); },
   onBattleEffect(action) { return sounds.playCombatWeapon(action); },
-  onBattleResult(action) { if (view) sounds.playCombatResult(action, view.you); },
+  onBattleResult(action) { if (view && view.phase !== 'finished') sounds.playCombatResult(action, view.you); },
 });
 el('board').addEventListener('pointerdown', () => el('board').focus({ preventScroll: true }));
 
@@ -586,8 +599,17 @@ function paintChatNotice(): void {
   if (renderedChatNotice !== markup) { root.innerHTML = markup; renderedChatNotice = markup; }
 }
 
+function refereeIsSpeaking(): boolean {
+  return !!refereeSpeech && animationsPreferred && !reducedMotion.matches;
+}
+
 function refereeMarkup(size: number): string {
   const state = refereePortrait(currentSkin.definition, refereeView());
+  if (refereeIsSpeaking() && !view?.paused && currentSkin.id.startsWith('icq-retro') &&
+      state.frame && /^referee-(?:(blue|red)-(turn|top|bottom)|neutral)$/.test(state.frame)) {
+    const image = '<img class="referee-speaking" src="' + esc(skinAssetUrl(currentSkin, 'speech/' + state.frame + '.svg')) + '?play=' + refereeSpeechSequence + '" width="' + size + '" height="' + size * .75 + '" alt="" />';
+    return '<span class="referee-portrait" data-referee-state="speaking" data-turn-team="' + (state.team ?? 'neutral') + '" data-turn-direction="' + (state.direction ?? 'neutral') + '" role="img" aria-label="' + esc(state.label) + '">' + image + '</span>';
+  }
   if (refereeInactivity.yawning && view && !view.paused && (view.phase === 'playing' || view.phase === 'duel')) {
     const animated = animationsPreferred && !reducedMotion.matches;
     const red = state.team === 'red' && !!currentSkin.definition.atlas?.frames['referee-yawn-red'];
@@ -810,7 +832,7 @@ function render(): void {
   chat.updateSession(view, networkStatus === 'connected');
   paintChatNotice();
   combat.update(view, currentSkin, { connected: networkStatus === 'connected', pending });
-  endgame.update(view, combat.busy, currentSkin);
+  endgame.update(view, combat.busy, currentSkin, refereeIsSpeaking());
   announceReferee();
   updateBoardInteraction();
   fitBoardToViewport();
@@ -910,6 +932,9 @@ function closeModal(): void {
 
 async function leaveRoom(): Promise<void> {
   view = null;
+  cancelStartCue();
+  cancelReferee();
+  sounds.cancel();
   combat.reset();
   sessionEnd = null;
   selected = null;
@@ -929,7 +954,6 @@ function requestLeave(): void {
     ? 'Bist du sicher? Du brichst die aktuelle Partie ab. Dein Gegner gewinnt.'
     : preparing ? 'Bist du sicher? Du verlässt den Raum und brichst die aktuelle Spielvorbereitung ab.'
     : 'Bist du sicher? Du verlässt diesen Raum.', 'Zur Lobby', () => {
-      if (playing) connection.send('resign');
       void leaveRoom();
     });
 }

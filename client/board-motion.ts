@@ -125,6 +125,8 @@ export function smoothStep(progress: number): number {
 export const NINJA_SPEED_FACTOR = 2;
 export const FACEOFF_HOLD_MS = 550;
 export function combatFacingFrame(skin: SkinDefinition, color: TeamColor, facing: 'left' | 'right'): string | null {
+  // Symbol-based designs keep their normal board symbols in the same staging positions.
+  if (skin.presentation !== 'retro') return null;
   const name = `battle-${color}-${facing}`;
   return skin.atlas?.frames[name] ? name : null;
 }

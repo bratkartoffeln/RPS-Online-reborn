@@ -33,7 +33,7 @@ try {
       await board.whenReady();
       const qa = window.qa = { board, effects: [], view: null };
       const overlay = qa.overlay = new CombatOverlay(document.querySelector('#combat'), {
-        onBusyChange() { board.update(qa.view, null, false); }, onCelebrate() {},
+        onBusyChange(busy) { board.setCombatOverlayBusy(busy); board.update(qa.view, null, false); }, onCelebrate() {},
         beforeBattle: () => board.whenEffectsComplete(),
         onBattleEffect: action => { qa.effects.push({ action, stage: document.querySelector('.combat-stage').dataset.stage }); return Promise.resolve(); },
       });
@@ -85,13 +85,23 @@ try {
         const stance = await page.evaluate(() => qa.stance());
         assert.ok(stance?.hidden, 'The faceoff is visible before the battle overlay');
         assert.equal(stance.moveMs, stance.expectedMs);
-        assert.equal(stance.attacker, `battle-blue-${stance.staging.attacker.facing}`);
-        assert.equal(stance.defender, `battle-red-${stance.staging.defender.facing}`);
+        if (skin.startsWith('icq')) {
+          assert.equal(stance.attacker, `battle-blue-${stance.staging.attacker.facing}`);
+          assert.equal(stance.defender, `battle-red-${stance.staging.defender.facing}`);
+        } else {
+          assert.ok(!stance.attacker?.startsWith('battle-') && !stance.defender?.startsWith('battle-'), 'Classic and Arcade stage their existing symbols without human figures');
+        }
         if (from === 21 && to === 14) await page.locator('.board-surface').screenshot({ path: path.join(tmpdir(), `rps-faceoff-${skin}-${touch ? 'mobile' : 'desktop'}.png`) });
       }
       await page.waitForFunction(() => document.querySelector('#combat').dataset.mode === 'battle');
       await page.waitForFunction(() => qa.effects.length === 1);
       assert.equal(await page.evaluate(() => qa.effects[0].stage), 'impact');
+      await page.waitForFunction(() => document.querySelector('.combat-stage')?.dataset.stage === 'winner');
+      const held = await page.evaluate(() => qa.stance());
+      assert.ok(held, 'Both opponents remain staged until the fight overlay closes');
+      if (skin.startsWith('icq')) assert.ok(held.attacker.startsWith('battle-') && held.defender.startsWith('battle-'));
+      await page.waitForFunction(() => !qa.overlay.busy);
+      assert.equal(await page.evaluate(() => qa.stance()), null, 'Side poses release after the overlay disappears');
       await page.evaluate(() => qa.choose());
       assert.equal(await page.locator('#combat').getAttribute('data-mode'), 'waiting');
       assert.equal(await page.locator('.combat-choice').count(), 0);

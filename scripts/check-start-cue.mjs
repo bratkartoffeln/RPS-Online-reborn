@@ -86,6 +86,10 @@ try {
     const portrait = red.locator('.score-referee .referee-portrait');
     assert.equal(await portrait.getAttribute('data-turn-team'), 'blue');
     assert.equal(await portrait.getAttribute('data-turn-direction'), 'top');
+    if (skin.startsWith('icq')) {
+      assert.equal(await portrait.getAttribute('data-referee-state'), 'speaking');
+      assert.match(await portrait.locator('img').getAttribute('src'), /speech\/referee-blue-top\.svg/);
+    }
     await blue.bringToFront();
     await blue.locator('.score-referee .referee-portrait[data-turn-direction="bottom"]').waitFor({ state: 'attached' });
     assert.equal(await blue.locator('.score-referee .referee-portrait').getAttribute('data-turn-direction'), 'bottom');
@@ -116,6 +120,13 @@ try {
       const samples = await blue.evaluate(() => window.gongSamples);
       assert.ok(samples[1].started - samples[0].ended >= 990, 'The next turn is announced after a full quiet second');
       assert.equal(await blue.locator('.score-referee .referee-portrait').getAttribute('data-turn-team'), 'red');
+      if (skin.startsWith('icq')) {
+        const speaker = blue.locator('.score-referee .referee-portrait');
+        assert.equal(await speaker.getAttribute('data-referee-state'), 'speaking');
+        assert.match(await speaker.locator('img').getAttribute('src'), /speech\/referee-red-turn\.svg/);
+        await blue.waitForFunction(() => window.gongSamples[1].ended !== null);
+        await blue.waitForFunction(() => !document.querySelector('[data-referee-state="speaking"]'));
+      }
       console.log(`${skin}: move sound completes, then one quiet second before the red indicator and announcement`);
     }
     await red.reload();

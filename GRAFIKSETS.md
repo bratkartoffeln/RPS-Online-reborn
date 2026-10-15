@@ -1,4 +1,4 @@
-# Grafiksets für RPS Arena v0.4.28
+# Grafiksets für RPS Arena v0.4.29
 
 Jedes eingebaute Design ist ein eigenständiges Paket unter `public/skins/<id>/`.
 Es enthält sein Manifest, Atlanten, Gewinnerbilder, Gonganimation, Sounds,
@@ -21,6 +21,15 @@ im Atlas eingebettet. Unter `icq-retro/source/video-side-poses.json` stehen Quel
 `scripts/extract-video-poses.mjs` reproduziert die PNGs mit dem Video, FFmpeg und
 Playwright als Argumenten. Beide Designs teilen diese Quelldateien. Die Bilder
 übernehmen die Rechte des Originalmaterials und sind nicht CC0.
+
+Die ICQ-Sprechporträts liegen unter `speech/` sowie als `*-speaking.svg` bei
+den Ergebnisbildern. `node scripts/build-referee-speech.mjs` erzeugt sie aus
+den bestehenden Schiedsrichtervorlagen. Die Mundbewegung ist nur während
+der tatsächlichen Ansagen aktiv und respektiert deaktivierte Animationen.
+
+Klassisch und Arcade verwenden bei der Gegenüberstellung ihre normalen Symbole.
+Die Seitenposen der ICQ-Figuren und die Symbole bleiben bis zum Schließen des
+Kampf-Overlays nebeneinander stehen.
 
 ## Ein Design hinzufügen
 
