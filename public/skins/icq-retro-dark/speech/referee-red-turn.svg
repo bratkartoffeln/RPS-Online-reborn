@@ -40,9 +40,11 @@
         <path d="M73.4 41.9C81.7 40.5 90.4 47.3 93.2 51.6 86.9 46.2 79.7 44.5 74.7 44.1Z" fill="url(#ref-hair-light)" stroke="none"/>
         <path d="M63.7 49.6C65.9 49.6 66.8 52.1 66.9 55.7L64.4 55.8 62.8 52.9Z" fill="#fffdf1" stroke-width=".75"/>
         <path d="M64.1 50.8 65.2 51.4 65.8 54.6 64.6 54.3Z" fill="#242921" stroke="none"/>
-        <g class="speech-mouth"><ellipse cx="79" cy="63" rx="5.8" ry="3.4" fill="#582b22" stroke="#6c532c" stroke-width=".8"/><path d="M74 61.3Q79 62.5 84 61.3" fill="none" stroke="#fffdf1" stroke-width="1.5"/><path d="M77 65q2-1 4 0" fill="none" stroke="#d98b78" stroke-width="1"/></g>
+        <path d="M73.2 59.8C76.5 61.8 80.6 63.3 84.4 63.3L83 66.8C77.8 66.4 74.8 64.5 73.2 59.8Z" fill="#fffdf1" stroke-width=".9"/>
+        <path d="M74.4 60.9 77.5 62.5 77.3 63.8 75.3 63.2Z" fill="#242921" stroke="none"/>
+        <path d="M72.9 58.8C75.7 61.4 80.6 62.6 84.6 62.7" fill="none" stroke-width="1.15"/>
         <ellipse cx="67" cy="58.1" rx="2.7" ry="2.9" fill="#eda873" fill-opacity=".9" stroke="none"/>
-        <path d="M63.9 65C67.4 65.9 70.7 67.1 73.9 67.6" fill="none" stroke="#6d502b" stroke-width=".85"/>
+        <g transform="rotate(14 68.9 66.3)"><g class="speech-mouth"><ellipse cx="68.9" cy="66.3" rx="4.9" ry="2.3" fill="#582b22" stroke="#6d502b" stroke-width=".85"/><path d="M65.10000000000001 65.3q3.8 .8 7.6 0" fill="none" stroke="#fffdf1" stroke-width="1"/><path d="M67.4 67.6q1.5-.7 3 0" fill="none" stroke="#d98b78" stroke-width=".7"/></g></g>
         <path d="M83.7 77C86.8 79.6 91.8 81.8 97.8 83.6L96.8 88.8C90.8 88.6 85.4 86.5 81.6 83.4 78.9 80.7 80.7 77 83.7 77Z" fill="url(#ref-gold)"/>
         <path d="M84.9 78.8 93.9 83.4" fill="none" stroke="#fff398" stroke-width="1.2"/>
         <path d="M98.2 82.7C100.6 80.8 104.1 82.3 105.2 84.6 106.3 87.1 104.3 89.8 101.9 88.6 100.5 90.5 98.5 88.9 96.9 88.5L97.5 85.7Z" fill="url(#ref-skin)" stroke-width="1.3"/>

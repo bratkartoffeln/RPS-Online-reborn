@@ -1,6 +1,6 @@
 {
   "name": "rps-remake",
-  "version": "0.4.29",
+  "version": "0.4.30",
   "private": true,
   "type": "module",
   "description": "RPS Arena – ein eigenständiger Browser-Prototyp mit privaten Zweispieler-Partien.",
