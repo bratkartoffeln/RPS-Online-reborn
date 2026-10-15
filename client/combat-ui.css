@@ -136,8 +136,8 @@
 @keyframes combat-approach-left { from { transform: translateX(-20px) rotate(-12deg); } to { transform: translateX(var(--clash-shift)) rotate(8deg); } }
 @keyframes combat-approach-right { from { transform: translateX(20px) rotate(12deg); } to { transform: translateX(calc(-1 * var(--clash-shift))) rotate(-8deg); } }
 @keyframes combat-impact { 0% { opacity: 1; transform: translateX(-50%) scale(.75); } 24% { opacity: 1; transform: translateX(-50%) scale(1.04); } 76% { opacity: 1; transform: translateX(-50%) scale(1); } 100% { opacity: 0; transform: translateX(-50%) scale(1.14); } }
-@keyframes combat-return-left { from { transform: translateX(var(--clash-shift)) rotate(8deg); } to { transform: translateX(0) rotate(0); } }
-@keyframes combat-return-right { from { transform: translateX(calc(-1 * var(--clash-shift))) rotate(-8deg); } to { transform: translateX(0) rotate(0); } }
+@keyframes combat-return-left { from { transform: translateX(var(--clash-shift)) rotate(8deg); } to { transform: translateX(var(--combat-return-x, 0px)) rotate(0); } }
+@keyframes combat-return-right { from { transform: translateX(calc(-1 * var(--clash-shift))) rotate(-8deg); } to { transform: translateX(var(--combat-return-x, 0px)) rotate(0); } }
 @keyframes combat-shatter { 0% { transform: translate(0) rotate(0); opacity: 1; } 65% { opacity: .95; } 100% { transform: translate(var(--shard-x), var(--shard-y)) rotate(var(--shard-angle)); opacity: 0; } }
 @keyframes combat-winner-pulse { 0%, 100% { scale: 1; filter: drop-shadow(0 0 0 transparent); } 42% { scale: 1.16; filter: drop-shadow(0 0 10px var(--team-color, #d0e9a7)); } }
 @media (prefers-reduced-motion: reduce) {
@@ -149,4 +149,39 @@
   .combat-overlay [data-motion="reduced"] [data-result="loser"] .combat-art-main { filter: none; }
   .combat-overlay .combat-art, .combat-overlay .combat-cloud { will-change: auto; }
   .combat-overlay .combat-stage, .combat-overlay .combat-choice-panel { box-shadow: none; }
+}
+/* Special encounters use the board figures themselves as the door and capturer. */
+.combat-stage:is([data-outcome="trap"], [data-outcome="flag"]) .combat-cloud { visibility: hidden; }
+.combat-trap-hole, .combat-capture-flag, .combat-puff { position: absolute; inset: 0; display: grid; place-items: center; pointer-events: none; }
+.combat-trap-hole { z-index: -1; opacity: 0; }
+.combat-capture-flag { transform: translateX(30%); }
+.combat-puff { opacity: 0; }
+[data-result="winner"] .combat-capture-flag { opacity: 0; }
+[data-outcome="trap"] .combat-art { isolation: isolate; }
+[data-outcome="trap"] .combat-fighters { --clash-shift: calc(25cqw + 5px); }
+[data-outcome="trap"] [data-kind="trap"] .combat-art-main { transform-origin: 12% 85%; }
+[data-outcome="trap"][data-stage="impact"] [data-kind="trap"] .combat-art-main { animation: combat-decoy-open 600ms ease-in both; }
+[data-outcome="trap"]:is([data-stage="impact"], [data-stage="shatter"], [data-stage="winner"], [data-stage="result"]) .combat-trap-hole { opacity: 1; }
+[data-outcome="trap"]:is([data-stage="shatter"], [data-stage="winner"], [data-stage="result"]) [data-kind="trap"] .combat-art-main { transform: translateX(105%) perspective(250px) rotateY(-105deg) rotateZ(10deg); }
+[data-outcome="trap"][data-stage="shatter"] [data-result="loser"] .combat-art-main { animation: combat-fall-in 700ms ease-in both; }
+[data-outcome="flag"][data-stage="shatter"] [data-result="loser"] .combat-art-main { animation: combat-vanish 700ms ease-out both; }
+[data-outcome="flag"][data-stage="shatter"] .combat-puff { animation: combat-puff 700ms ease-out both; }
+[data-outcome="flag"]:is([data-stage="shatter"], [data-stage="winner"], [data-stage="result"]) [data-result="loser"] .combat-capture-flag { opacity: 0; }
+[data-outcome="flag"]:is([data-stage="shatter"], [data-stage="winner"], [data-stage="result"]) [data-result="winner"] .combat-capture-flag { opacity: 1; }
+[data-outcome="flag"][data-stage="shatter"] [data-result="winner"] .combat-capture-flag { animation: combat-take-flag 700ms ease-out both; }
+/* Both figures meet over the same pit; keep them there as the victim falls. */
+[data-outcome="trap"][data-stage="shatter"] .combat-fighter:first-child .combat-art { --combat-return-x: var(--clash-shift); }
+[data-outcome="trap"][data-stage="shatter"] .combat-fighter:nth-child(2) .combat-art { --combat-return-x: calc(-1 * var(--clash-shift)); }
+[data-outcome="trap"][data-stage="winner"] .combat-fighter:nth-child(2) .combat-art { transform: translateX(calc(-1 * var(--clash-shift))); }
+@keyframes combat-decoy-open { to { transform: translateX(105%) perspective(250px) rotateY(-105deg) rotateZ(10deg); } }
+@keyframes combat-fall-in { 0% { opacity: 1; transform: translateY(0) scale(1); } 30% { opacity: 1; transform: translateY(12%) scale(.85); } 100% { opacity: 0; transform: translateY(43%) scale(.05); } }
+@keyframes combat-vanish { 0%, 20% { opacity: 1; } 100% { opacity: 0; transform: scale(.2); } }
+@keyframes combat-puff { 0% { opacity: 0; transform: scale(.2); } 35% { opacity: 1; } 100% { opacity: 0; transform: scale(1.4); } }
+@keyframes combat-take-flag { from { transform: translateX(85%) rotate(20deg); } to { transform: translateX(30%) rotate(0); } }
+@container combat-board (max-width: 420px) {
+  [data-outcome="trap"] .combat-fighters { --clash-shift: calc(25cqw + 2px); }
+  .combat-trap-hole > .atlas-icon, .combat-capture-flag > .atlas-icon, .combat-puff > .atlas-icon { scale: .78; }
+}
+@container combat-board (max-height: 280px) {
+  .combat-trap-hole > .atlas-icon, .combat-capture-flag > .atlas-icon, .combat-puff > .atlas-icon { scale: .52; }
 }

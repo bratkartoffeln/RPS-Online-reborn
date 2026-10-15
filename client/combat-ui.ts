@@ -1,7 +1,7 @@
 import type { FighterKind, GameActionView, PieceView } from '../shared/game';
 import type { Snapshot } from '../shared/protocol';
 import { escapeHtml as esc, icon } from './icons';
-import { pieceIcon, weaponIcon } from './skin-ui';
+import { atlasIcon, pieceIcon, weaponIcon } from './skin-ui';
 import type { LoadedSkin, TeamColor } from './skin-types';
 import { teamColorForSeat, teamColorName } from './team-ui';
 
@@ -339,7 +339,7 @@ export class CombatOverlay {
     const stageElement = this.root.querySelector<HTMLElement>('.combat-stage');
     if (stageElement) stageElement.dataset.stage = stage;
     const result = this.root.querySelector<HTMLElement>('.combat-result');
-    if (result && this.active) result.textContent = stage === 'shatter' || stage === 'winner' || stage === 'result' ? this.active.result : 'Die Waffen treffen aufeinander.';
+    if (result && this.active) result.textContent = stage === 'shatter' || stage === 'winner' || stage === 'result' ? this.active.result : this.active.outcome === 'trap' ? 'Die Figur klappt wie eine Falltür auf …' : this.active.outcome === 'flag' ? 'Die Flagge wird erobert …' : 'Die Waffen treffen aufeinander.';
   }
 
   private paint(): void {
@@ -364,10 +364,17 @@ export class CombatOverlay {
     const hadFocus = this.root.contains(this.root.ownerDocument.activeElement);
     this.rememberFocus();
     const model = this.active, skin = this.skin;
+    const special = model.outcome === 'trap' || model.outcome === 'flag';
     const fighter = (piece: Combatant): string => {
-      const art = artwork(skin, piece, 104);
-      const shards = piece.result === 'loser' ? '<span class="combat-shards" aria-hidden="true">' + Array.from({ length: 6 }, (_, index) => `<span class="combat-shard combat-shard-${index}">${art}</span>`).join('') + '</span>' : '';
-      return `<div class="combat-fighter" data-piece-id="${esc(piece.id)}" data-owner-id="${esc(piece.ownerId)}" data-team-color="${piece.team}" data-result="${piece.result}"><p class="combat-fighter-role">${piece.role}</p><div class="combat-art"><span class="combat-art-main">${art}</span>${shards}</div><div class="combat-fighter-caption"><strong>${esc(piece.name)}</strong><span>${teamColorName(piece.team)} · ${LABELS[piece.kind ?? 'unknown']}</span><span class="combat-fighter-result">${piece.result === 'winner' ? 'Sieger' : piece.result === 'loser' ? 'Besiegt' : 'Neue Wahl'}</span></div></div>`;
+      const tile = (name: string) => atlasIcon(skin, name, 104) ?? '';
+      const perspective = model.outcome === 'trap' && piece.own ? 'own' : 'enemy';
+      const figure = skin.definition.teamPieces?.[piece.team]?.[perspective]?.unknown ?? skin.definition.pieces?.[piece.team === 'blue' ? 'own' : 'enemy']?.unknown;
+      // The door uses the normal concealed board figure, including its color
+      // and viewing direction, rather than a separate decoy illustration.
+      const art = special ? model.outcome === 'trap' || figure ? pieceIcon(skin, 'unknown', 104, perspective, false, piece.team) : tile('combat-figure-' + piece.team) : artwork(skin, piece, 104);
+      const extras = model.outcome === 'trap' && piece.kind === 'trap' ? `<span class="combat-trap-hole">${tile('combat-trap-hole')}</span>` : model.outcome === 'flag' ? `<span class="combat-capture-flag">${tile('combat-flag-' + model.defender.team)}</span>${piece.result === 'loser' ? '<span class="combat-puff">' + tile('combat-puff') + '</span>' : ''}` : '';
+      const shards = !special && piece.result === 'loser' ? '<span class="combat-shards" aria-hidden="true">' + Array.from({ length: 6 }, (_, index) => `<span class="combat-shard combat-shard-${index}">${art}</span>`).join('') + '</span>' : '';
+      return `<div class="combat-fighter" data-kind="${piece.kind ?? 'unknown'}" data-piece-id="${esc(piece.id)}" data-owner-id="${esc(piece.ownerId)}" data-team-color="${piece.team}" data-result="${piece.result}"><p class="combat-fighter-role">${piece.role}</p><div class="combat-art"><span class="combat-art-main">${art}</span>${extras}${shards}</div><div class="combat-fighter-caption"><strong>${esc(piece.name)}</strong><span>${teamColorName(piece.team)} · ${LABELS[piece.kind ?? 'unknown']}</span><span class="combat-fighter-result">${piece.result === 'winner' ? 'Sieger' : piece.result === 'loser' ? 'Besiegt' : 'Neue Wahl'}</span></div></div>`;
     };
     this.root.hidden = false;
     this.root.dataset.mode = 'battle';
@@ -376,7 +383,7 @@ export class CombatOverlay {
     delete this.root.dataset.transition;
     delete this.root.dataset.duelId;
     delete this.root.dataset.duelRound;
-    this.root.innerHTML = `<section class="combat-stage" data-stage="${this.activeStage}" data-motion="${this.root.dataset.motion}" aria-label="Kampf" tabindex="-1"><header class="combat-heading"><p>${model.round ? 'DUELL · RUNDE ' + model.round : 'KAMPF · ZUG ' + model.turn}</p><h2>${esc(model.heading)}</h2></header><div class="combat-fighters">${fighter(model.attacker)}${fighter(model.defender)}${CLOUD}</div><p class="combat-result" role="status" aria-live="polite"></p></section>`;
+    this.root.innerHTML = `<section class="combat-stage" data-outcome="${model.outcome}" data-stage="${this.activeStage}" data-motion="${this.root.dataset.motion}" aria-label="Kampf" tabindex="-1"><header class="combat-heading"><p>${model.round ? 'DUELL · RUNDE ' + model.round : 'KAMPF · ZUG ' + model.turn}</p><h2>${esc(model.heading)}</h2></header><div class="combat-fighters">${fighter(model.attacker)}${fighter(model.defender)}${CLOUD}</div><p class="combat-result" role="status" aria-live="polite"></p></section>`;
     this.paintedSkin = skin;
     this.setStage(this.activeStage);
     if (hadFocus) this.root.querySelector<HTMLElement>('.combat-stage')?.focus({ preventScroll: true });

@@ -232,3 +232,19 @@ details[open] > summary::after { transform: rotate(45deg); }
   .compact-game .header-arena .series-player-score { font-size: 26px; }
   .compact-game .header-arena .series-player-name { font-size: 12px; }
 }
+/* Reserve both the portrait and two caption lines independently of the active team. */
+.compact-game .score-referee { height: 110px; justify-content: flex-start; }
+.compact-game .score-referee .referee-portrait { display: grid; place-items: center; flex: 0 0 76px; width: 76px; height: 76px; }
+.compact-game .score-referee > span:last-child { display: grid; align-content: center; height: 26px; flex: 0 0 26px; }
+.compact-game .header-arena .series-player-name { display: -webkit-box; -webkit-box-orient: vertical; -webkit-line-clamp: 2; overflow: hidden; height: 36px; line-height: 18px; }
+/* Turn changes and selection hints must not move the board. Setup/end controls may grow. */
+.compact-game[data-phase="playing"] .phase-top-host .phase-card,
+.compact-game[data-phase="duel"] .phase-top-host .phase-card { box-sizing: border-box; height: 100px; overflow: auto; }
+.compact-game[data-phase="playing"] .phase-top-host h2,
+.compact-game[data-phase="duel"] .phase-top-host h2 { display: -webkit-box; -webkit-box-orient: vertical; -webkit-line-clamp: 2; overflow: hidden; height: 35px; }
+@media (max-height: 500px) {
+  .compact-game .score-referee { height: 94px; }
+  .compact-game .score-referee .referee-portrait { height: 60px; flex-basis: 60px; }
+  .compact-game[data-phase="playing"] .phase-top-host .phase-card,
+  .compact-game[data-phase="duel"] .phase-top-host .phase-card { height: 51px; }
+}

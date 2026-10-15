@@ -303,6 +303,42 @@
         "y": 296,
         "width": 272,
         "height": 272
+      },
+      "combat-trap-hole": {
+        "x": 0,
+        "y": 2016,
+        "width": 272,
+        "height": 272
+      },
+      "combat-flag-blue": {
+        "x": 272,
+        "y": 2016,
+        "width": 272,
+        "height": 272
+      },
+      "combat-flag-red": {
+        "x": 544,
+        "y": 2016,
+        "width": 272,
+        "height": 272
+      },
+      "combat-puff": {
+        "x": 816,
+        "y": 2016,
+        "width": 272,
+        "height": 272
+      },
+      "combat-figure-blue": {
+        "x": 1088,
+        "y": 2016,
+        "width": 272,
+        "height": 272
+      },
+      "combat-figure-red": {
+        "x": 1360,
+        "y": 2016,
+        "width": 272,
+        "height": 272
       }
     }
   },
@@ -762,6 +798,42 @@
       "chat-notice": {
         "x": 868,
         "y": 148,
+        "width": 136,
+        "height": 136
+      },
+      "combat-trap-hole": {
+        "x": 0,
+        "y": 1008,
+        "width": 136,
+        "height": 136
+      },
+      "combat-flag-blue": {
+        "x": 136,
+        "y": 1008,
+        "width": 136,
+        "height": 136
+      },
+      "combat-flag-red": {
+        "x": 272,
+        "y": 1008,
+        "width": 136,
+        "height": 136
+      },
+      "combat-puff": {
+        "x": 408,
+        "y": 1008,
+        "width": 136,
+        "height": 136
+      },
+      "combat-figure-blue": {
+        "x": 544,
+        "y": 1008,
+        "width": 136,
+        "height": 136
+      },
+      "combat-figure-red": {
+        "x": 680,
+        "y": 1008,
         "width": 136,
         "height": 136
       }

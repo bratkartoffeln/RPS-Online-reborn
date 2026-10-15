@@ -59,10 +59,11 @@ try {
       await blue.waitForTimeout(250);
       const bounds = await blue.locator('#endgame-overlay').evaluate(root => {
         const overlay = root.getBoundingClientRect(), result = root.querySelector('.endgame-result').getBoundingClientRect();
-        return { overflow: document.documentElement.scrollWidth > innerWidth, fits: result.top >= overlay.top - 1 && result.bottom <= overlay.bottom + 1 };
+        return { overflow: document.documentElement.scrollWidth > innerWidth, fits: result.top >= overlay.top - 1 && result.bottom <= overlay.bottom + 1, centered: Math.abs((result.top + result.bottom) / 2 - (overlay.top + overlay.bottom) / 2) < 1 };
       });
       assert.equal(bounds.overflow, false);
       assert.equal(bounds.fits, true, `${skin} ${width}x${height}: end scene fits board`);
+      assert.equal(bounds.centered, true, `${skin} ${width}x${height}: end scene is vertically centered`);
       if (skin.startsWith('icq-retro') && width === 390) await blue.locator('.board-surface').screenshot({ path: path.join(tmpdir(), `rps-endgame-${skin}.png`) });
     }
     console.log(`${skin}: blue winner, sad red player and raised blue flag fit all viewport sizes`);

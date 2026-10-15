@@ -1,5 +1,15 @@
 # Änderungen
 
+## 0.4.17
+
+- Feste Höhen für Schiedsrichter, Zughinweis und Spielernamen im kompakten Layout; Zugwechsel und Auswahlhinweise verschieben das Spielfeld nicht mehr.
+- Gewinner-Overlay vertikal über dem Spielfeld zentriert, auch in niedrigen Querformatfenstern. Der Schiedsrichter zeigt mit der farbrichtigen Gewinnerfahne zum Sieger.
+- Eigene Fallenbegegnung: Die vorhandene verdeckte Spielfigur in passender Teamfarbe und Ansicht klappt wie eine Tür auf und gibt das Fallloch frei. Der Angreifer fällt hinein, statt als Waffe zu zerbrechen.
+- Ausgelöste gegnerische Fallen erscheinen auf dem Brett wieder verdeckt und bleiben für weitere Angriffe wirksam. Das Kampfereignis zeigt die Falle weiterhin.
+- Flaggeneroberung mit vollständigen Figuren, übernommener Fahne und verpuffendem bisherigen Flaggenträger. Aktualisierte Grafiken für alle vier Designs einschließlich Raster- und Mobilatlanten.
+- Neue Kampfmotive folgen dem jeweiligen Grafikset: Retro-Fahnen aus den Siegerposen, kantige Arcade-Spielsteine und klassische Liniengrafiken. Die Falltür verwendet direkt die vorhandene Figurengrafik. Editierbare SVG-Quellen und getrennte Quell- und Atlasexporte.
+- README vollständig auf Spielbeschreibung, Einstieg, Regeln und Bedienung ausgerichtet. Versionshistorie im Changelog gebündelt; interne Betriebsadressen, Infrastrukturangaben, Konfiguration und Bereitstellungsdetails aus der README entfernt.
+
 ## 0.4.16
 
 - Persistentes Spielende-Overlay mit farbrichtiger Gewinnerfahne beim Schiri sowie jubelndem Sieger und traurigem Verlierer. Eigene, aus den vorhandenen SVG-Figuren abgeleitete Posen; neutrale Szene bei Unentschieden. Wartet auf das Ende der Kampfanimation und bleibt bis zur nächsten Partie bestehen.

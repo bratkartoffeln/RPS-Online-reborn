@@ -91,6 +91,25 @@ test('resolved battles preserve both public participants even after the losing f
   }
 });
 
+test('a triggered trap remains disguised on the opponent board and can catch another figure', () => {
+  const game = battle('rock', 'trap');
+  game.board[18] = { id: 'second-victim', owner: 'a', kind: 'scissors', revealed: false };
+  const trapId = game.board[17]!.id;
+  success(movePiece(game, 'a', 24, 17));
+  for (const viewer of ['a', 'not-a-player']) {
+    assert.deepEqual(viewFor(game, viewer).board[17], { id: trapId, owner: 'b', kind: null, revealed: false });
+    assert.equal(viewFor(game, viewer).lastAction!.defender!.kind, 'trap', 'The combat scene still reveals the trap');
+  }
+  assert.equal(viewFor(game, 'b').board[17]!.kind, 'trap');
+  success(movePiece(game, 'b', 6, 5));
+  assert.equal(viewFor(game, 'a').board[17]!.kind, null, 'It stays disguised on subsequent turns');
+  success(movePiece(game, 'a', 18, 17));
+  assert.equal(game.lastAction!.outcome, 'trap');
+  assert.equal(game.board[17]!.id, trapId);
+  assert.equal(game.board.some(piece => piece?.id === 'second-victim'), false);
+  assert.equal(viewFor(game, 'a').board[17]!.revealed, false);
+});
+
 test('duel events publish choices only after both submissions and keep earlier results unchanged', () => {
   for (const [attackChoice, defenseChoice, outcome] of [
     ['paper', 'rock', 'attacker'],

@@ -272,7 +272,7 @@ test('flag capture wins immediately, including on the turn-limit boundary', () =
   rejected(game, () => chooseDuel(game, 'b', 'rock'));
 });
 
-test('trap kills the attacker and remains publicly revealed on its cell', () => {
+test('trap kills the attacker and resumes its opponent disguise', () => {
   const game = battle('paper', 'trap');
   const trapId = game.board[17]!.id;
   success(movePiece(game, 'a', 24, 17));
@@ -280,7 +280,9 @@ test('trap kills the attacker and remains publicly revealed on its cell', () => 
   assert.equal(game.board[17]!.id, trapId);
   assert.equal(game.board[17]!.kind, 'trap');
   assert.equal(game.board[17]!.revealed, true);
-  assert.equal(viewFor(game, 'a').board[17]!.kind, 'trap');
+  assert.equal(viewFor(game, 'a').board[17]!.kind, null);
+  assert.equal(viewFor(game, 'a').board[17]!.revealed, false);
+  assert.equal(viewFor(game, 'b').board[17]!.kind, 'trap');
   assert.equal(game.phase, 'playing');
   assert.equal(game.currentTurn, 'b');
   rejected(game, () => movePiece(game, 'b', 17, 16));

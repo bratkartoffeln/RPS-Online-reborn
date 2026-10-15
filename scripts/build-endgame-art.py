@@ -59,5 +59,11 @@ for color in ['blue', 'red']:
 
 for color, frame in [('blue', 'referee-blue-top'), ('red', 'referee-red-turn'), ('neutral', 'referee-neutral')]:
     group = deepcopy(next(node for node in referees.iter() if node.get('id') == frame))
+    # The winner is always on the right of the result scene. These source poses
+    # raise the colored flag on the left; mirror the whole pose, including gaze.
+    if color != 'neutral':
+        wrapper = ET.Element(f'{{{SVG}}}g', {'transform': 'translate(320 0) scale(-1 1)'})
+        wrapper.append(group)
+        group = wrapper
     export(f'referee-{color}', group, referees.find(f'{{{SVG}}}defs'), '0 0 320 240', f'Schiedsrichter: {color}')
 print('Nine SVG endgame poses exported to public/endgame.')

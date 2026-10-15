@@ -1,4 +1,4 @@
-# Grafiksets für RPS Arena v0.4.16
+# Grafiksets für RPS Arena v0.4.17
 
 Das Spielende verwendet eigenständige SVG-Posen in `public/endgame/`, abgeleitet
 aus den vorhandenen ICQ-Retro-Figuren. `scripts/build-endgame-art.py` exportiert
@@ -6,6 +6,28 @@ die Sieger-, Verlierer- und neutralen Figuren sowie die Schiedsrichter mit
 farbrichtiger Gewinnerfahne aus den editierbaren Vorlagen in
 `design/icq-retro-source/`. Dafür genügt Python ohne zusätzliche Grafikmodule.
 Die Szene passt ihren Hintergrund und ihre Schrift an das aktive Design an.
+
+Fallen- und Flaggenbegegnungen verwenden vollständige Figuren statt Waffen.
+`node scripts/build-combat-atlases.mjs` ergänzt alle vier Sets um die Frames
+`combat-trap-hole`, `combat-flag-blue`,
+`combat-flag-red`, `combat-puff` und zwei Ersatzfiguren für Sets ohne Figurenatlas.
+Die Flaggenframes sind nach dem bisherigen Besitzer benannt und zeigen dessen
+Zielflagge. Die editierbaren SVG-Vorlagen liegen in `design/combat/`. Der Export
+liest diese Quellen und ergänzt Hauptatlas, PNG-Fallback und mobilen WebP-Atlas
+samt Manifesten. Bestehende Frame-Koordinaten bleiben erhalten; neue Retro-Motive
+erhalten dieselbe Auflösung wie die übrigen Figuren. Das Werkzeug benötigt
+`sharp`; als erstes Argument kann dessen installierter Modulpfad angegeben werden.
+Nach einem Neuaufbau der ursprünglichen Atlanten diesen Export zuletzt ausführen.
+
+`python scripts/build-combat-art.py` erzeugt die Quellvorlagen bei Bedarf neu:
+Retro verwendet die Fahnen aus den Siegerposen; Arcade übernimmt seine vorhandenen
+Spielsteinformen, Klassisch die Strichstärken und Formen des Linien-Iconsets.
+Fallloch und Rauch folgen jeweils derselben Kontur-, Farb- und Schattensprache.
+Die Falltür selbst verwendet direkt die vorhandene verdeckte Figur des Besitzers,
+mit derselben Vorder- oder Rückenansicht wie auf dem Brett; dafür gibt es keinen
+zusätzlichen Attrappenframe.
+Der Quellgenerator benötigt nur die Python-Standardbibliothek. Manuelle Änderungen
+in `design/combat/` bleiben beim reinen Atlasexport erhalten.
 
 Die optionale Manifest-Eigenschaft `chatNotice` verweist auf den Atlas-Frame für
 neue Chatnachrichten. Die mitgelieferten Designs enthalten passende

@@ -331,7 +331,7 @@ test('bundled retro, classic and Arcade packs resolve to existing, correctly bou
   assert.notEqual(retro.colorTurnPortraits.blue, retro.colorTurnPortraits.red);
   assert.notEqual(retro.colorTurnPortraits.blue, retro.portrait);
   assert.notEqual(retro.colorTurnPortraits.red, retro.portrait);
-  assert.equal(Object.keys(retro.atlas!.frames).length, 44);
+  assert.equal(Object.keys(retro.atlas!.frames).length, 50);
   assert.deepEqual(retro.flagVictoryFrames, { blue: 'blue-front-flag-victory', red: 'red-front-flag-victory' });
   assert.deepEqual(retro.directionalTurnPortraits, {
     blue: { top: 'referee-blue-top', bottom: 'referee-blue-turn' },
@@ -382,7 +382,7 @@ test('bundled retro, classic and Arcade packs resolve to existing, correctly bou
   const classic = parseSkinDefinition(JSON.parse(readFileSync(new URL('classic/skin.json', root), 'utf8')));
   assert.deepEqual(classic.palette, DEFAULT_SKIN.palette);
   assert.equal(classic.atlas?.image, 'atlas.svg');
-  validateAtlasDimensions(classic, 96, 96);
+  validateAtlasDimensions(classic, 896, 224);
   assert.equal(classic.pieces, undefined, 'Classic pieces retain the built-in vector artwork.');
   const arcade = parseSkinDefinition(JSON.parse(readFileSync(new URL('arcade/skin.json', root), 'utf8')));
   assert.equal(arcade.atlas?.image, 'master.svg');
@@ -390,9 +390,9 @@ test('bundled retro, classic and Arcade packs resolve to existing, correctly bou
   const png = readFileSync(new URL(`arcade/${arcade.atlas!.fallbackImage}`, root));
   assert.deepEqual(png.subarray(0, 8), Buffer.from([137, 80, 78, 71, 13, 10, 26, 10]));
   const width = png.readUInt32BE(16), height = png.readUInt32BE(20);
-  assert.deepEqual([width, height], [1152, 1248]);
+  assert.deepEqual([width, height], [1152, 1376]);
   validateAtlasDimensions(arcade, width, height);
-  assert.equal(Object.keys(arcade.atlas!.frames).length, 148);
+  assert.equal(Object.keys(arcade.atlas!.frames).length, 154);
   assert.ok(arcade.board?.light && arcade.board.dark && arcade.logo);
   for (const team of ['own', 'enemy'] as const) {
     for (const kind of ['rock', 'paper', 'scissors', 'flag', 'trap', 'unknown'] as const) {
@@ -402,7 +402,7 @@ test('bundled retro, classic and Arcade packs resolve to existing, correctly bou
     }
   }
   const svg = readFileSync(new URL(`arcade/${arcade.atlas!.image}`, root), 'utf8');
-  assert.match(svg, /width="1152" height="1248"/);
+  assert.match(svg, /width="1152" height="1376"/);
   assert.match(svg, /id="enemy-unknown-lose-1"/);
   assert.doesNotMatch(svg, /<script|<image|href=/i);
 });
