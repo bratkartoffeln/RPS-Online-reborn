@@ -1,0 +1,29 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="128" height="128" viewBox="0 0 128 128">
+  <title>ICQ-Kämpfer – neu gezeichnete Seitenansicht nach der Videoreferenz</title>
+  <g stroke="#171c23" stroke-width="2.8" stroke-linecap="round" stroke-linejoin="round">
+    <!-- Balanced stance, complete shoes and empty hands. -->
+    <path d="M51 84 44 100 36 114Q39 120 51 117L66 98 72 112Q80 118 91 112L77 85Z" fill="#306ac5"/>
+    <path d="m37 112-4 7q9 6 20 0l1-6m18-3 1 7q11 5 21-2l-5-6" fill="#26344a"/>
+    <path d="M48 64Q38 72 42 91L55 99 76 87 70 66Z" fill="#538de0"/>
+    <path d="M45 77q-10 1-11 9l8 5 9-8" fill="#306ac5"/>
+    <path d="M35 84q-7-1-8 4t8 7l7-4" fill="#ffcf91"/>
+    <path d="M55 75Q64 88 84 86L94 78 99 86Q87 100 74 96L53 86" fill="#538de0"/>
+    <path d="M92 78q5-5 10-2l5 5q2 6-5 9l-6-1-4-5" fill="#ffcf91"/>
+    <path d="m45 91 13 3 14-5" fill="none" stroke="#204786"/>
+    <!-- Swept knot, large cheek and narrow sideways gaze from the original pose. -->
+    <path d="M40 27 18 17Q12 22 13 33L36 40Z" fill="#306ac5"/>
+    <path d="M35 35 22 39 28 44 41 40" fill="#22529b"/>
+    <path d="M34 45Q30 27 47 21 69 12 88 28L91 38 100 43 96 51Q101 66 84 73 65 82 44 67 36 63 36 55Z" fill="#ffcf91"/>
+    <path d="M35 51Q26 33 42 23 65 9 86 23L91 37Q65 22 45 37L42 55Z" fill="#306ac5"/>
+    <path d="M39 33Q57 18 78 26" fill="none" stroke="#659be5" stroke-width="3"/>
+    <path d="M46 45Q61 44 76 51L70 59Q54 60 46 49Z" fill="#fffef2"/>
+    <path d="m67 49 4 3-2 6" fill="#171c23" stroke-width="2"/>
+    <path d="m47 43 29 7m9-9 8 3" fill="none"/>
+    <path d="m89 46 5 3-5 3" fill="#fffef2" stroke-width="2"/>
+    <path d="M60 64q12 9 25-3" fill="none"/>
+    <path d="m62 64-2-3" fill="none" stroke-width="2"/>
+    <ellipse cx="88" cy="57" rx="4" ry="3.5" fill="#ec9473" stroke="none"/>
+    <path d="M41 53q-6-3-6 3t8 6" fill="#ffcf91"/>
+    <path d="m39 55 3 3" fill="none" stroke="#c68d61" stroke-width="1.5"/>
+  </g>
+</svg>

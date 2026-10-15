@@ -1,4 +1,4 @@
-# Grafiksets für RPS Arena v0.4.26
+# Grafiksets für RPS Arena v0.4.27
 
 Jedes eingebaute Design ist ein eigenständiges Paket unter `public/skins/<id>/`.
 Es enthält sein Manifest, Atlanten, Gewinnerbilder, Gonganimation, Sounds,
@@ -14,9 +14,10 @@ Vorlage liegt in `source/battle-poses.svg`; nach den übrigen Atlas-Exportern
 aktualisiert `node scripts/build-battle-poses.mjs` die SVG-, PNG- und mobilen
 WebP-Atlanten gemeinsam (benötigt das optionale Playwright-Grafikwerkzeug).
 
-Die beiden ICQ-Designs verwenden dafür freigestellte Originalbilder aus dem
-Referenzvideo statt gezeichneter Seitenansichten. Unter
-`icq-retro/source/video-side-poses.json` stehen Quelle, Zeitpunkte und Masken;
+Die beiden ICQ-Designs verwenden dafür die saubere Vektorzeichnung
+`icq-retro/source/side-profile.svg`, nach den Seitenposen des Referenzvideos.
+Die früheren Ausschnitte bleiben als Zeichenvorlage erhalten, werden aber nicht
+im Atlas eingebettet. Unter `icq-retro/source/video-side-poses.json` stehen Quelle, Zeitpunkte und Masken;
 `scripts/extract-video-poses.mjs` reproduziert die PNGs mit dem Video, FFmpeg und
 Playwright als Argumenten. Beide Designs teilen diese Quelldateien. Die Bilder
 übernehmen die Rechte des Originalmaterials und sind nicht CC0.

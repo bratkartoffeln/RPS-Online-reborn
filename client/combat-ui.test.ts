@@ -318,7 +318,7 @@ test('resolved choices open the fight immediately and skin repaints cannot repea
   h.overlay.reset();
 });
 
-test('weapon effects begin with the visible action and finish before the winner sound', async (t) => {
+test('0.4.24 battle timing proceeds independently of weapon playback completion', async (t) => {
   t.mock.timers.enable({ apis: ['setTimeout'] });
   let endSound!: () => void;
   const playback = new Promise<void>(resolve => { endSound = resolve; });
@@ -335,9 +335,9 @@ test('weapon effects begin with the visible action and finish before the winner 
   h.cloud.dispatchEvent(animationEnd('combat-impact'));
   assert.equal(effects, 1);
   assert.equal(h.root.dataset.stage, 'shatter');
+  assert.equal(results, 1, 'The result starts after 1200ms, as in 0.4.24');
   h.left.dispatchEvent(animationEnd('combat-return-left'));
-  assert.equal(h.root.dataset.stage, 'shatter', 'The action holds while its weapon sample is playing');
-  assert.equal(results, 0);
+  assert.equal(h.root.dataset.stage, 'winner', 'An unresolved playback promise cannot hold the animation');
   endSound(); await playback;
   assert.equal(h.root.dataset.stage, 'winner');
   assert.equal(results, 1);

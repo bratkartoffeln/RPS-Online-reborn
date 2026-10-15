@@ -176,7 +176,6 @@ export class CombatOverlay {
   private waitingForBoard = false;
   private effectPlayed = false;
   private resultPlayed = false;
-  private effectPlayback: Promise<void> | null = null;
   private provisionalChoice: { identity: string; kind: FighterKind } | null = null;
   private queue: QueuedCombat[] = [];
   private timers: Array<ReturnType<typeof setTimeout>> = [];
@@ -284,7 +283,6 @@ export class CombatOverlay {
     this.activeStarted = false;
     this.waitingForBoard = false;
     this.provisionalChoice = null;
-    this.effectPlayback = null;
     this.setBusy(false);
   }
 
@@ -297,7 +295,6 @@ export class CombatOverlay {
     this.activeStarted = false;
     this.effectPlayed = false;
     this.resultPlayed = false;
-    this.effectPlayback = null;
     if (!this.active) { this.setBusy(false); return; }
     this.setBusy(true);
     if (this.callbacks.beforeBattle && this.activeAction?.kind !== 'duel') {
@@ -334,13 +331,12 @@ export class CombatOverlay {
     if (!this.effectPlayed && this.activeAction && (this.activeStage === 'impact' ||
         this.activeStage === 'result' && this.activeReduced)) {
       this.effectPlayed = true;
-      this.effectPlayback = this.callbacks.onBattleEffect?.(this.activeAction) ?? null;
+      void this.callbacks.onBattleEffect?.(this.activeAction);
     }
     if (this.activeReduced || this.activeStage === 'result') {
       const epoch = this.epoch;
       const finish = () => { if (epoch === this.epoch && this.active) this.finish(); };
-      this.schedule(this.activeReduced ? COMBAT_TIMING.reduced : COMBAT_TIMING.complete - COMBAT_TIMING.shatter,
-        () => { if (this.effectPlayback) void this.effectPlayback.then(finish); else finish(); });
+      this.schedule(this.activeReduced ? COMBAT_TIMING.reduced : COMBAT_TIMING.complete - COMBAT_TIMING.shatter, finish);
       return;
     }
     const stages = {
@@ -358,9 +354,7 @@ export class CombatOverlay {
         if (stage.next === null) this.finish();
         else { this.setStage(stage.next); this.continueBattle(); }
       };
-      // Contact starts the weapon sample; its duration must not postpone the visible attack.
-      if (this.effectPlayback && this.activeStage !== 'impact') void this.effectPlayback.then(advance);
-      else advance();
+      advance();
     });
   }
 
@@ -380,7 +374,7 @@ export class CombatOverlay {
   }
 
   private setStage(stage: CombatStage): void {
-    if (stage === 'winner') this.playResult();
+    if (stage === 'shatter' || stage === 'result') this.playResult();
     this.activeStage = stage;
     this.root.dataset.stage = stage;
     const stageElement = this.root.querySelector<HTMLElement>('.combat-stage');
