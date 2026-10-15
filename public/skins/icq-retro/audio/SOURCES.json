@@ -1,0 +1,298 @@
+{
+  "retrieved": "2026-10-15",
+  "effects": {
+    "duel.ogg": {
+      "author": "Kenney Vleugels",
+      "url": "https://kenney.nl/assets/digital-audio",
+      "license": "CC0-1.0",
+      "original": "Audio/twoTone1.ogg",
+      "sha256": "8732f14d6398407a8f1df77b986c2099cfd88f6583e1272cb60497cb2fe8da1d"
+    },
+    "draw.ogg": {
+      "author": "Kenney Vleugels",
+      "url": "https://kenney.nl/assets/digital-audio",
+      "license": "CC0-1.0",
+      "original": "Audio/twoTone2.ogg",
+      "sha256": "e8e4a2d9faa4344f4722de9ef81103290858bbcd80f1dc686879128cae52e9f0"
+    },
+    "move.ogg": {
+      "author": "Kenney Vleugels",
+      "url": "https://kenney.nl/assets/impact-sounds",
+      "license": "CC0-1.0",
+      "original": "Audio/footstep_wood_001.ogg",
+      "sha256": "e4f68e1c9fd55b4dc8ca89ed2bbab6f200171bc54bdc18aa96b80d8e7336f462"
+    },
+    "rock.ogg": {
+      "author": "Kenney Vleugels",
+      "url": "https://kenney.nl/assets/impact-sounds",
+      "license": "CC0-1.0",
+      "original": "Audio/impactPunch_heavy_000.ogg",
+      "sha256": "b33a8f14068aec24ec69ba85e5e87fdc41228975f6a1a3e44a6e7d6fc3d9f8d8"
+    },
+    "paper.ogg": {
+      "author": "Kenney Vleugels",
+      "url": "https://kenney.nl/assets/impact-sounds",
+      "license": "CC0-1.0",
+      "original": "Audio/impactSoft_heavy_000.ogg",
+      "sha256": "49e7ca88743fca974bb8676ea138b751cfd8f9033b5e7af8736c2a215d6edbc1"
+    },
+    "scissors.ogg": {
+      "author": "Kenney Vleugels",
+      "url": "https://kenney.nl/assets/impact-sounds",
+      "license": "CC0-1.0",
+      "original": "Audio/impactTin_medium_000.ogg",
+      "sha256": "f4bbee66ca191ec744b84fc07ac9ed2a6fda955d51cfed8360f12b62815d3cbd"
+    },
+    "trap.ogg": {
+      "author": "Kenney Vleugels",
+      "url": "https://kenney.nl/assets/digital-audio",
+      "license": "CC0-1.0",
+      "original": "Audio/lowDown.ogg",
+      "sha256": "e0215fcfd8b9d7877f74d5c46b239a13d7db0d25998da97b80404931ef9eef5d"
+    },
+    "flag.ogg": {
+      "author": "Kenney Vleugels",
+      "url": "https://kenney.nl/assets/digital-audio",
+      "license": "CC0-1.0",
+      "original": "Audio/powerUp2.ogg",
+      "sha256": "83786b43d828a399e14ac20604b63a60ca05385977f5477d00304c2adc696204"
+    },
+    "win.ogg": {
+      "author": "Kenney Vleugels",
+      "url": "https://kenney.nl/assets/digital-audio",
+      "license": "CC0-1.0",
+      "original": "Audio/powerUp5.ogg",
+      "sha256": "528e7245a1b61c6fd94bcb8df1d747e6e9b76dce58a36e44be992cf9e09884f8"
+    },
+    "lose.ogg": {
+      "author": "Kenney Vleugels",
+      "url": "https://kenney.nl/assets/digital-audio",
+      "license": "CC0-1.0",
+      "original": "Audio/phaserDown1.ogg",
+      "sha256": "d2d046cd0247045f8819905fc9719a7237ccbd590b3128ce58a61a81f50d208b"
+    },
+    "gong.ogg": {
+      "author": "rubberduck",
+      "url": "https://opengameart.org/content/100-cc0-sfx",
+      "license": "CC0-1.0",
+      "original": "gong_01.ogg",
+      "sha256": "4780a38e91688b59899b3679cf3534b4b75654b45a177af9d9fb681c447f7f9a"
+    },
+    "moveBlue-1.ogg": {
+      "author": "Kenney Vleugels",
+      "url": "https://kenney.nl/assets/digital-audio",
+      "license": "CC0-1.0",
+      "original": "Audio/phaseJump1.ogg",
+      "sha256": "c60069ed7108678dd6a1306404d168a93cc2575cda37b06add9dd6c4d46352a3"
+    },
+    "moveBlue-2.ogg": {
+      "author": "Kenney Vleugels",
+      "url": "https://kenney.nl/assets/digital-audio",
+      "license": "CC0-1.0",
+      "original": "Audio/phaseJump2.ogg",
+      "sha256": "5d85717cfca231f7da7887cef5f44b2131bbe3308eb0c1fee0b4f9e61d59b571"
+    },
+    "moveRed-1.ogg": {
+      "author": "Kenney Vleugels",
+      "url": "https://kenney.nl/assets/digital-audio",
+      "license": "CC0-1.0",
+      "original": "Audio/pepSound4.ogg",
+      "sha256": "8afd1776651eb3155e1b588f26d6c9b5cc183e9c53297685763f51ac63e63673"
+    },
+    "moveRed-2.ogg": {
+      "author": "Kenney Vleugels",
+      "url": "https://kenney.nl/assets/digital-audio",
+      "license": "CC0-1.0",
+      "original": "Audio/pepSound5.ogg",
+      "sha256": "4dc9824b319efd915bac82d8e2767e51d5f6503224d358fda6e2d445f2934bc8"
+    }
+  },
+  "speech": {
+    "engine": "eSpeak NG (espeak-ng npm 1.0.2), offline formant synthesis",
+    "engineSource": "https://github.com/espeak-ng/espeak-ng",
+    "engineLicense": "GPL-3.0-or-later (tool only; not shipped)",
+    "voice": "cmn+m3",
+    "speed": 155,
+    "pitch": 38,
+    "language": "English phrases spoken using the Mandarin voice",
+    "note": "Locally generated Mandarin-profile WAVs remain as optional alternatives. Active retro speech is extracted from the user-specified video; see video.files and skin.json. The video excerpts are NOT CC0.",
+    "phrases": {
+      "redTurn": "Red turn",
+      "blueTurn": "Blue turn",
+      "youWin": "You win",
+      "youLose": "You lose"
+    }
+  },
+  "video": {
+    "source": "https://www.youtube.com/watch?v=Q2sDtTbzHiI",
+    "title": "Rock Paper Scissors in ICQ (RPS)",
+    "channel": "shachar700",
+    "license": "No free license declared in the retrieved video metadata; not CC0. Source/game audio rights remain with their respective owners.",
+    "notes": "User-requested excerpts. Seconds refer to the downloaded audio timeline. No pitch change, no added speech. Gong tail ends before the next spoken turn cue. Missing isolated events retain the CC0 replacement sounds.",
+    "clips": {
+      "gong": {
+        "start": 22.52,
+        "end": 23.38,
+        "label": "Opening gong strike, cut before the blue-turn announcement"
+      },
+      "move": {
+        "start": 51,
+        "end": 51.66,
+        "label": "Piece hop / movement whoop"
+      },
+      "paper": {
+        "start": 34.31,
+        "end": 34.94,
+        "label": "Paper-versus-paper approach before weapon selection"
+      },
+      "scissors": {
+        "start": 37.36,
+        "end": 38.86,
+        "label": "Blue scissors attacking red paper"
+      },
+      "rock": {
+        "start": 42.15,
+        "end": 43.73,
+        "label": "Red rock attacking blue scissors"
+      },
+      "flag": {
+        "start": 352.61,
+        "end": 354.08,
+        "label": "Final flag pickup and victory hop before the game-over announcement"
+      },
+      "blueTurn": {
+        "start": 27.39,
+        "end": 28.04,
+        "label": "Blue turn"
+      },
+      "redTurn": {
+        "start": 318.1,
+        "end": 319.45,
+        "label": "Complete Red turn from a different late-game passage (05:18.10-05:19.45), with breathing room before the next movement near 319.8s"
+      },
+      "youWin": {
+        "start": 44.16,
+        "end": 45.74,
+        "label": "You win"
+      },
+      "youLose": {
+        "start": 39.84,
+        "end": 40.41,
+        "label": "You lose"
+      },
+      "moveBlue": {
+        "start": 51,
+        "end": 51.66,
+        "label": "Blue-team movement whoop"
+      },
+      "moveBlue2": {
+        "start": 83.46,
+        "end": 84.63,
+        "cue": "moveBlue",
+        "variant": true,
+        "label": "Blue-team movement variation"
+      },
+      "moveRed": {
+        "start": 52.42,
+        "end": 53.59,
+        "label": "Red-team movement grunt after the red-turn announcement"
+      },
+      "moveRed2": {
+        "start": 294.8,
+        "end": 295.4,
+        "cue": "moveRed",
+        "variant": true,
+        "label": "Red-team movement variation before blue-turn announcement"
+      }
+    },
+    "sourceSha256": "0346b1c0906afe388e3a51fe0798481c639527889ee602a006c19af2aaa24f43",
+    "imported": "2026-10-15",
+    "processing": "FFmpeg; mono PCM WAV 22050 Hz, high-pass 55 Hz, peak normalization to -2 dBFS, 6 ms fade-in / 35 ms fade-out. No pitch change. Gong only: 2.1 s feedback-reverb tail with staggered delays, decaying to silence without importing the following voice.",
+    "files": {
+      "original-gong.wav": {
+        "cue": "gong",
+        "start": 22.52,
+        "end": 23.38,
+        "sha256": "3ed483a7131424c34981499e57a57b55f2df1bf47c9cfdc9f765fc07bf948732"
+      },
+      "original-move.wav": {
+        "cue": "move",
+        "start": 51,
+        "end": 51.66,
+        "sha256": "c3dc98c9b82e9b491b58ca6dd7519d6834273bf2bad35d96b639d7f91eea9b18"
+      },
+      "original-paper.wav": {
+        "cue": "paper",
+        "start": 34.31,
+        "end": 34.94,
+        "sha256": "b36403bd0423347da1ddc9b59eae2d848b17b4e33a1bbefc1acac5dada229d08"
+      },
+      "original-scissors.wav": {
+        "cue": "scissors",
+        "start": 37.36,
+        "end": 38.86,
+        "sha256": "07f6ebd9113639b5af891e99279e20c50e87ed9b30d5ddd753350e20c7391a66"
+      },
+      "original-rock.wav": {
+        "cue": "rock",
+        "start": 42.15,
+        "end": 43.73,
+        "sha256": "6db9c0ba126ed8e0ab1c018e69756fc8bdfb34c90349fbe5e567f5606eb5588d"
+      },
+      "original-flag.wav": {
+        "cue": "flag",
+        "start": 352.61,
+        "end": 354.08,
+        "sha256": "62e2a54906d346a81b3ad18f086f64a8d2e932de750e2a0553fa4d116b2802e8"
+      },
+      "original-blueTurn.wav": {
+        "cue": "blueTurn",
+        "start": 27.39,
+        "end": 28.04,
+        "sha256": "eb89a7af24e530015376fa156ada5681ede1ab6c81f26d87590aaae0a6d6a62c"
+      },
+      "original-redTurn.wav": {
+        "cue": "redTurn",
+        "start": 318.1,
+        "end": 319.45,
+        "sha256": "ca46990a8e23511a5a5ef752ff619725bbfa25d74783d293cd8e5294663c2e35"
+      },
+      "original-youWin.wav": {
+        "cue": "youWin",
+        "start": 44.16,
+        "end": 45.74,
+        "sha256": "e1e9f0e37a434e64d154a97846e23a4bed38986a204d9b94aa02f6787e1fbfe5"
+      },
+      "original-youLose.wav": {
+        "cue": "youLose",
+        "start": 39.84,
+        "end": 40.41,
+        "sha256": "02f0f996cafbcfa052cd6dd59c78935ea15e17b08338fd278d438dacf9bd5f2d"
+      },
+      "original-moveBlue.wav": {
+        "cue": "moveBlue",
+        "start": 51,
+        "end": 51.66,
+        "sha256": "c3dc98c9b82e9b491b58ca6dd7519d6834273bf2bad35d96b639d7f91eea9b18"
+      },
+      "original-moveBlue2.wav": {
+        "cue": "moveBlue",
+        "start": 83.46,
+        "end": 84.63,
+        "sha256": "a097ebb2e854823158267af3a91f139fcdf74888bd98733301725fc2c08ede03"
+      },
+      "original-moveRed.wav": {
+        "cue": "moveRed",
+        "start": 52.42,
+        "end": 53.59,
+        "sha256": "0445705ba571b71ecb0955e9e342884c75355f8c66472bace60939d87298fb92"
+      },
+      "original-moveRed2.wav": {
+        "cue": "moveRed",
+        "start": 294.8,
+        "end": 295.4,
+        "sha256": "a0f81433b3378cc370a633e4ca3a5760fbde8663a089e4009e5d4dc2daeb9386"
+      }
+    }
+  }
+}

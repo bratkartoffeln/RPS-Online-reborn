@@ -55,7 +55,7 @@ def original_figure(id, color):
 
 
 def retro_flag(owner):
-    root = ET.parse(ROOT / 'design/icq-retro-source/flag-victory.svg').getroot()
+    root = ET.parse(ROOT / 'public/skins/icq-retro/source/flag-victory.svg').getroot()
     # A holder's target cloth is the opposing color. Reuse the finished capture
     # cloth, its folds, highlights, outline and wooden pole from the source art.
     color = 'red' if owner == 'blue' else 'blue'
@@ -96,7 +96,7 @@ def sources(id):
     return [hole, *flags, puff, *figures]
 
 
-directory = ROOT / 'design/combat'
+directory = ROOT / 'public/skins'
 directory.mkdir(parents=True, exist_ok=True)
 for id in ['classic', 'arcade', 'icq-retro', 'icq-retro-dark']:
     root = element('svg', width='896', height='128', viewBox='0 0 896 128')
@@ -106,5 +106,7 @@ for id in ['classic', 'arcade', 'icq-retro', 'icq-retro-dark']:
         # Duplicate figures have unique IDs; all underlying geometry is inline.
         group.append(drawing)
         root.append(group)
-    ET.ElementTree(root).write(directory / f'{id}.svg', encoding='utf-8', xml_declaration=False)
+    target = directory / id / 'source'
+    target.mkdir(parents=True, exist_ok=True)
+    ET.ElementTree(root).write(target / 'combat.svg', encoding='utf-8', xml_declaration=False)
     print(f'{id}: source silhouettes and matching scenery exported')

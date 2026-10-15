@@ -1,47 +1,157 @@
-# Grafiksets für RPS Arena v0.4.18
+# Grafiksets für RPS Arena v0.4.19
 
-Klassisch und Arcade verwenden eigene Spielende-SVGs unter
-`public/endgame/classic/` und `public/endgame/arcade/`. Der reproduzierbare Export
-`node scripts/build-style-referees.mjs` erzeugt diese Motive und ergänzt je fünf
-Zuganzeigen in den beiden Atlanten, einschließlich Arcade-PNG. Als erstes Argument
-kann der installierte `sharp`-Modulpfad übergeben werden. Arcade übernimmt seine
-Original-Spielsteine mit Sieger- und Verliererposen; Klassisch verwendet Linienmotive.
-Die bestehenden Manifestfelder `portrait` und `directionalTurnPortraits` steuern
-Teamfarbe, neutrale Zustände und Richtung mit derselben Logik wie ICQ Retro.
-Die exportierten Zuganzeigen liegen zusätzlich in `design/turn-indicators/`.
-Nach einem Neubau der Grund- und Kampf-Atlanten diesen Export zuletzt ausführen.
+Jedes eingebaute Design ist ein eigenständiges Paket unter `public/skins/<id>/`.
+Es enthält sein Manifest, Atlanten, Gewinnerbilder, Gonganimation, Sounds,
+editierbare Vorlagen und Audio-Lizenzen. Auch ICQ Retro Dark besitzt alle zur
+Laufzeit verwendeten Dateien selbst. Die zentrale Oberfläche liest die Ressourcen
+aus dem Manifest; neue Designs benötigen keine Abzweigungen nach Design-ID.
 
-Die Gongmotive werden in `client/gong-ui.ts` eingebunden. Beide Retro-Sets verwenden
-das freigestellte Bildmotiv aus der Nutzervorlage unter
-`public/gong/icq-original-cutout.png`, keine nachgezeichnete Ersatzfigur.
-`client/retro-gong-art.ts` trennt die vorhandenen Schlägerpixel über SVG-Masken
-von der ruhenden Grafik. Die Atlanten betten dieses PNG direkt ein; alle übrigen
-Retro-Motive behalten ihre Vektorpfade. Klassisch und Arcade besitzen eigene
-Vektorvarianten. `client/gong-ui.css` steuert den
-einmaligen Schlägerschlag, `client/sound.ts` den dazu synchronisierten Klang.
-Am Spielende ersetzt das ruhende Gongmotiv die normale Schiedsrichterposition.
+## Ein Design hinzufügen
 
-Das ruhende Gongmotiv erscheint ebenfalls während der Aufstellung. Der Export
-`node --import tsx scripts/build-gong-atlases.mjs` ergänzt `gong-idle` und
-`gong-strike` in allen vier Atlanten und ihren Raster-/Mobilvarianten. Er verwendet
-dieselbe SVG-Quelle wie die laufende Animation und schreibt eine Vorschau je Set
-nach `design/gong/`. Als erstes Argument kann der `sharp`-Modulpfad folgen.
-Diesen Export nach allen anderen Atlasexporten zuletzt ausführen. Ruheposen lädt
-die Oberfläche aus dem Atlas; beim Start animiert sie die zugehörigen SVG-Teile.
+1. Einen vollständigen Designordner kopieren, zum Beispiel `public/skins/classic/`
+   nach `public/skins/mein-design/`. Vorhandene Ordner nicht überschreiben.
+2. `name`, Farben, Bilder und Audiozuordnungen in `skin.json` anpassen.
+3. Im Feld `skins` von `public/skins/index.json` den Eintrag
+   `{ "id": "mein-design", "name": "Mein Design", "file": "mein-design/skin.json" }` ergänzen.
+4. `/skins/mein-design/preview.html` im laufenden Spielserver öffnen und
+   `npm run build` sowie `npm test` ausführen.
 
-Das Spielende verwendet eigenständige SVG-Posen in `public/endgame/`, abgeleitet
-aus den vorhandenen ICQ-Retro-Figuren. `scripts/build-endgame-art.py` exportiert
-die Sieger-, Verlierer- und neutralen Figuren sowie die Schiedsrichter mit
-farbrichtiger Gewinnerfahne aus den editierbaren Vorlagen in
-`design/icq-retro-source/`. Dafür genügt Python ohne zusätzliche Grafikmodule.
-Die Szene passt ihren Hintergrund und ihre Schrift an das aktive Design an.
+Für NAS-Overrides gilt dieselbe Ordnerstruktur unter `skins/` beziehungsweise
+`SKINS_DIR`. Relative Ressourcenpfade bleiben innerhalb des ausgewählten Pakets.
+Das bestehende `assetPack` betrifft nur Atlasbilder; neue vollständige Designs
+sollten ihre Dateien selbst mitbringen.
+
+| Pfad im Designordner | Inhalt |
+| --- | --- |
+| `skin.json` | Farben, Frames, Bewegungswerte sowie Audio- und Grafikzuordnung |
+| `atlas.svg` / `master.svg`, PNG, WebP | Brett, Figuren, Symbole und mobile Varianten |
+| `endgame/` | Neun SVGs: beide Farben mit happy/sad/neutral, Schiri blue/red/neutral |
+| `gong/idle.svg`, `gong/strike.svg` | Selbstständige SVGs mit eingebetteter Grafik und Animation |
+| `audio/` | Ogg-Effekte, lokal erzeugte WAV-Stimmen, Lizenztexte und `SOURCES.json` |
+| `source/` | Editierbare SVGs, Gong-CSS, Originalvorlagen und Arbeitsnotizen |
+| `preview.html` | Bilder und einzeln abspielbare Sounds zur Designkontrolle |
+
+## Audio und zusätzliche Grafiken konfigurieren
+
+Das optionale Feld `audio` ordnet Ereignisse relativen Dateien zu:
+
+```json
+{
+  "audio": {
+    "gong": { "file": "audio/gong.ogg", "volume": 0.8, "rate": 1 },
+    "blueTurn": { "file": "audio/blueTurn.wav", "volume": 0.85, "rate": 1 }
+  },
+  "artwork": {
+    "endgame": "endgame",
+    "gong": { "idle": "gong/idle.svg", "strike": "gong/strike.svg", "strikeMs": 380, "durationMs": 1500 }
+  }
+}
+```
+
+Alle Audioereignisse: `move`, `moveBlue`, `moveRed`, `rock`, `paper`, `scissors`, `trap`, `flag`,
+`duel`, `win`, `lose`, `draw`, `gong`, `redTurn`, `blueTurn`, `youWin`, `youLose`.
+Die ersten drei Waffenereignisse begleiten den Zusammenprall; Falle und Flagge
+besitzen eigene Effekte. `win`/`lose` sind kurze Kampfergebnisse,
+`youWin`/`youLose` die gesprochenen Partieergebnisse aus Sicht des Betrachters.
+Zugfarben folgen den festen Spielersitzen. Ansagen warten auf die sichtbare
+Ergebnisszene beziehungsweise das Ende der Startanimation. Wiederverbinden,
+Neuladen, Pausieren und Synchronisieren lösen keine verspäteten Ansagen aus.
+
+Unterstützt werden Ogg, WAV, MP3 und M4A; pro Datei maximal 1 MiB und zehn
+Sekunden dekodierte Dauer. `volume` liegt zwischen 0 und 1 (Standard 0.7),
+`rate` zwischen 0.5 und 2 (Standard 1). Mit `variants` können bis zu fünf weitere
+relative Audiodateien pro Ereignis angegeben werden. Sie wechseln bei jedem
+Ereignis der Reihe nach. `moveBlue` und `moveRed` verwenden getrennte Varianten
+für die feste Besitzerfarbe; fehlt eine Teamzuordnung, dient `move` als Ersatz.
+Alle vier Designs enthalten zwei Bewegungsvarianten je Farbe. Fehlerhafte oder fehlende Effekte
+fallen auf einen kurzen Signalton zurück; fehlende Stimmen werden ausgelassen.
+Stummschalten und Designwechsel stoppen bereits geplante Sounds. Ohne gespeicherte
+Auswahl sind Spielsounds aktiv; eine gespeicherte Stummschaltung bleibt erhalten.
+
+## Klangquellen und lokale Sprachproduktion
+
+- Kenney: [Impact Sounds](https://kenney.nl/assets/impact-sounds) und
+  [Digital Audio](https://kenney.nl/assets/digital-audio), beide CC0 1.0.
+- rubberduck: [100 CC0 SFX](https://opengameart.org/content/100-cc0-sfx), CC0 1.0, für die Gongaufnahmen.
+- Recherchierte Sprachbibliotheken: Kenneys Voiceover Pack und Voiceover Pack
+  (Fighter) enthalten „you win“/„you lose“, aber nicht die benötigten
+  Farb-Zugansagen. Auf Nutzerwunsch wird keine dieser Sprecheraufnahmen eingebunden.
+- Die synthetischen Stimmen werden offline mit [eSpeak NG](https://github.com/espeak-ng/espeak-ng)
+  erzeugt: englischer Text im Mandarin-Sprachprofil `cmn`. Dies ist eine
+  synthetische Mandarin-geprägte Aussprache, keine menschliche Dialektaufnahme.
+  Klassisch verwendet eine ruhige Stimme, Retro einen tieferen Klang und Arcade
+  eine schnellere raue Variante. Retro Dark verwendet dieselbe synthetische Retro-Alternative; aktiv sind dort die folgenden Videoansagen.
+
+Die Sounddateien sind bereits enthalten. Zum Reproduzieren die drei Archive
+lokal in `impact/`, `digital/`, `gong/` entpacken. Außerhalb des Projekts
+`espeak-ng@1.0.2` (npm-Paket mit WASM) bereitstellen, dann:
+
+```text
+node scripts/build-skin-audio.mjs <ordner-der-audioarchive> <espeak-ng-paket/dist>
+```
+
+Zur Laufzeit gibt es keine externen Audioabrufe und keine Sprachsynthese.
+Originaldateinamen, SHA-256, Urheber, Syntheseparameter und Lizenzangaben stehen
+pro Paket in `audio/SOURCES.json`. Das Synthesewerkzeug selbst wird nicht
+mitgeliefert. Seine GPL-Lizenz ist von den erzeugten Sprach-WAVs getrennt;
+die erzeugten Sprachdateien werden als CC0 bereitgestellt.
+
+## Originalsounds aus dem ICQ-Video
+
+Auf ausdrücklichen Nutzerwunsch verwenden ICQ Retro und Retro Dark kurze
+Originalausschnitte aus [Rock Paper Scissors in ICQ (RPS)](https://www.youtube.com/watch?v=Q2sDtTbzHiI)
+von shachar700. Diese ersetzen die aktiven Retro-Zuordnungen für Gong, Bewegung,
+Stein, Papier, Schere, Flagge sowie „red turn“, „blue turn“, „you win“ und
+„you lose“. Die synthetischen Retro-WAVs bleiben als optionale Alternativen
+enthalten. Nicht isoliert extrahierte Ereignisse behalten ihre CC0-Ersatzsounds.
+Klassisch und Arcade verwenden weiterhin lokal erzeugte Sprachansagen.
+Die rote Ansage stammt vollständig aus 05:18,10–05:19,45; der nächste
+Bewegungssound bleibt außerhalb dieses Ausschnitts. Zwei verschiedene
+Bewegungsaufnahmen pro Team ergänzen die ursprüngliche Standardbewegung.
+
+Die Videometadaten weisen keine freie Wiederverwendungslizenz aus. Deshalb sind
+`audio/original-*.wav` ausdrücklich **nicht CC0**. Quellen, genaue Zeitbereiche,
+SHA-256 und Bearbeitung stehen in `audio/SOURCES.json` und
+`source/video-audio-cuts.json` jedes Retro-Pakets. Die Video-Audiospur selbst
+und die Extraktionswerkzeuge werden nicht mit dem Spiel ausgeliefert.
+
+Zum Reproduzieren mit einer lokalen Kopie der Video-Audiospur:
+
+```text
+node scripts/extract-retro-audio.mjs <lokale-audio-oder-videodatei> <ffmpeg-programmpfad>
+```
+
+Der Export erzeugt Mono-PCM-WAVs mit 22050 Hz, normalisiert auf -2 dBFS und
+entfernt Schnittklicks mit kurzen Ein-/Ausblendungen. Tonhöhe und Tempo bleiben
+erhalten. Die isolierte Gongaufnahme endet vor der anschließenden Zugansage;
+ein nur für den Gong ergänzter Hallausklang verlängert das Nachklingen um
+2,1 Sekunden und blendet weich in die Stille aus. Eine erneute
+CC0-/Sprachgenerierung behält die aktiven Originalzuordnungen und deren
+abweichende Lizenzhinweise bei.
+
+## Grafiken neu exportieren
+
+`node scripts/build-gong-art.mjs` erzeugt die beiden Gong-SVGs aus
+`source/gong.svg` und `source/gong.css`. Die Retro-SVGs betten das freigestellte
+Nutzermotiv ein und trennen die vorhandenen Schlägerpixel mit Masken.
+`node scripts/build-gong-atlases.mjs <sharp-modulpfad>` ergänzt die Ruhe- und
+Schlagpose in Haupt-, PNG- und Mobilatlas. Die Zeilenvorschau liegt in
+`source/gong-atlas.svg`. Diesen Export nach den anderen Atlasexporten ausführen.
+`node scripts/build-skin-previews.mjs` aktualisiert die Designvorschauen.
+
+`node scripts/build-style-referees.mjs <sharp-modulpfad>` erzeugt die
+Gewinnerbilder für Klassisch und Arcade sowie ihre Zuganzeigen.
+`python scripts/build-endgame-art.py` erzeugt die Retro-Gewinnerbilder für
+beide Retro-Ordner aus `public/skins/icq-retro/source/`.
+Blau bleibt im Gewinnerbild links, Rot rechts; das Overlay spiegelt die blaue
+Schiri-Anzeige, deren Ausgangsgrafik nach rechts zeigt.
 
 Fallen- und Flaggenbegegnungen verwenden vollständige Figuren statt Waffen.
 `node scripts/build-combat-atlases.mjs` ergänzt alle vier Sets um die Frames
 `combat-trap-hole`, `combat-flag-blue`,
 `combat-flag-red`, `combat-puff` und zwei Ersatzfiguren für Sets ohne Figurenatlas.
 Die Flaggenframes sind nach dem bisherigen Besitzer benannt und zeigen dessen
-Zielflagge. Die editierbaren SVG-Vorlagen liegen in `design/combat/`. Der Export
+Zielflagge. Die editierbaren SVG-Vorlagen liegen in `public/skins/<design-id>/source/combat.svg`. Der Export
 liest diese Quellen und ergänzt Hauptatlas, PNG-Fallback und mobilen WebP-Atlas
 samt Manifesten. Bestehende Frame-Koordinaten bleiben erhalten; neue Retro-Motive
 erhalten dieselbe Auflösung wie die übrigen Figuren. Das Werkzeug benötigt
@@ -56,14 +166,14 @@ Die Falltür selbst verwendet direkt die vorhandene verdeckte Figur des Besitzer
 mit derselben Vorder- oder Rückenansicht wie auf dem Brett; dafür gibt es keinen
 zusätzlichen Attrappenframe.
 Der Quellgenerator benötigt nur die Python-Standardbibliothek. Manuelle Änderungen
-in `design/combat/` bleiben beim reinen Atlasexport erhalten.
+in `public/skins/<design-id>/source/combat.svg` bleiben beim reinen Atlasexport erhalten.
 
 Die optionale Manifest-Eigenschaft `chatNotice` verweist auf den Atlas-Frame für
 neue Chatnachrichten. Die mitgelieferten Designs enthalten passende
 Sprechblase; ICQ Retro verwendet eine Comic-Kontur mit cremefarbener Füllung.
 Auch `mobileAtlas.frames` muss diesen Frame enthalten.
 
-Die editierbaren SVG-Vorlagen liegen in `design/chat-notices/`. Nach Änderungen
+Die editierbaren SVG-Vorlagen liegen in `public/skins/<design-id>/source/chat-notice.svg`. Nach Änderungen
 oder einer Neuerzeugung der ursprünglichen Atlanten fügt
 `node scripts/update-chat-atlases.mjs` die Motive in freie Atlasplätze ein und
 aktualisiert SVG, PNG-Fallback, mobilen WebP-Atlas und Manifeste gemeinsam. Dieses
@@ -107,10 +217,7 @@ reduzierte Bewegung im Betriebssystem hat Vorrang: Dann werden die Figuren
 statisch dargestellt und die Bewegung wird nicht animiert. Kämpfe zeigen dann
 kurz ein statisches Ergebnis; die Waffenwahl bleibt normal bedienbar.
 
-Unter **Design → Spielsounds** kannst du zusätzlich kurze Zug- und Kampftöne
-einschalten. Sie sind anfangs ausgeschaltet, werden lokal erzeugt und benötigen
-keine Audiodateien im Grafikset.
-
+Unter **Design ? Spielsounds** lassen sich Designsounds und Schiedsrichteransagen gemeinsam ein- und ausschalten.
 In allen vier mitgelieferten Sets ist **Seat 0 blau und Seat 1 rot**. Diese
 Zuordnung bleibt in beiden Browsern gleich. Die eigene Armee steht weiterhin
 unten; ICQ Retro zeigt sie von hinten und die gegnerische Armee von vorn.
@@ -248,7 +355,7 @@ Züge verwendet diese Flaggenpose nicht.
 ICQ Retro verwendet `presentation: "retro"` für zusammenhängende rechteckige
 Spielfeldkacheln und die passende Oberfläche. Das Set ist eine neu erstellte
 Annäherung an das historische Design; Quellen und Gestaltungsentscheidungen
-stehen in [design/ICQ-RETRO.md](design/ICQ-RETRO.md).
+stehen in [ICQ-RETRO.md](public/skins/icq-retro/source/ICQ-RETRO.md).
 
 ## 1. Eigene Grafiken auf dem NAS ohne neuen Containerbau
 
@@ -643,10 +750,10 @@ gemeinsam**. Die Bearbeitungsquellen sind:
 
 | Datei | Zweck |
 | --- | --- |
-| `design/icq-retro-source/original.png` | Aufgehobene PNG aus 0.4.3 als Vorlage für Figurenkonturen und ursprüngliche Gestaltung |
-| `design/icq-retro-source/layout.json` | Ausschnittplan dieser alten Bearbeitungsvorlage mit 1121 × 1787 Pixeln |
-| `design/icq-retro-source/referees.svg` | Vier Farb-/Richtungsposen und eine neutrale Schiedsrichterpose nach den Nutzerreferenzen |
-| `design/icq-retro-source/flag-victory.svg` | Zwei native, lächelnde Frontposen mit erhobener eroberter Flagge; je Motiv 320 × 320 Einheiten |
+| `public/skins/icq-retro/source/original.png` | Aufgehobene PNG aus 0.4.3 als Vorlage für Figurenkonturen und ursprüngliche Gestaltung |
+| `public/skins/icq-retro/source/layout.json` | Ausschnittplan dieser alten Bearbeitungsvorlage mit 1121 × 1787 Pixeln |
+| `public/skins/icq-retro/source/referees.svg` | Vier Farb-/Richtungsposen und eine neutrale Schiedsrichterpose nach den Nutzerreferenzen |
+| `public/skins/icq-retro/source/flag-victory.svg` | Zwei native, lächelnde Frontposen mit erhobener eroberter Flagge; je Motiv 320 × 320 Einheiten |
 | `public/skins/icq-retro/weapon-atlas.svg` | Bearbeitbare Stein-, Papier- und Scherenmotive als Vektoren |
 | `scripts/retro_vectorize.py` | Hilfsmodul für die Pfadvektorisierung mit Pillow und libpotrace |
 
@@ -929,7 +1036,7 @@ Bei ICQ Retro liefert normalerweise `atlas.svg` sämtliche Bildmotive.
 Eine Änderung nur an `atlas.png` verändert zunächst die Rückfallgrafik.
 Bearbeite die passenden Quellen und erzeuge SVG, PNG und Manifest mit dem
 vollständigen Grafikbuild gemeinsam neu. Das gilt auch für Änderungen nur
-an `weapon-atlas.svg` oder an `design/icq-retro-source/referees.svg`.
+an `weapon-atlas.svg` oder an `public/skins/icq-retro/source/referees.svg`.
 
 Du kannst die aktuelle Serverdatei direkt im Browser ansehen, beispielsweise
 unter [dem Grafikkatalog](https://flusensieb.dns.navy:8443/skins/index.json) oder

@@ -43,7 +43,7 @@ function indicator(style, team, direction) {
   return `<g stroke-linejoin="round"><path d="m80 49 160 0 37 37v160l-37 37H80l-37-37V86Z" fill="${color}"/><path d="M85 61h150l30 30v150l-30 30H85l-30-30V91Z" fill="#132e40"/><path d="M90 71h140l24 24v70L66 192V95Z" fill="${team === 'red' ? '#b9333e' : team === 'blue' ? '#205dc1' : '#34505b'}"/><g fill="none" stroke="${team ? '#eef9ef' : '#ffcf7e'}" stroke-width="13" stroke-linecap="square">${team ? arrow : '<path d="M117 141h86m-86 40h86"/>'}</g><path d="M102 258h116" stroke="${color}" stroke-width="4"/></g>`;
 }
 for (const style of ['classic', 'arcade']) {
-  const directory = new URL(`public/endgame/${style}/`, root);
+  const directory = new URL(`public/skins/${style}/endgame/`, root);
   await mkdir(directory, { recursive: true });
   for (const team of ['blue', 'red']) for (const mood of ['happy', 'sad', 'neutral']) {
     await writeFile(new URL(`${team}-${mood}.svg`, directory), svg(player(style, team, mood), `${style}: ${team}, ${mood}`));
@@ -63,8 +63,8 @@ for (const style of ['classic', 'arcade']) {
     return `<g id="${name}" transform="translate(${index * size} 0) scale(.4)">${indicator(style, team, direction)}</g>`;
   }).join('');
   const rowSvg = `<svg xmlns="http://www.w3.org/2000/svg" width="${width}" height="${size}">${row}</svg>`;
-  await mkdir(new URL('design/turn-indicators/', root), { recursive: true });
-  await writeFile(new URL(`design/turn-indicators/${style}.svg`, root), rowSvg + '\n');
+  await mkdir(new URL(`public/skins/${style}/source/`, root), { recursive: true });
+  await writeFile(new URL(`public/skins/${style}/source/turn-indicators.svg`, root), rowSvg + '\n');
   atlas = atlas.replace(/<!-- style-referees -->[\s\S]*?<!-- end-style-referees -->\s*/g, '');
   atlas = atlas.replace(/<svg\b[^>]*>/, tag => tag.replace(/\bwidth="[^"]*"/, `width="${width}"`).replace(/\bheight="[^"]*"/, `height="${height + size}"`).replace(/\bviewBox="[^"]*"/, `viewBox="0 0 ${width} ${height + size}"`));
   atlas = atlas.replace(/<\/svg>\s*$/, `<!-- style-referees --><g transform="translate(0 ${height})">${row}</g><!-- end-style-referees --></svg>\n`);

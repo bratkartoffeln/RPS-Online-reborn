@@ -60,6 +60,14 @@ export interface BoardPalette {
   enemySymbol: string;
   revealed: string;
 }
+export const SOUND_CUES = ['move', 'moveBlue', 'moveRed', 'rock', 'paper', 'scissors', 'trap', 'flag', 'duel', 'win', 'lose', 'draw', 'gong', 'redTurn', 'blueTurn', 'youWin', 'youLose'] as const;
+export type SoundCue = typeof SOUND_CUES[number];
+export interface SkinSound { file: string; volume: number; rate: number; variants?: string[] }
+export interface SkinArtwork {
+  /** Relative directory containing the nine team/mood/referee SVGs. */
+  endgame?: string;
+  gong?: { idle: string; strike: string; strikeMs: number; durationMs: number };
+}
 /** The parser fills missing palette/motion fields with the built-in defaults. */
 export interface SkinDefinition {
   version: 1;
@@ -68,6 +76,8 @@ export interface SkinDefinition {
   assetPack?: string;
   /** Optional interface and board treatment; artwork and rules stay independent. */
   presentation?: 'modern' | 'retro';
+  audio?: Partial<Record<SoundCue, SkinSound>>;
+  artwork?: SkinArtwork;
   palette: { ui: UiPalette; board: BoardPalette };
   atlas?: SkinAtlas;
   /** Standalone weapons for rules and concealed choices; frames also exist in the main atlas. */

@@ -2,19 +2,21 @@ import type { GameView } from '../shared/game';
 import { escapeHtml as esc } from './icons';
 import { teamColorForSeat } from './team-ui';
 import type { LoadedSkin, TeamColor } from './skin-types';
+import { skinAssetUrl } from './skin-assets';
 
-/** Keep ICQ characters within retro packs; other packs have their own symbols. */
+/** Artwork is selected by manifest, without special cases for design IDs. */
 export function endgameArtDirectory(skin?: LoadedSkin): string {
-  if (!skin || skin.definition.presentation === 'retro') return '/endgame/';
-  return skin.id === 'arcade' ? '/endgame/arcade/' : '/endgame/classic/';
+  return skin?.definition.artwork?.endgame
+    ? skinAssetUrl(skin, skin.definition.artwork.endgame) + '/'
+    : '/skins/classic/endgame/';
 }
 
 export interface EndgameModel {
   matchId: string;
   title: string;
   winnerTeam: TeamColor | null;
-  left: { name: string; team: TeamColor; mood: 'sad' | 'neutral' };
-  right: { name: string; team: TeamColor; mood: 'happy' | 'neutral' };
+  left: { name: string; team: TeamColor; mood: 'happy' | 'sad' | 'neutral' };
+  right: { name: string; team: TeamColor; mood: 'happy' | 'sad' | 'neutral' };
 }
 
 /** Absolute seat colors stay the same in both viewers; never infer a winner from the last capture. */
@@ -22,15 +24,16 @@ export function endgameModel(view: GameView | null): EndgameModel | null {
   if (!view || view.phase !== 'finished' || view.players.length !== 2) return null;
   const winner = view.players.find(player => player.id === view.winner);
   if (view.winner !== null && !winner) return null;
-  const loser = winner ? view.players.find(player => player.id !== winner.id)! : null;
-  const left = loser ?? view.players.find(player => player.seat === 0)!;
-  const right = winner ?? view.players.find(player => player.seat === 1)!;
+  const left = view.players.find(player => player.seat === 0);
+  const right = view.players.find(player => player.seat === 1);
+  if (!left || !right) return null;
+  const mood = (id: string) => !winner ? 'neutral' : id === winner.id ? 'happy' : 'sad';
   return {
     matchId: view.series.id + ':' + view.series.matchId,
     title: winner ? winner.name + ' gewinnt!' : 'Unentschieden',
     winnerTeam: winner ? teamColorForSeat(winner.seat) : null,
-    left: { name: left.name, team: teamColorForSeat(left.seat), mood: loser ? 'sad' : 'neutral' },
-    right: { name: right.name, team: teamColorForSeat(right.seat), mood: winner ? 'happy' : 'neutral' },
+    left: { name: left.name, team: teamColorForSeat(left.seat), mood: mood(left.id) },
+    right: { name: right.name, team: teamColorForSeat(right.seat), mood: mood(right.id) },
   };
 }
 
@@ -53,7 +56,7 @@ export class EndgameOverlay {
     this.root.dataset.winnerTeam = model.winnerTeam ?? 'draw';
     const directory = endgameArtDirectory(skin);
     const figure = (player: EndgameModel['left'] | EndgameModel['right']) => '<figure class="endgame-player" data-team-color="' + player.team + '" data-mood="' + player.mood + '"><img src="' + directory + player.team + '-' + player.mood + '.svg" alt="' + (player.mood === 'happy' ? 'Siegerteam' : player.mood === 'sad' ? 'Unterlegenes Team' : 'Unentschieden') + '" /><figcaption>' + esc(player.name) + '</figcaption></figure>';
-    const markup = '<section class="endgame-result" data-match-id="' + esc(model.matchId) + '" role="status" aria-live="polite" aria-atomic="true"><h2>' + esc(model.title) + '</h2><div class="endgame-cast">' + figure(model.left) + '<figure class="endgame-referee"><img src="' + directory + 'referee-' + (model.winnerTeam ?? 'neutral') + '.svg" alt="' + (model.winnerTeam ? 'Siegeranzeige: ' + (model.winnerTeam === 'blue' ? 'Blau' : 'Rot') + ', rechts' : 'Unentschieden') + '" /></figure>' + figure(model.right) + '</div></section>';
+    const markup = '<section class="endgame-result" data-match-id="' + esc(model.matchId) + '" role="status" aria-live="polite" aria-atomic="true"><h2>' + esc(model.title) + '</h2><div class="endgame-cast">' + figure(model.left) + '<figure class="endgame-referee"><img src="' + directory + 'referee-' + (model.winnerTeam ?? 'neutral') + '.svg" alt="' + (model.winnerTeam ? 'Siegeranzeige: ' + (model.winnerTeam === 'blue' ? 'Blau' : 'Rot') + (model.winnerTeam === 'blue' ? ', links' : ', rechts') : 'Unentschieden') + '" /></figure>' + figure(model.right) + '</div></section>';
     if (markup !== this.markup) { this.root.innerHTML = markup; this.markup = markup; }
   }
 }

@@ -19,7 +19,7 @@ const configurations = [
 
 for (const { id, image, frame } of configurations) {
   const directory = path.join(root, 'public/skins', id);
-  const source = await readFile(path.join(root, 'design/chat-notices', id + '.svg'), 'utf8');
+  const source = await readFile(path.join(directory, 'source/chat-notice.svg'), 'utf8');
   const manifest = JSON.parse(await readFile(path.join(directory, 'skin.json'), 'utf8'));
   const body = source.replace(/^[\s\S]*?<svg[^>]*>/, '').replace(/<\/svg>\s*$/, '').replace(/<title>[\s\S]*?<\/title>/, '').trim();
   if (id === 'classic') {

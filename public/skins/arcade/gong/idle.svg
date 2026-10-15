@@ -1,0 +1,16 @@
+<svg xmlns="http://www.w3.org/2000/svg" class="gong-scene" data-gong-style="arcade" data-animated="false" width="320" height="240" viewBox="0 0 320 240" aria-hidden="true"><style>.phase-referee, .phase-referee-turn { display: flex; align-items: center; justify-content: center; min-height: 135px; margin: 12px 0; line-height: 0; }
+.referee-portrait { display: inline-flex; align-items: center; justify-content: center; max-width: 100%; }
+.gong-scene { display: block; max-width: 100%; flex-shrink: 0; overflow: visible; }
+.gong-scene[data-animated="true"] .gong-mallet { will-change: transform; transform-box: view-box; animation: gong-strike 1500ms both; }
+.gong-scene[data-animated="true"] .gong-disc { will-change: transform; animation: gong-ring 1500ms linear both; transform-origin: 130px 115px; }
+@keyframes gong-strike {
+  0% { transform: rotate(0); animation-timing-function: cubic-bezier(.2,.65,.4,1); }
+  10% { transform: rotate(9deg); animation-timing-function: cubic-bezier(.55,0,.85,.45); }
+  25.333% { transform: rotate(-73deg); animation-timing-function: cubic-bezier(.15,.6,.3,1); }
+  59% { transform: rotate(5deg); animation-timing-function: cubic-bezier(.35,0,.3,1); }
+  88%, 100% { transform: rotate(0); }
+}
+@keyframes gong-ring { 0%, 25.333% { transform: translateX(0); } 28% { transform: translateX(-2px); } 31% { transform: translateX(1.8px); } 34% { transform: translateX(-1.5px); } 37% { transform: translateX(1.2px); } 40% { transform: translateX(-.8px); } 43% { transform: translateX(.5px); } 47%, 100% { transform: translateX(0); } }
+:root[data-motion="off"] .gong-scene *, :root[data-motion="off"] .gong-scene *::before { animation: none !important; }
+@media (prefers-reduced-motion: reduce) { .gong-scene * { animation: none !important; } }
+</style><g stroke="#111f27" stroke-width="5" stroke-linejoin="round"><path d="M40 207h231l17 17H23Z" fill="#ffcf7e"/><path d="M61 195v16m165-16v16" stroke="#73b2ff" stroke-width="12"/><g class="gong-disc"><path d="m74 25 104 0 54 54v83l-54 45H74l-47-45V79Z" fill="#73b2ff"/><path d="M81 38h90l47 47v70l-47 39H81l-40-39V85Z" fill="#132e40"/><path d="M93 54h65l42 39v18L58 153V93Z" fill="#205dc1"/><path d="M102 80h47l32 32-32 32h-47l-28-32Z" fill="#ffcf7e"/><path d="M109 92h32l20 20-20 20h-32l-17-20Z" fill="#eef9ef"/></g><g class="gong-mallet" style="transform-origin:259px 159px"><path d="m259 159 19-95" stroke="#ffcf7e" stroke-width="12"/><path d="m268 28 27 5 12 24-17 20-28-6-9-24Z" fill="#ff8b84"/><path d="m267 36 23 5 6 13-14 12-16-5-6-12Z" fill="#b9333e"/></g></g></svg>

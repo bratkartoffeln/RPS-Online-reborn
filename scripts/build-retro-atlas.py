@@ -3,7 +3,7 @@
 
 Optional artwork tool: Pillow, libpotrace and Inkscape. Ordinary game builds
 use the shipped assets and do not need these programs. Original art, source
-coordinates and editable referee drawings live in design/icq-retro-source.
+coordinates and editable referee drawings live in public/skins/icq-retro/source.
 """
 
 from __future__ import annotations
@@ -36,7 +36,7 @@ XLINK = 'http://www.w3.org/1999/xlink'
 ET.register_namespace('xlink', XLINK)
 ROOT = Path(__file__).resolve().parent.parent
 DIRECTORY = ROOT / 'public/skins/icq-retro'
-SOURCE = ROOT / 'design/icq-retro-source'
+SOURCE = ROOT / 'public/skins/icq-retro/source'
 KINDS = ['rock', 'paper', 'scissors', 'flag', 'trap', 'unknown']
 WEAPONS = [f'weapon-{kind}' for kind in KINDS[:3]]
 BASE_REFEREES = ['referee-blue-turn', 'referee-red-turn', 'referee-neutral']

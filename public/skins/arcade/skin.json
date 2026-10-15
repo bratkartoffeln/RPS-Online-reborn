@@ -1813,5 +1813,107 @@
       "top": "referee-red-top",
       "bottom": "referee-red-bottom"
     }
+  },
+  "audio": {
+    "duel": {
+      "file": "audio/duel.ogg",
+      "volume": 0.55,
+      "rate": 1
+    },
+    "draw": {
+      "file": "audio/draw.ogg",
+      "volume": 0.55,
+      "rate": 1
+    },
+    "move": {
+      "file": "audio/move.ogg",
+      "volume": 0.32,
+      "rate": 1
+    },
+    "rock": {
+      "file": "audio/rock.ogg",
+      "volume": 0.55,
+      "rate": 1
+    },
+    "paper": {
+      "file": "audio/paper.ogg",
+      "volume": 0.55,
+      "rate": 1
+    },
+    "scissors": {
+      "file": "audio/scissors.ogg",
+      "volume": 0.55,
+      "rate": 1
+    },
+    "trap": {
+      "file": "audio/trap.ogg",
+      "volume": 0.55,
+      "rate": 1
+    },
+    "flag": {
+      "file": "audio/flag.ogg",
+      "volume": 0.55,
+      "rate": 1
+    },
+    "win": {
+      "file": "audio/win.ogg",
+      "volume": 0.55,
+      "rate": 1
+    },
+    "lose": {
+      "file": "audio/lose.ogg",
+      "volume": 0.55,
+      "rate": 1
+    },
+    "gong": {
+      "file": "audio/gong.ogg",
+      "volume": 0.8,
+      "rate": 1.35
+    },
+    "redTurn": {
+      "file": "audio/redTurn.wav",
+      "volume": 0.85,
+      "rate": 1
+    },
+    "blueTurn": {
+      "file": "audio/blueTurn.wav",
+      "volume": 0.85,
+      "rate": 1
+    },
+    "youWin": {
+      "file": "audio/youWin.wav",
+      "volume": 0.85,
+      "rate": 1
+    },
+    "youLose": {
+      "file": "audio/youLose.wav",
+      "volume": 0.85,
+      "rate": 1
+    },
+    "moveBlue": {
+      "file": "audio/moveBlue-1.ogg",
+      "variants": [
+        "audio/moveBlue-2.ogg"
+      ],
+      "volume": 0.32,
+      "rate": 1
+    },
+    "moveRed": {
+      "file": "audio/moveRed-1.ogg",
+      "variants": [
+        "audio/moveRed-2.ogg"
+      ],
+      "volume": 0.32,
+      "rate": 1
+    }
+  },
+  "artwork": {
+    "endgame": "endgame",
+    "gong": {
+      "idle": "gong/idle.svg",
+      "strike": "gong/strike.svg",
+      "strikeMs": 380,
+      "durationMs": 1500
+    }
   }
 }

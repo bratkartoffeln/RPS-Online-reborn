@@ -1,0 +1,83 @@
+{
+  "source": "https://www.youtube.com/watch?v=Q2sDtTbzHiI",
+  "title": "Rock Paper Scissors in ICQ (RPS)",
+  "channel": "shachar700",
+  "license": "No free license declared in the retrieved video metadata; not CC0. Source/game audio rights remain with their respective owners.",
+  "notes": "User-requested excerpts. Seconds refer to the downloaded audio timeline. No pitch change, no added speech. Gong tail ends before the next spoken turn cue. Missing isolated events retain the CC0 replacement sounds.",
+  "clips": {
+    "gong": {
+      "start": 22.52,
+      "end": 23.38,
+      "label": "Opening gong strike, cut before the blue-turn announcement"
+    },
+    "move": {
+      "start": 51,
+      "end": 51.66,
+      "label": "Piece hop / movement whoop"
+    },
+    "paper": {
+      "start": 34.31,
+      "end": 34.94,
+      "label": "Paper-versus-paper approach before weapon selection"
+    },
+    "scissors": {
+      "start": 37.36,
+      "end": 38.86,
+      "label": "Blue scissors attacking red paper"
+    },
+    "rock": {
+      "start": 42.15,
+      "end": 43.73,
+      "label": "Red rock attacking blue scissors"
+    },
+    "flag": {
+      "start": 352.61,
+      "end": 354.08,
+      "label": "Final flag pickup and victory hop before the game-over announcement"
+    },
+    "blueTurn": {
+      "start": 27.39,
+      "end": 28.04,
+      "label": "Blue turn"
+    },
+    "redTurn": {
+      "start": 318.1,
+      "end": 319.45,
+      "label": "Complete Red turn from a different late-game passage (05:18.10-05:19.45), with breathing room before the next movement near 319.8s"
+    },
+    "youWin": {
+      "start": 44.16,
+      "end": 45.74,
+      "label": "You win"
+    },
+    "youLose": {
+      "start": 39.84,
+      "end": 40.41,
+      "label": "You lose"
+    },
+    "moveBlue": {
+      "start": 51,
+      "end": 51.66,
+      "label": "Blue-team movement whoop"
+    },
+    "moveBlue2": {
+      "start": 83.46,
+      "end": 84.63,
+      "cue": "moveBlue",
+      "variant": true,
+      "label": "Blue-team movement variation"
+    },
+    "moveRed": {
+      "start": 52.42,
+      "end": 53.59,
+      "label": "Red-team movement grunt after the red-turn announcement"
+    },
+    "moveRed2": {
+      "start": 294.8,
+      "end": 295.4,
+      "cue": "moveRed",
+      "variant": true,
+      "label": "Red-team movement variation before blue-turn announcement"
+    }
+  }
+}

@@ -39,9 +39,14 @@ try {
       const root = page.locator('#endgame-overlay');
       assert.equal(await root.getAttribute('data-winner-team'), color);
       const skin = await page.evaluate(() => document.documentElement.dataset.skin);
-      const directory = skin === 'classic' || skin === 'arcade' ? `/endgame/${skin}/` : '/endgame/';
+      const directory = `/skins/${skin}/endgame/`;
       assert.equal(await root.locator('.endgame-referee img').getAttribute('src'), directory + 'referee-' + color + '.svg');
       assert.equal(await root.locator('[data-mood="happy"]').getAttribute('data-team-color'), color);
+      assert.equal(await root.locator('.endgame-player').nth(0).getAttribute('data-team-color'), 'blue');
+      assert.equal(await root.locator('.endgame-player').nth(1).getAttribute('data-team-color'), 'red');
+      assert.equal(await root.locator('.endgame-referee img').evaluate(img => getComputedStyle(img).transform), color === 'blue' ? 'matrix(-1, 0, 0, 1, 0, 0)' : 'none');
+      assert.equal(await root.locator('.endgame-result').evaluate(result => getComputedStyle(result).borderBottomWidth), '2px');
+      assert.equal(await root.locator('.endgame-referee img').getAttribute('alt'), 'Siegeranzeige: ' + (color === 'blue' ? 'Blau, links' : 'Rot, rechts'));
       assert.notEqual(await root.locator('[data-mood="sad"]').getAttribute('data-team-color'), color);
       assert.ok(await page.locator('#restart-button').isVisible());
       assert.equal(await root.locator('button').count(), 0, 'No dismissal control');
@@ -66,7 +71,7 @@ try {
       assert.equal(bounds.overflow, false);
       assert.equal(bounds.fits, true, `${skin} ${width}x${height}: end scene fits board`);
       assert.equal(bounds.centered, true, `${skin} ${width}x${height}: end scene is vertically centered`);
-      const directory = skin === 'classic' || skin === 'arcade' ? `/endgame/${skin}/` : '/endgame/';
+      const directory = `/skins/${skin}/endgame/`;
       assert.ok(await blue.locator('#endgame-overlay img').evaluateAll((images, prefix) => images.every(img => img.getAttribute('src').startsWith(prefix) && img.complete && img.naturalWidth > 0), directory));
       assert.equal(await blue.locator('.score-referee .gong-scene[data-animated="false"]').count(), 1, 'The regular referee position becomes a resting gong at game end');
       assert.equal(await blue.locator('.score-referee [data-turn-team]').count(), 0, 'No second referee beside the winner scene');

@@ -1,0 +1,126 @@
+{
+  "retrieved": "2026-10-15",
+  "effects": {
+    "duel.ogg": {
+      "author": "Kenney Vleugels",
+      "url": "https://kenney.nl/assets/digital-audio",
+      "license": "CC0-1.0",
+      "original": "Audio/twoTone1.ogg",
+      "sha256": "8732f14d6398407a8f1df77b986c2099cfd88f6583e1272cb60497cb2fe8da1d"
+    },
+    "draw.ogg": {
+      "author": "Kenney Vleugels",
+      "url": "https://kenney.nl/assets/digital-audio",
+      "license": "CC0-1.0",
+      "original": "Audio/twoTone2.ogg",
+      "sha256": "e8e4a2d9faa4344f4722de9ef81103290858bbcd80f1dc686879128cae52e9f0"
+    },
+    "move.ogg": {
+      "author": "Kenney Vleugels",
+      "url": "https://kenney.nl/assets/impact-sounds",
+      "license": "CC0-1.0",
+      "original": "Audio/footstep_wood_000.ogg",
+      "sha256": "5f1c252942a220d658121bd9417448cd19649ded9fff2ff15f6e50899373ce8e"
+    },
+    "rock.ogg": {
+      "author": "Kenney Vleugels",
+      "url": "https://kenney.nl/assets/impact-sounds",
+      "license": "CC0-1.0",
+      "original": "Audio/impactWood_medium_000.ogg",
+      "sha256": "1723a9fd25103ed41af06054814e84e65f4a772bac86ab2dc927da93d9592ff5"
+    },
+    "paper.ogg": {
+      "author": "Kenney Vleugels",
+      "url": "https://kenney.nl/assets/impact-sounds",
+      "license": "CC0-1.0",
+      "original": "Audio/impactSoft_medium_000.ogg",
+      "sha256": "7d3ba0bb5e60a11b5d3e558c141303dcf494256675fbf753c0d252d2cf0481e3"
+    },
+    "scissors.ogg": {
+      "author": "Kenney Vleugels",
+      "url": "https://kenney.nl/assets/impact-sounds",
+      "license": "CC0-1.0",
+      "original": "Audio/impactMetal_light_000.ogg",
+      "sha256": "33b5e6e37c6e9d54e07bf5a89b12c76e879f40c1ea83cdd82714df1d6f9fec6d"
+    },
+    "trap.ogg": {
+      "author": "Kenney Vleugels",
+      "url": "https://kenney.nl/assets/impact-sounds",
+      "license": "CC0-1.0",
+      "original": "Audio/impactPlank_medium_000.ogg",
+      "sha256": "8403cd7a043f0391574c88c55dd205743725b5363d2407f6de145f201690b68f"
+    },
+    "flag.ogg": {
+      "author": "Kenney Vleugels",
+      "url": "https://kenney.nl/assets/impact-sounds",
+      "license": "CC0-1.0",
+      "original": "Audio/impactBell_heavy_000.ogg",
+      "sha256": "94b8bb5f2d43ab65e4bcc32b28562416e9bc2c51d9fd4be1e333660ee52f977f"
+    },
+    "win.ogg": {
+      "author": "Kenney Vleugels",
+      "url": "https://kenney.nl/assets/impact-sounds",
+      "license": "CC0-1.0",
+      "original": "Audio/impactBell_heavy_001.ogg",
+      "sha256": "9df61e3ae9a83dc65e5a1fd3ed19d480876f3b22b963a1b9ef6fa293592dcec4"
+    },
+    "lose.ogg": {
+      "author": "Kenney Vleugels",
+      "url": "https://kenney.nl/assets/impact-sounds",
+      "license": "CC0-1.0",
+      "original": "Audio/impactGeneric_light_000.ogg",
+      "sha256": "f0e982611e97512fee5f777986b67e8b435434b601f94992ec044f7e89fb5acb"
+    },
+    "gong.ogg": {
+      "author": "rubberduck",
+      "url": "https://opengameart.org/content/100-cc0-sfx",
+      "license": "CC0-1.0",
+      "original": "gong_02.ogg",
+      "sha256": "eb53bd74d92ed2422568ed5770615b177b0a4d281f55959e6aa263d756412524"
+    },
+    "moveBlue-1.ogg": {
+      "author": "Kenney Vleugels",
+      "url": "https://kenney.nl/assets/impact-sounds",
+      "license": "CC0-1.0",
+      "original": "Audio/footstep_wood_000.ogg",
+      "sha256": "5f1c252942a220d658121bd9417448cd19649ded9fff2ff15f6e50899373ce8e"
+    },
+    "moveBlue-2.ogg": {
+      "author": "Kenney Vleugels",
+      "url": "https://kenney.nl/assets/impact-sounds",
+      "license": "CC0-1.0",
+      "original": "Audio/footstep_wood_001.ogg",
+      "sha256": "e4f68e1c9fd55b4dc8ca89ed2bbab6f200171bc54bdc18aa96b80d8e7336f462"
+    },
+    "moveRed-1.ogg": {
+      "author": "Kenney Vleugels",
+      "url": "https://kenney.nl/assets/impact-sounds",
+      "license": "CC0-1.0",
+      "original": "Audio/footstep_concrete_000.ogg",
+      "sha256": "d7267e183067757c92c169de2a379abea592cfca6b39bb2e8feea15221ad79fe"
+    },
+    "moveRed-2.ogg": {
+      "author": "Kenney Vleugels",
+      "url": "https://kenney.nl/assets/impact-sounds",
+      "license": "CC0-1.0",
+      "original": "Audio/footstep_concrete_001.ogg",
+      "sha256": "507a75eb19b897087855a3be3cf11a12d7fa37d143ad535eeebe0b8031c7325d"
+    }
+  },
+  "speech": {
+    "engine": "eSpeak NG (espeak-ng npm 1.0.2), offline formant synthesis",
+    "engineSource": "https://github.com/espeak-ng/espeak-ng",
+    "engineLicense": "GPL-3.0-or-later (tool only; not shipped)",
+    "voice": "cmn",
+    "speed": 145,
+    "pitch": 43,
+    "language": "English phrases spoken using the Mandarin voice",
+    "note": "Synthetic voice, no human recording or voice imitation. Generated WAV assets dedicated to CC0-1.0.",
+    "phrases": {
+      "redTurn": "Red turn",
+      "blueTurn": "Blue turn",
+      "youWin": "You win",
+      "youLose": "You lose"
+    }
+  }
+}
