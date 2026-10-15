@@ -1,4 +1,4 @@
-# Grafiksets für RPS Arena v0.4.19
+# Grafiksets für RPS Arena v0.4.20
 
 Jedes eingebaute Design ist ein eigenständiges Paket unter `public/skins/<id>/`.
 Es enthält sein Manifest, Atlanten, Gewinnerbilder, Gonganimation, Sounds,
@@ -48,12 +48,20 @@ Das optionale Feld `audio` ordnet Ereignisse relativen Dateien zu:
 }
 ```
 
-Alle Audioereignisse: `move`, `moveBlue`, `moveRed`, `rock`, `paper`, `scissors`, `trap`, `flag`,
+Alle Audioereignisse: `shuffle`, `move`, `moveBlue`, `moveRed`, `rock`, `paper`, `scissors`, `trap`, `flag`,
 `duel`, `win`, `lose`, `draw`, `gong`, `redTurn`, `blueTurn`, `youWin`, `youLose`.
+`shuffle` begleitet die erste Aufstellung und den bestätigten „Mischen“-Befehl.
+`node scripts/build-shuffle-audio.mjs` erzeugt die Klassisch-/Arcade-Mischsounds
+reproduzierbar und verknüpft die unveränderten `original-bling.wav` der Retro-Pakete.
+Der normale Audioexport ruft diesen Schritt ebenfalls auf. Die Sounds können
+unter „Mischen / Aufstellung“ in der jeweiligen `preview.html` probegehört werden.
 Die ersten drei Waffenereignisse begleiten den Zusammenprall; Falle und Flagge
 besitzen eigene Effekte. `win`/`lose` sind kurze Kampfergebnisse,
 `youWin`/`youLose` die gesprochenen Partieergebnisse aus Sicht des Betrachters.
-Zugfarben folgen den festen Spielersitzen. Ansagen warten auf die sichtbare
+Zugfarben folgen den festen Spielersitzen. Zuganzeige und Zugansage warten auf
+das tatsächliche Ende der Bewegung und sämtlicher laufender Sounds sowie danach
+eine volle Sekunde. Bis dahin bleibt der Schiedsrichter neutral und die
+Figurensteuerung gesperrt. Ansagen warten außerdem auf die sichtbare
 Ergebnisszene beziehungsweise das Ende der Startanimation. Wiederverbinden,
 Neuladen, Pausieren und Synchronisieren lösen keine verspäteten Ansagen aus.
 
@@ -102,7 +110,9 @@ Auf ausdrücklichen Nutzerwunsch verwenden ICQ Retro und Retro Dark kurze
 Originalausschnitte aus [Rock Paper Scissors in ICQ (RPS)](https://www.youtube.com/watch?v=Q2sDtTbzHiI)
 von shachar700. Diese ersetzen die aktiven Retro-Zuordnungen für Gong, Bewegung,
 Stein, Papier, Schere, Flagge sowie „red turn“, „blue turn“, „you win“ und
-„you lose“. Die synthetischen Retro-WAVs bleiben als optionale Alternativen
+„you lose“. Auch die Kampfergebnisse `win` und `lose` verwenden die extrahierten
+Originalansagen; OGG-Dateien kommen nur bei Ereignissen ohne Originalaufnahme
+zum Einsatz. Die synthetischen Retro-WAVs bleiben als optionale Alternativen
 enthalten. Nicht isoliert extrahierte Ereignisse behalten ihre CC0-Ersatzsounds.
 Klassisch und Arcade verwenden weiterhin lokal erzeugte Sprachansagen.
 Die rote Ansage stammt vollständig aus 05:18,10–05:19,45; der nächste

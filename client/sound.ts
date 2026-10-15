@@ -33,6 +33,13 @@ export class GameSounds {
   private active = new Set<AudioScheduledSourceNode>();
   private voice: AudioBufferSourceNode | null = null;
   private variants = new Map<SoundCue, number>();
+  private pending = new Set<Promise<void>>();
+  private completions = new Map<AudioScheduledSourceNode, () => void>();
+  private pendingCancels = new Set<() => void>();
+
+  async whenIdle(): Promise<void> {
+    await Promise.all([...this.pending]);
+  }
 
   setEnabled(enabled: boolean): void {
     this.enabled = enabled;
@@ -52,8 +59,11 @@ export class GameSounds {
 
   cancel(): void {
     this.epoch++;
+    for (const resolve of this.pendingCancels) resolve();
+    this.pendingCancels.clear();
     for (const source of this.active) {
       try { source.stop(); } catch { /* Already completed. */ }
+      this.completions.get(source)?.();
     }
     this.active.clear();
     this.voice = null;
@@ -113,32 +123,49 @@ export class GameSounds {
   }
 
   playCue(cue: SoundCue, delayMs = 0): void {
+    let cancel!: () => void;
+    const cancelled = new Promise<void>(resolve => { cancel = resolve; });
+    this.pendingCancels.add(cancel);
+    const playback = Promise.race([this.playSample(cue, delayMs).catch(() => {}), cancelled]);
+    this.pending.add(playback);
+    void playback.then(() => {
+      this.pending.delete(playback);
+      this.pendingCancels.delete(cancel);
+    });
+  }
+
+  private async playSample(cue: SoundCue, delayMs: number): Promise<void> {
     const context = this.context, skin = this.skin;
     if (!this.enabled || !context || context.state !== 'running' || document.hidden || !skin) return;
     const clip = skin.definition.audio?.[cue];
     const epoch = this.epoch, due = context.currentTime + Math.max(0, delayMs) / 1000;
-    if (!clip) { if (!VOICES.has(cue)) this.fallback(cue, due); return; }
+    if (!clip) { if (!VOICES.has(cue)) await this.fallback(cue, due); return; }
     const files = [clip.file, ...clip.variants ?? []];
     const variant = this.variants.get(cue) ?? 0;
     this.variants.set(cue, variant + 1);
-    void this.load(skinAssetUrl(skin, files[variant % files.length])).then(buffer => {
-      if (epoch !== this.epoch || !this.enabled || context.state !== 'running' || document.hidden || context.currentTime > due + .3) return;
-      if (!buffer) { if (!VOICES.has(cue)) this.fallback(cue, due); return; }
-      if (VOICES.has(cue)) {
-        try { this.voice?.stop(); } catch { /* Previous announcement ended. */ }
-      }
-      const source = context.createBufferSource(), gain = context.createGain();
-      source.buffer = buffer;
-      source.playbackRate.value = clip.rate;
-      gain.gain.value = clip.volume;
-      source.connect(gain); gain.connect(context.destination);
-      this.active.add(source);
-      if (VOICES.has(cue)) this.voice = source;
-      source.onended = () => {
+    const buffer = await this.load(skinAssetUrl(skin, files[variant % files.length]));
+    if (epoch !== this.epoch || !this.enabled || context.state !== 'running' || document.hidden || context.currentTime > due + .3) return;
+    if (!buffer) { if (!VOICES.has(cue)) await this.fallback(cue, due); return; }
+    if (VOICES.has(cue)) {
+      try { this.voice?.stop(); } catch { /* Previous announcement ended. */ }
+    }
+    const source = context.createBufferSource(), gain = context.createGain();
+    source.buffer = buffer;
+    source.playbackRate.value = clip.rate;
+    gain.gain.value = clip.volume;
+    source.connect(gain); gain.connect(context.destination);
+    this.active.add(source);
+    if (VOICES.has(cue)) this.voice = source;
+    await new Promise<void>(resolve => {
+      const finish = () => {
         this.active.delete(source);
+        this.completions.delete(source);
         if (this.voice === source) this.voice = null;
         source.disconnect(); gain.disconnect();
+        resolve();
       };
+      this.completions.set(source, finish);
+      source.onended = finish;
       source.start(Math.max(context.currentTime, due));
     });
   }
@@ -152,6 +179,8 @@ export class GameSounds {
     const impact: SoundCue = action.outcome === 'trap' ? 'trap' : action.outcome === 'flag' ? 'flag' :
       action.attacker.kind === 'paper' ? 'paper' : action.attacker.kind === 'scissors' ? 'scissors' : 'rock';
     this.playCue(impact, Math.min(resultAfterMs, 600));
+    // The match result announces a flag victory after the final effect finishes.
+    if (action.outcome === 'flag') return;
     if (action.outcome === 'duel' || action.outcome === 'tie') this.playCue('duel', resultAfterMs);
     else {
       const winner = action.winnerId === action.attacker.id ? action.attacker : action.defender;
@@ -161,7 +190,7 @@ export class GameSounds {
 
   playStartGong(delayMs: number): void { this.playCue('gong', delayMs); }
 
-  private fallback(cue: SoundCue, due: number): void {
+  private async fallback(cue: SoundCue, due: number): Promise<void> {
     const context = this.context;
     if (!context || this.active.size >= 20) return;
     const oscillator = context.createOscillator(), gain = context.createGain();
@@ -172,7 +201,14 @@ export class GameSounds {
     gain.gain.exponentialRampToValueAtTime(.0001, start + duration);
     oscillator.connect(gain); gain.connect(context.destination);
     this.active.add(oscillator);
-    oscillator.onended = () => { this.active.delete(oscillator); oscillator.disconnect(); gain.disconnect(); };
-    oscillator.start(start); oscillator.stop(start + duration);
+    await new Promise<void>(resolve => {
+      const finish = () => {
+        this.active.delete(oscillator); this.completions.delete(oscillator);
+        oscillator.disconnect(); gain.disconnect(); resolve();
+      };
+      this.completions.set(oscillator, finish);
+      oscillator.onended = finish;
+      oscillator.start(start); oscillator.stop(start + duration);
+    });
   }
 }

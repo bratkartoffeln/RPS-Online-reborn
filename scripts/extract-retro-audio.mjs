@@ -76,6 +76,8 @@ for (const id of ['icq-retro', 'icq-retro-dark']) {
     credits.video.files[path.basename(file)] = { cue, start: cut.start, end: cut.end, sha256: createHash('sha256').update(wav).digest('hex') };
     console.log(`${id}: ${cue} ${cut.start}-${cut.end}s`);
   }
+  manifest.audio.win = { ...manifest.audio.youWin };
+  manifest.audio.lose = { ...manifest.audio.youLose };
   credits.speech.note = 'Locally generated Mandarin-profile WAVs remain as optional alternatives. Active retro speech is extracted from the user-specified video; see video.files and skin.json. The video excerpts are NOT CC0.';
   await writeFile(new URL('skin.json', directory), JSON.stringify(manifest, null, 2) + '\n');
   await writeFile(creditsUrl, JSON.stringify(credits, null, 2) + '\n');

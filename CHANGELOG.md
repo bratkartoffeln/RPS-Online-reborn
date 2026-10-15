@@ -1,5 +1,12 @@
 # Änderungen
 
+## 0.4.20
+
+- Eigener Mischsound bei der ersten Aufstellung und beim erneuten Mischen: unverändertes `original-bling.wav` in beiden ICQ-Retro-Designs, lokal erzeugtes Rascheln für Klassisch und elektronische Tonfolge für Arcade. Stummschaltung gilt auch hier; Wiederverbinden spielt das Mischen nicht erneut ab.
+- Zuganzeige und Schiedsrichteransage warten auf das tatsächliche Ende von Bewegung und Sound sowie anschließend eine zusätzliche Sekunde. Bis dahin bleibt der Schiedsrichter neutral und die Figurensteuerung gesperrt; veraltete Ansagen werden bei Unterbrechungen verworfen.
+- ICQ Retro und Retro Dark verwenden auch für Kampfsieg und Niederlage die extrahierten Originalansagen. OGG-Ersatz bleibt auf Ereignisse ohne Originalaufnahme beschränkt.
+- Das Ergebnis-Overlay zeigt je nach Betrachter „Du hast gewonnen! (You win)“ oder „Du hast verloren. (You lose)“.
+
 ## 0.4.19
 
 - Vollständige Designpakete unter `public/skins/<id>/`: Atlanten, Gewinnerbilder, Gonggrafiken, Audiodateien, editierbare Quellen und Audio-Lizenzen. Manifestfelder `artwork` und `audio` ersetzen Sonderfälle nach Design-ID.

@@ -122,5 +122,11 @@
       "youWin": "You win",
       "youLose": "You lose"
     }
+  },
+  "shuffle": {
+    "file": "shuffle.wav",
+    "sha256": "1bfe9f3618fbc725cea42ac052ccb7cd699045f1dfe5004b9ac0ee753525536d",
+    "source": "Generated offline by scripts/build-shuffle-audio.mjs (deterministic PCM synthesis).",
+    "license": "CC0-1.0"
   }
 }

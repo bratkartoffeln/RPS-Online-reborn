@@ -16,6 +16,7 @@ import { applyUiPalette, atlasIcon, pieceIcon, weaponIcon } from './skin-ui';
 import type { LoadedSkin, SkinCatalog, SkinEntry, SoundCue, TeamColor } from './skin-types';
 import { freshAction } from './board-motion';
 import { GameSounds, freshRefereeCue } from './sound';
+import { RefereeDelay } from './referee-delay';
 import { readSeriesMode, seriesAnnouncement, seriesModeDescription, seriesModeLabel, seriesScoreMarkup, seriesInfoMarkup, seriesVoteStatus, seriesWinnerText } from './series-ui';
 import { refereePortrait } from './referee-ui';
 import { otherTeamColor, teamColorForPlayer, teamColorName } from './team-ui';
@@ -78,12 +79,32 @@ let startCueActive = false;
 let startCueSequence = 0;
 let startCueTimer: ReturnType<typeof setTimeout> | undefined;
 let pendingRefereeCue: SoundCue | null = null;
+let shuffleSoundPending = false;
+const refereeDelay = new RefereeDelay();
+
+function cancelReferee(): void {
+  pendingRefereeCue = null;
+  refereeDelay.cancel();
+}
+
+function turnAnnouncementPending(): boolean {
+  return view?.phase === 'playing' && (refereeDelay.waiting || pendingRefereeCue === 'blueTurn' || pendingRefereeCue === 'redTurn');
+}
+
+function refereeView() {
+  return view && turnAnnouncementPending() ? { ...view, currentTurn: null } : view;
+}
 
 function announceReferee(): void {
   if (!pendingRefereeCue || combat.busy || startCueActive || view?.paused || networkStatus !== 'connected') return;
   const cue = pendingRefereeCue;
   pendingRefereeCue = null;
-  sounds.playCue(cue);
+  refereeDelay.schedule(async () => {
+    await Promise.all([board.whenEffectsComplete(), sounds.whenIdle()]);
+  }, () => {
+    sounds.playCue(cue);
+    render();
+  }, cue === 'blueTurn' || cue === 'redTurn' ? 1000 : 0);
 }
 
 function cancelStartCue(): void {
@@ -117,8 +138,9 @@ const connection = new RpsConnection({
   onStatus(status) {
     networkStatus = status;
     if (status !== 'connected') {
+      if (status !== 'connecting') shuffleSoundPending = false;
       cancelStartCue();
-      pendingRefereeCue = null;
+      cancelReferee();
       sounds.cancel();
     }
     if (status === 'connecting' || status === 'connected') sessionEnd = null;
@@ -132,9 +154,16 @@ const connection = new RpsConnection({
     const start = networkStatus === 'connected' && freshMatchStart(view, snapshot);
     const refereeCue = networkStatus === 'connected' ? freshRefereeCue(view, snapshot) : null;
     if (!view || snapshot.paused || snapshot.series.matchId !== view.series.matchId ||
-        snapshot.phase === 'waiting' || snapshot.phase === 'setup' || snapshot.revision > view.revision + 1) {
-      pendingRefereeCue = null;
+        ((snapshot.phase === 'waiting' || snapshot.phase === 'setup') && snapshot.phase !== view.phase) || snapshot.revision > view.revision + 1) {
+      cancelReferee();
       sounds.cancel();
+    }
+    const preparing = snapshot.phase === 'waiting' || snapshot.phase === 'setup';
+    const nextSetup = preparing && view?.phase === 'finished' && snapshot.series.matchId !== view.series.matchId;
+    if (preparing && (shuffleSoundPending || nextSetup)) {
+      shuffleSoundPending = false;
+      sounds.cancel();
+      sounds.playCue('shuffle');
     }
     if (snapshot.phase !== 'playing' || view?.series.matchId !== snapshot.series.matchId) cancelStartCue();
     if (start) {
@@ -147,6 +176,7 @@ const connection = new RpsConnection({
       startCueTimer = setTimeout(() => { cancelStartCue(); render(); }, animated ? gong?.durationMs ?? GONG_TIMING.complete : 350);
     }
     const action = networkStatus === 'connected' ? freshAction(view, snapshot) : null;
+    if (action) cancelReferee();
     const victory = networkStatus === 'connected' ? freshVictory(view, snapshot) : null;
     if (action?.kind === 'move') sounds.playAction(action, snapshot.you, 0, teamColorForPlayer(snapshot, action.attacker.owner));
     if (view?.phase !== snapshot.phase || view?.series.matchId !== snapshot.series.matchId) {
@@ -162,7 +192,10 @@ const connection = new RpsConnection({
     setRoomUrl(snapshot.roomId);
     if (action && action.kind !== 'move') combat.present(action, snapshot);
     else if (victory) combat.reset();
-    if (refereeCue) pendingRefereeCue = refereeCue;
+    if (refereeCue) {
+      cancelReferee();
+      pendingRefereeCue = refereeCue;
+    }
     render();
     if (victory && (!action || action.kind === 'move')) board.celebrate(victory);
     const latest = snapshot.log.at(-1) ?? '';
@@ -174,6 +207,7 @@ const connection = new RpsConnection({
     }
   },
   onProblem(message) {
+    shuffleSoundPending = false;
     clearPending();
     render();
     toast(message, true);
@@ -216,8 +250,8 @@ const combat = new CombatOverlay(el('combat-overlay'), {
 el('board').addEventListener('pointerdown', () => el('board').focus({ preventScroll: true }));
 
 function updateBoardInteraction(): void {
-  board.update(view, selected, networkStatus === 'connected' && !pending && !combat.busy && !startCueActive);
-  el('board').setAttribute('aria-busy', String(combat.busy || startCueActive));
+  board.update(view, selected, networkStatus === 'connected' && !pending && !combat.busy && !startCueActive && !turnAnnouncementPending());
+  el('board').setAttribute('aria-busy', String(combat.busy || startCueActive || turnAnnouncementPending()));
   el('board-hint').textContent = boardHint();
 }
 
@@ -244,7 +278,7 @@ function updateMotion(): void {
 
 function applySkin(skin: LoadedSkin): void {
   currentSkin = skin;
-  pendingRefereeCue = null;
+  cancelReferee();
   sounds.setSkin(skin);
   preloadGongArtwork(skin);
   skinPreviews.set(skin.id, skin);
@@ -372,11 +406,13 @@ function send(message: string, payload?: unknown): void {
   if (pending || networkStatus !== 'connected') return;
   pending = true;
   if (!connection.send(message, payload)) {
+    shuffleSoundPending = false;
     clearPending();
     toast('Bitte warte, bis die Verbindung wiederhergestellt ist.', true);
     return;
   }
   pendingTimeout = setTimeout(() => {
+    shuffleSoundPending = false;
     clearPending();
     connection.send('sync');
     render();
@@ -402,7 +438,7 @@ function phaseAnnouncement(snapshot: Snapshot): string {
 }
 
 function handleCell(index: number): void {
-  if (!view || pending || combat.busy || startCueActive || networkStatus !== 'connected' || view.paused) return;
+  if (!view || pending || combat.busy || startCueActive || turnAnnouncementPending() || networkStatus !== 'connected' || view.paused) return;
   const piece = view.board[index];
   if (view.phase === 'setup' || view.phase === 'waiting') {
     if (me()?.ready || piece?.owner !== view.you) return;
@@ -529,7 +565,7 @@ function refereeMarkup(size: number): string {
     const image = resting ? '<span class="gong-scene" data-gong-style="' + currentSkin.id + '" data-animated="false">' + resting + '</span>' : gongMarkup(currentSkin, size, animated, startCueSequence);
     return '<span class="referee-portrait" data-referee-state="gong" role="img" aria-label="' + (startCueActive ? 'Die Partie beginnt: Gongschlag' : view.phase === 'finished' ? 'Gong: Partie beendet' : 'Gong: Bereit für den Spielbeginn') + '">' + image + '</span>';
   }
-  const state = refereePortrait(currentSkin.definition, view);
+  const state = refereePortrait(currentSkin.definition, refereeView());
   const image = atlasIcon(currentSkin, state.frame, size);
   if (!image) return '';
   return '<span class="referee-portrait" role="group" aria-label="' + esc(state.label) + '" title="' + esc(state.label) + '" data-turn-team="' + (state.team ?? 'neutral') + '" data-turn-direction="' + (state.direction ?? 'neutral') + '">' + image + '</span>';
@@ -617,6 +653,7 @@ function gameMarkup(): string {
 }
 
 function boardHint(): string {
+  if (turnAnnouncementPending()) return 'Zug wird beendet. Der Schiedsrichter zeigt gleich den nächsten Spieler an.';
   if (!view) return 'Erstelle oder betrete einen Raum.';
   if (networkStatus === 'ended') return 'Diese Partie ist beendet.';
   if (pending) return 'Zug wird bestätigt …';
@@ -694,7 +731,7 @@ function render(): void {
     el('board').focus({ preventScroll: true });
   }
   el('preview-banner').hidden = true;
-  const referee = refereePortrait(currentSkin.definition, view);
+  const referee = refereePortrait(currentSkin.definition, refereeView());
   const headerReferee = '<div class="score-referee">' + (refereeMarkup(76) || icon('info', '', 28)) + '<span>' + esc(startCueActive ? 'Die Partie beginnt' : referee.caption) + '</span></div>';
   const scores = view ? seriesScoreMarkup(view, headerReferee) : '';
   el('series-scoreboard').hidden = !view;
@@ -780,13 +817,17 @@ async function begin(action: 'create' | 'join'): Promise<void> {
   notice = '';
   try {
     if (action === 'create') {
+      shuffleSoundPending = true;
       seriesMode = readSeriesMode(el<HTMLSelectElement>('series-mode')?.value ?? seriesMode);
       savePreference('rps-arena:series-mode', seriesMode);
       await connection.create(chosenName, seriesMode);
     }
     else if (connection.hasSavedSession(code)) await connection.resume(code);
-    else await connection.join(code, chosenName);
-  } catch (error) { notice = error instanceof Error ? error.message : 'Die Verbindung konnte nicht hergestellt werden.'; render(); }
+    else {
+      shuffleSoundPending = true;
+      await connection.join(code, chosenName);
+    }
+  } catch (error) { shuffleSoundPending = false; notice = error instanceof Error ? error.message : 'Die Verbindung konnte nicht hergestellt werden.'; render(); }
 }
 
 async function copyInvitation(): Promise<void> {
@@ -865,8 +906,8 @@ async function newGame(): Promise<void> {
   name = chosenName;
   if (!chosenName) { el('player-name').focus({ preventScroll: true }); return; }
   writeSession('rps-arena:name', chosenName);
-  try { await connection.create(chosenName, seriesMode); }
-  catch (error) { notice = error instanceof Error ? error.message : 'Der neue Raum konnte nicht erstellt werden. Bitte versuche es erneut.'; render(); }
+  try { shuffleSoundPending = true; await connection.create(chosenName, seriesMode); }
+  catch (error) { shuffleSoundPending = false; notice = error instanceof Error ? error.message : 'Der neue Raum konnte nicht erstellt werden. Bitte versuche es erneut.'; render(); }
 }
 
 async function retry(): Promise<void> {
@@ -916,7 +957,12 @@ app.addEventListener('click', (event) => {
   if (action === 'back-to-board') scrollToGameElement('board');
   if (action === 'copy') void copyInvitation();
   if (action === 'dismiss-notice') { notice = ''; render(); }
-  if (action === 'shuffle' && view) { selected = null; send('shuffle', { revision: view.revision }); }
+  if (action === 'shuffle' && view) {
+    if (pending || networkStatus !== 'connected') return;
+    selected = null;
+    shuffleSoundPending = true;
+    send('shuffle', { revision: view.revision });
+  }
   if (action === 'ready' && view) { selected = null; send('ready', { revision: view.revision }); }
   if ((action === 'restart' || action === 'new-series') && view?.phase === 'finished') {
     if (button.dataset.seriesId !== view.series.id || button.dataset.matchId !== view.series.matchId) {
