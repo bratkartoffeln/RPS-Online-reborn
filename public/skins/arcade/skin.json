@@ -926,6 +926,42 @@
         "y": 1152,
         "width": 96,
         "height": 96
+      },
+      "combat-trap-hole": {
+        "x": 0,
+        "y": 1248,
+        "width": 128,
+        "height": 128
+      },
+      "combat-flag-blue": {
+        "x": 128,
+        "y": 1248,
+        "width": 128,
+        "height": 128
+      },
+      "combat-flag-red": {
+        "x": 256,
+        "y": 1248,
+        "width": 128,
+        "height": 128
+      },
+      "combat-puff": {
+        "x": 384,
+        "y": 1248,
+        "width": 128,
+        "height": 128
+      },
+      "combat-figure-blue": {
+        "x": 512,
+        "y": 1248,
+        "width": 128,
+        "height": 128
+      },
+      "combat-figure-red": {
+        "x": 640,
+        "y": 1248,
+        "width": 128,
+        "height": 128
       }
     }
   },

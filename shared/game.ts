@@ -697,7 +697,11 @@ export function viewFor(game: GameState, id: string): GameView {
       id: player.id, name: player.name, seat: player.seat, connected: player.connected,
       ready: player.ready, restartRequested: player.restartRequested, newSeriesRequested: player.newSeriesRequested,
     })),
-    board: game.board.map((piece) => piece ? publicPiece(piece) : null),
+    // A triggered trap is public in the combat event only. Its board disguise
+    // returns immediately, so remembering its square remains part of the game.
+    board: game.board.map((piece) => piece ? piece.kind === 'trap' && piece.owner !== id
+      ? { id: piece.id, owner: piece.owner, kind: null, revealed: false }
+      : publicPiece(piece) : null),
     currentTurn: game.currentTurn, turnNumber: game.turnNumber, paused: isPaused,
     winner: game.winner, finishReason: game.finishReason, duel: duelView, lastAction: actionView,
     legalMoves: isParticipant && game.phase === 'playing' && !isPaused && game.currentTurn === id ? legalMovesFor(game, id) : {},
