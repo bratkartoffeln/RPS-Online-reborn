@@ -1,5 +1,6 @@
 import { mobileGraphics, mobileRenderScale } from './mobile-graphics';
 import Phaser from 'phaser';
+import { fidgetFrame, nextFidgetDelay } from './idle-motion';
 import type { GameActionView, GameView, PieceView } from '../shared/game';
 import {
   artworkForPiece, artworkFrame, canContinueEffect, captureMotionFrame, CELEBRATION_MS,
@@ -64,6 +65,8 @@ type PieceVisual = {
   shownFrame: string | null;
   clipState: SkinAnimationState | null;
   clipElapsed: number;
+  fidgetWait: number;
+  fidgetVariant: number;
   effectState: SkinAnimationState | null;
   effectElapsed: number;
 };
@@ -188,7 +191,7 @@ class ArenaScene extends Phaser.Scene {
     }
     for (const visual of this.visuals.values()) this.animateArtwork(visual, elapsed);
     // Only the visual clock sleeps. Network, chat and combat timers stay alive.
-    const animated = !this.mobile && this.animationsEnabled && [...this.visuals.values()].some(visual => {
+    const animated = (!this.mobile || this.retro) && this.animationsEnabled && !this.view?.paused && [...this.visuals.values()].some(visual => {
       const frames = visual.artwork?.animations?.[this.normalState(visual)]?.frames;
       return visual.sprite && frames && new Set(frames).size > 1;
     });
@@ -685,6 +688,7 @@ class ArenaScene extends Phaser.Scene {
     const visual: PieceVisual = {
       piece, index, ghost, container, vector, question, marker, glow, sprite: null,
       artwork: undefined, appearance: '', shownFrame: null, clipState: null, clipElapsed: 0,
+      fidgetWait: nextFidgetDelay(), fidgetVariant: 0,
       effectState: null, effectElapsed: 0,
     };
     this.visuals.set(piece.id, visual);
@@ -809,7 +813,18 @@ class ArenaScene extends Phaser.Scene {
       visual.clipElapsed = 0;
     } else visual.clipElapsed += delta;
     const elapsed = visual.effectState ? visual.effectElapsed : visual.clipElapsed;
-    const frame = artworkFrame(visual.artwork, state, elapsed, this.animationsEnabled && (!this.mobile || !!this.effect || !!this.celebration));
+    let frame = artworkFrame(visual.artwork, state, elapsed, this.animationsEnabled && (!this.mobile || !!this.effect || !!this.celebration));
+    const idleFrames = visual.artwork.animations?.idle?.frames;
+    if (this.retro && idleFrames && (state === 'idle' || state === 'selected')) {
+      if (this.animationsEnabled && !this.view?.paused) {
+        visual.fidgetWait -= delta;
+        if (visual.fidgetWait < -720) {
+          visual.fidgetWait = nextFidgetDelay();
+          visual.fidgetVariant = Math.floor(Math.random() * (idleFrames.length - 1));
+        }
+        frame = fidgetFrame(visual.artwork.frame, idleFrames, -visual.fidgetWait, visual.fidgetVariant);
+      } else frame = visual.artwork.frame;
+    }
     if (frame === visual.shownFrame || !this.atlasFrames.has(frame)) return;
     visual.sprite.setTexture(this.textureKey!, frame);
     const source = visual.sprite.frame;

@@ -36,7 +36,8 @@ test('every shipped design owns complete audio, licenses, artwork and correctly 
   for (const id of ['classic', 'arcade', 'icq-retro', 'icq-retro-dark']) {
     const directory = `public/skins/${id}/`;
     const skin = parseSkinDefinition(JSON.parse(readFileSync(directory + 'skin.json', 'utf8')));
-    assert.deepEqual(Object.keys(skin.audio!).sort(), [...SOUND_CUES].sort());
+    const expected = SOUND_CUES.filter(cue => id.startsWith('icq') ? !['duel', 'draw', 'trap'].includes(cue) : cue !== 'yawn');
+    assert.deepEqual(Object.keys(skin.audio!).sort(), expected.sort());
     for (const clip of Object.values(skin.audio!)) for (const file of [clip.file, ...clip.variants ?? []]) {
       assert.ok(existsSync(directory + file), `${id}/${file}`);
       assert.ok(readFileSync(directory + file).length < 1024 * 1024);
@@ -58,6 +59,12 @@ test('every shipped design owns complete audio, licenses, artwork and correctly 
     assert.equal(credits.shuffle.file, skin.audio!.shuffle!.file.replace('audio/', ''));
     assert.match(credits.speech.voice, /^cmn/);
     if (id.startsWith('icq')) {
+      assert.equal(skin.audio!.yawn!.file, 'audio/original-yawn.wav');
+      assert.ok(Object.values(skin.audio!).every(clip => !clip.file.endsWith('.ogg')));
+      const yawn = readFileSync(directory + 'yawn.svg', 'utf8');
+      assert.match(yawn, /class="yawn-arm"/);
+      assert.match(yawn, /class="yawn-hand"/);
+      assert.doesNotMatch(yawn, /M91\.7 69\.8|M107\.7 68\.2|M121\.7 71\.3|M107\.2 71 137\.9/);
       assert.equal(skin.audio!.win!.file, skin.audio!.youWin!.file);
       assert.equal(skin.audio!.lose!.file, skin.audio!.youLose!.file);
       for (const cue of ['move', 'moveBlue', 'moveRed', 'rock', 'paper', 'scissors', 'flag', 'gong', 'win', 'lose', 'youWin', 'youLose', 'blueTurn', 'redTurn'] as const) {

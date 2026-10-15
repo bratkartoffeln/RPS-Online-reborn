@@ -60,7 +60,7 @@ export interface BoardPalette {
   enemySymbol: string;
   revealed: string;
 }
-export const SOUND_CUES = ['shuffle', 'move', 'moveBlue', 'moveRed', 'rock', 'paper', 'scissors', 'trap', 'flag', 'duel', 'win', 'lose', 'draw', 'gong', 'redTurn', 'blueTurn', 'youWin', 'youLose'] as const;
+export const SOUND_CUES = ['shuffle', 'move', 'moveBlue', 'moveRed', 'rock', 'paper', 'scissors', 'trap', 'flag', 'duel', 'win', 'lose', 'draw', 'gong', 'redTurn', 'blueTurn', 'youWin', 'youLose', 'yawn'] as const;
 export type SoundCue = typeof SOUND_CUES[number];
 export interface SkinSound { file: string; volume: number; rate: number; variants?: string[] }
 export interface SkinArtwork {

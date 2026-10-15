@@ -1,4 +1,6 @@
 import { mobileGraphics } from './mobile-graphics';
+import { inactivityKey, RefereeInactivity } from './idle-motion';
+import { skinAssetUrl } from './skin-assets';
 import './styles.css';
 import './series.css';
 import './retro.css';
@@ -81,6 +83,19 @@ let startCueTimer: ReturnType<typeof setTimeout> | undefined;
 let pendingRefereeCue: SoundCue | null = null;
 let shuffleSoundPending = false;
 const refereeDelay = new RefereeDelay();
+const refereeInactivity = new RefereeInactivity();
+let yawnSequence = 0;
+
+function updateRefereeInactivity(): void {
+  const active = !!view && (view.phase === 'playing' || view.phase === 'duel') && !view.paused &&
+    view.players.every(player => player.connected) && networkStatus === 'connected' && !document.hidden &&
+    !!currentSkin.definition.audio?.yawn && !startCueActive;
+  if (refereeInactivity.update(view ? inactivityKey(view) : '', active, performance.now())) {
+    if (refereeInactivity.yawning) { yawnSequence++; sounds.playCue('yawn'); }
+    render();
+  }
+}
+setInterval(updateRefereeInactivity, 250);
 
 function cancelReferee(): void {
   pendingRefereeCue = null;
@@ -184,6 +199,7 @@ const connection = new RpsConnection({
       if (confirmAction) closeModal();
     }
     view = snapshot;
+    updateRefereeInactivity();
     sessionEnd = null;
     inputRoom = snapshot.roomId;
     clearPending();
@@ -559,7 +575,13 @@ function paintChatNotice(): void {
 }
 
 function refereeMarkup(size: number): string {
+  if (refereeInactivity.yawning && view && !view.paused && (view.phase === 'playing' || view.phase === 'duel')) {
+    const animated = animationsPreferred && !reducedMotion.matches;
+    const image = animated ? '<img class="referee-yawn" src="' + esc(skinAssetUrl(currentSkin, 'yawn.svg')) + '?play=' + yawnSequence + '" width="' + size + '" height="' + size * .75 + '" alt="" />' : atlasIcon(currentSkin, 'referee-yawn', size);
+    return '<span class="referee-portrait" data-referee-state="yawn" role="img" aria-label="Der Schiedsrichter gähnt">' + image + '</span>';
+  }
   if (view && (startCueActive || view.phase === 'waiting' || view.phase === 'setup' || view.phase === 'finished')) {
+    if (startCueActive && size > 76) size = Math.round(size * 1.2);
     const animated = startCueActive && animationsPreferred && !reducedMotion.matches;
     const resting = !animated && atlasIcon(currentSkin, 'gong-idle', size);
     const image = resting ? '<span class="gong-scene" data-gong-style="' + currentSkin.id + '" data-animated="false">' + resting + '</span>' : gongMarkup(currentSkin, size, animated, startCueSequence);

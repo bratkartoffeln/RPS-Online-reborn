@@ -66,7 +66,7 @@ for (const id of ['classic', 'arcade', 'icq-retro', 'icq-retro-dark']) {
     voice: theme.voice, speed: theme.speed, pitch: theme.pitch, language: 'English phrases spoken using the Mandarin voice',
     note: 'Synthetic voice, no human recording or voice imitation. Generated WAV assets dedicated to CC0-1.0.', phrases,
   } };
-  for (const [cue, [pack, name]] of Object.entries({ ...common, ...theme.clips })) {
+  for (const [cue, [pack, name]] of Object.entries(style === 'retro' ? {} : { ...common, ...theme.clips })) {
     const input = await find(path.join(libraries, pack), name);
     if (!input) throw new Error(`Missing ${pack}/${name}`);
     const file = cue + '.ogg';
@@ -80,7 +80,7 @@ for (const id of ['classic', 'arcade', 'icq-retro', 'icq-retro-dark']) {
     await writeFile(path.join(directory, file), engine.FS.readFile('voice.wav'));
     manifest.audio[cue] = { file: 'audio/' + file, volume: .85, rate: 1 };
   }
-  for (const color of ['blue', 'red']) {
+  for (const color of style === 'retro' ? [] : ['blue', 'red']) {
     const cue = color === 'blue' ? 'moveBlue' : 'moveRed';
     const [pack, ...names] = moveBanks[style][color];
     const files = [];
@@ -96,6 +96,7 @@ for (const id of ['classic', 'arcade', 'icq-retro', 'icq-retro-dark']) {
   }
   if (previousCredits?.video) {
     credits.video = previousCredits.video;
+    if (previousCredits.yawn) credits.yawn = previousCredits.yawn;
     credits.speech.note = previousCredits.speech.note;
     Object.assign(manifest.audio, originalAudio);
   }
@@ -106,6 +107,6 @@ for (const id of ['classic', 'arcade', 'icq-retro', 'icq-retro-dark']) {
     await copyFile(license, path.join(directory, `LICENSE-${pack}.txt`));
   }
   await writeFile(manifestFile, JSON.stringify(manifest, null, 2) + '\n');
-  console.log(`${id}: themed CC0 effects, team movement variations and four local speech alternatives`);
+  console.log(`${id}: audio assets updated`);
 }
 await import('./build-shuffle-audio.mjs');
