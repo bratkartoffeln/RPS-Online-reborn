@@ -68,7 +68,7 @@ try {
     const baseY = Number(appendedY ?? manifest.atlas.frames['referee-yawn']?.y ?? oldHeight);
     // Yawn is always the first appended frame, so repeated exports replace the same rows.
     for (const atlas of [manifest.atlas, manifest.mobileAtlas].filter(Boolean)) {
-      for (const name of Object.keys(atlas.frames)) if (name.includes('-fidget-') || name === 'referee-yawn') delete atlas.frames[name];
+      for (const name of Object.keys(atlas.frames)) if (name.includes('-fidget-') || name.startsWith('referee-yawn')) delete atlas.frames[name];
     }
     const source = await readFile(new URL('icq-retro/source/referees.svg', root), 'utf8');
     const defs = /<defs>([\s\S]*?)<\/defs>/.exec(source)[1];
@@ -81,7 +81,13 @@ try {
     referee = referee.replace(/[\t ]+$/gm, '');
     const animation = '<style>@keyframes yawn-mouth{0%,100%{transform:scaleY(.15)}30%,70%{transform:scaleY(1)}}@keyframes yawn-body{0%,100%{transform:rotate(0deg)}35%,65%{transform:rotate(-3deg)}}.yawn-mouth{transform-box:fill-box;transform-origin:center;animation:yawn-mouth 2.4s ease-in-out both}.yawn-hand{transform-box:fill-box;transform-origin:bottom;animation:yawn-body 2.4s ease-in-out both}#yawning-referee{transform-box:fill-box;transform-origin:50% 90%;animation:yawn-body 2.4s ease-in-out both}</style>';
     await writeFile(new URL('yawn.svg', dir), `<svg xmlns="http://www.w3.org/2000/svg" width="320" height="240" viewBox="0 0 320 240"><title>Gähnender Schiedsrichter</title><defs>${defs}</defs>${animation}${referee}</svg>\n`);
-    const poses = [{ name: 'referee-yawn', body: `<svg width="128" height="128" viewBox="0 0 320 240"><defs>${defs}</defs>${referee}</svg>` }];
+    // Copy the existing motion to the opposite hand, keeping the red turn flag visible.
+    const redReferee = `<g transform="translate(320 0) scale(-1 1)">${referee.replaceAll('url(#ref-blue)', 'url(#ref-red)')}</g>`;
+    await writeFile(new URL('yawn-red.svg', dir), `<svg xmlns="http://www.w3.org/2000/svg" width="320" height="240" viewBox="0 0 320 240"><title>Gähnender Schiedsrichter mit roter Flagge</title><defs>${defs}</defs>${animation}${redReferee}</svg>\n`);
+    const poses = [
+      { name: 'referee-yawn', referee },
+      { name: 'referee-yawn-red', referee: redReferee },
+    ].map(({name, referee}) => ({name, body: `<svg width="128" height="128" viewBox="0 0 320 240"><defs>${defs}</defs>${referee}</svg>`}));
     function removeIdleClips(value) {
       if (!value || typeof value !== 'object') return;
       if (typeof value.frame === 'string' && /^(blue|red)-(front|back)-/.test(value.frame) && value.animations) {

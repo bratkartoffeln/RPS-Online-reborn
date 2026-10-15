@@ -52,8 +52,28 @@ try {
     assert.ok((await img.boundingBox()).width >= (width === 390 ? 151 : 179));
     await red.screenshot({ path: path.join(tmpdir(), `rps-idle-${skin}-${width}.png`) });
     await red.waitForFunction(() => !document.querySelector('[data-referee-state="yawn"]'));
+    // Move a blue front-row fighter into the empty middle, then wait for red's idle pose.
+    await blue.bringToFront();
+    await blue.waitForFunction(() => document.querySelector('#board').getAttribute('aria-busy') === 'false');
+    const board = blue.locator('#board');
+    await board.focus();
+    await board.press('ArrowUp');
+    for (let step = 0; step < 3; step++) await board.press('ArrowLeft');
+    let movable = false;
+    for (let column = 0; column < 7; column++) {
+      await board.press('Enter');
+      if ((await blue.locator('#board-hint').textContent()).includes('markiertes Ziel')) { movable = true; break; }
+      await board.press('ArrowRight');
+    }
+    assert.ok(movable);
+    await board.press('ArrowUp'); await board.press('Enter');
+    await blue.locator('.referee-portrait[data-turn-team="red"]:visible').first().waitFor();
+    const redYawn = blue.locator('[data-referee-state="yawn"][data-turn-team="red"]:visible');
+    await redYawn.first().waitFor({ timeout: 15000 });
+    assert.match(await redYawn.first().locator('img').getAttribute('src'), /yawn-red\.svg/);
+    await blue.screenshot({ path: path.join(tmpdir(), `rps-idle-red-${skin}-${width}.png`) });
     assert.deepEqual(errors, []);
-    console.log(`${skin}, ${width}px: larger gong, yawn with sound, unchanged header height`);
+    console.log(`${skin}, ${width}px: blue and red yawn, correct flag, sound, unchanged header height`);
     await context.close();
   }
 } finally { await browser.close(); await server.close(); }

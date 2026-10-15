@@ -331,9 +331,10 @@ test('bundled retro, classic and Arcade packs resolve to existing, correctly bou
   assert.notEqual(retro.colorTurnPortraits.blue, retro.colorTurnPortraits.red);
   assert.notEqual(retro.colorTurnPortraits.blue, retro.portrait);
   assert.notEqual(retro.colorTurnPortraits.red, retro.portrait);
-  assert.equal(Object.keys(retro.atlas!.frames).length, 57);
+  assert.equal(Object.keys(retro.atlas!.frames).length, 58);
   assert.ok(Object.keys(retro.atlas!.frames).every(frame => !frame.includes('-fidget-')));
   assert.ok(retro.atlas!.frames['referee-yawn']);
+  assert.ok(retro.atlas!.frames['referee-yawn-red']);
   assert.deepEqual(retro.flagVictoryFrames, { blue: 'blue-front-flag-victory', red: 'red-front-flag-victory' });
   assert.deepEqual(retro.directionalTurnPortraits, {
     blue: { top: 'referee-blue-top', bottom: 'referee-blue-turn' },
