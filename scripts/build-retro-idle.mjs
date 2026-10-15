@@ -1,10 +1,11 @@
-/** Append fidget poses to both retro atlases and render matching PNG/WebP assets.
+/** Remove per-figure idle poses, keep the referee yawn and render compact PNG/WebP assets.
  * Run after the base/combat/gong exporters:
  * node scripts/build-retro-idle.mjs [installed playwright module]
  */
 import { readFile, writeFile as write, rename } from 'node:fs/promises';
 import { createRequire } from 'node:module';
 import { createHash } from 'node:crypto';
+import { deflateSync, inflateSync } from 'node:zlib';
 const { chromium } = createRequire(import.meta.url)(process.argv[2] || 'playwright');
 const browser = await chromium.launch({ headless: true, channel: 'msedge' });
 const page = await browser.newPage();
@@ -13,6 +14,33 @@ async function writeFile(file, content) {
   const temporary = new URL(file.href + '.idle-tmp');
   await write(temporary, content);
   await rename(temporary, file);
+}
+
+/** Recompress the browser's lossless PNG stream without changing any pixels. */
+function compactPng(png) {
+  const chunks = [], data = [];
+  for (let offset = 8; offset < png.length;) {
+    const length = png.readUInt32BE(offset), type = png.toString('ascii', offset + 4, offset + 8);
+    const chunk = png.subarray(offset, offset + length + 12);
+    chunks.push({ type, chunk });
+    if (type === 'IDAT') data.push(chunk.subarray(8, length + 8));
+    offset += length + 12;
+  }
+  const compressed = deflateSync(inflateSync(Buffer.concat(data)), { level: 9 });
+  const chunk = Buffer.alloc(compressed.length + 12);
+  chunk.writeUInt32BE(compressed.length); chunk.write('IDAT', 4); compressed.copy(chunk, 8);
+  let crc = 0xffffffff;
+  for (const byte of chunk.subarray(4, -4)) {
+    crc ^= byte;
+    for (let bit = 0; bit < 8; bit++) crc = (crc >>> 1) ^ ((crc & 1) ? 0xedb88320 : 0);
+  }
+  chunk.writeUInt32BE((crc ^ 0xffffffff) >>> 0, chunk.length - 4);
+  let inserted = false;
+  return Buffer.concat([png.subarray(0, 8), ...chunks.flatMap(entry => {
+    if (entry.type !== 'IDAT') return [entry.chunk];
+    if (inserted) return [];
+    inserted = true; return [chunk];
+  })]);
 }
 
 function group(source, id) {
@@ -54,45 +82,15 @@ try {
     const animation = '<style>@keyframes yawn-mouth{0%,100%{transform:scaleY(.15)}30%,70%{transform:scaleY(1)}}@keyframes yawn-body{0%,100%{transform:rotate(0deg)}35%,65%{transform:rotate(-3deg)}}.yawn-mouth{transform-box:fill-box;transform-origin:center;animation:yawn-mouth 2.4s ease-in-out both}.yawn-hand{transform-box:fill-box;transform-origin:bottom;animation:yawn-body 2.4s ease-in-out both}#yawning-referee{transform-box:fill-box;transform-origin:50% 90%;animation:yawn-body 2.4s ease-in-out both}</style>';
     await writeFile(new URL('yawn.svg', dir), `<svg xmlns="http://www.w3.org/2000/svg" width="320" height="240" viewBox="0 0 320 240"><title>Gähnender Schiedsrichter</title><defs>${defs}</defs>${animation}${referee}</svg>\n`);
     const poses = [{ name: 'referee-yawn', body: `<svg width="128" height="128" viewBox="0 0 320 240"><defs>${defs}</defs>${referee}</svg>` }];
-    const artworks = new Map();
-    function collect(value) {
+    function removeIdleClips(value) {
       if (!value || typeof value !== 'object') return;
-      if (typeof value.frame === 'string') artworks.set(value.frame, [...artworks.get(value.frame) ?? [], value]);
-      for (const [key, child] of Object.entries(value)) if (key !== 'animations') collect(child);
+      if (typeof value.frame === 'string' && /^(blue|red)-(front|back)-/.test(value.frame) && value.animations) {
+        delete value.animations.idle;
+        if (!Object.keys(value.animations).length) delete value.animations;
+      }
+      for (const [key, child] of Object.entries(value)) if (key !== 'animations') removeIdleClips(child);
     }
-    collect(manifest.teamPieces); collect(manifest.pieces);
-    for (const [name, items] of artworks) {
-      const frame = manifest.atlas.frames[name];
-      const scale = 128 / Math.max(frame.width, frame.height);
-      const art = `<g transform="translate(${(128 - frame.width * scale) / 2} ${(128 - frame.height * scale) / 2}) scale(${scale})"><g transform="translate(${-frame.x} ${-frame.y})"><use href="#${name}"/></g></g>`;
-      const names = [];
-      for (let variant = 0; variant < 3; variant++) {
-        const pose = `${name}-fidget-${variant}`;
-        const top = variant === 0 ? 'translate(-3 0) skewX(2)' : variant === 1 ? 'translate(3 0) skewX(-2)' : '';
-        const foot = variant === 2 ? 'translate(0 -4) rotate(3 90 102)' : '';
-        poses.push({ name: pose, body: `<defs><clipPath id="${pose}-top"><rect width="128" height="94"/></clipPath><clipPath id="${pose}-feet"><rect y="94" width="128" height="34"/></clipPath></defs><g clip-path="url(#${pose}-top)"><g transform="${top}">${art}</g></g><g clip-path="url(#${pose}-feet)"><g transform="${foot}">${art}</g></g>` });
-        names.push(pose);
-      }
-      // Front views have visible eyes. Rear views deliberately keep their blank
-      // face area; drawing eyelids there would reveal a face through the hat.
-      if (name.includes('-front-') && !name.endsWith('-trap')) {
-        const kind = name.split('-').at(-1);
-        const eyes = { rock: [40, 77], paper: [39, 76], scissors: [37, 73], flag: [35, 71], unknown: [44, 81] }[kind];
-        if (!eyes) throw new Error('Missing eye positions: ' + name);
-        const pose = `${name}-fidget-blink`;
-        const lids = eyes.map(x => `<rect x="${x - 15}" y="51" width="30" height="19" rx="3" fill="url(#${pose}-skin)"/><path d="M${x - 11} 60Q${x} 65 ${x + 11} 60" fill="none" stroke="#171b22" stroke-width="1.8" stroke-linecap="round"/>`).join('');
-        poses.push({ name: pose, body: `${art}<defs><linearGradient id="${pose}-skin" x1="0" y1="0" x2="0" y2="1"><stop stop-color="#fcc995"/><stop offset="1" stop-color="#f7c594"/></linearGradient></defs><g class="closed-eyelids">${lids}</g>` });
-        names.push(pose);
-      }
-      for (const item of items) {
-        if (name.endsWith('-trap')) {
-          if (item.animations) {
-            delete item.animations.idle;
-            if (!Object.keys(item.animations).length) delete item.animations;
-          }
-        } else item.animations = { ...item.animations, idle: { frames: [name, ...names], fps: 6 } };
-      }
-    }
+    removeIdleClips(manifest.teamPieces); removeIdleClips(manifest.pieces);
     const columns = Math.floor(width / 128);
     const height = baseY + Math.ceil(poses.length / columns) * 128;
     const additions = poses.map(({ name, body }, index) => {
@@ -116,13 +114,13 @@ try {
       }
       return { png: render(width, height, 'image/png'), webp: render(mobileWidth, Math.round(height * mobileWidth / width), 'image/webp') };
     }, { svg, width, height, mobileWidth });
-    await writeFile(new URL(manifest.atlas.fallbackImage, dir), Buffer.from(rasters.png, 'base64'));
+    await writeFile(new URL(manifest.atlas.fallbackImage, dir), compactPng(Buffer.from(rasters.png, 'base64')));
     await writeFile(new URL(manifest.mobileAtlas.image, dir), Buffer.from(rasters.webp, 'base64'));
     manifest.audio.yawn = { file: 'audio/original-yawn.wav', volume: .72, rate: 1 };
     const creditsUrl = new URL('audio/SOURCES.json', dir), credits = JSON.parse(await readFile(creditsUrl, 'utf8'));
     credits.yawn = { file: 'original-yawn.wav', source: 'User-supplied original-yawn.wav; used unchanged.', license: 'Original game recording; no additional reuse license supplied.', sha256: createHash('sha256').update(await readFile(new URL('audio/original-yawn.wav', dir))).digest('hex') };
     await writeFile(creditsUrl, JSON.stringify(credits, null, 2) + '\n');
     await writeFile(new URL('skin.json', dir), JSON.stringify(manifest, null, 2) + '\n');
-    console.log(`${id}: ${artworks.size} figures, ${poses.length} poses, ${width}×${height}`);
+    console.log(`${id}: ${poses.length} shared referee pose, ${width}×${height}`);
   }
 } finally { await browser.close(); }

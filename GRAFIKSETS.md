@@ -1,4 +1,4 @@
-# Grafiksets für RPS Arena v0.4.22
+# Grafiksets für RPS Arena v0.4.23
 
 Jedes eingebaute Design ist ein eigenständiges Paket unter `public/skins/<id>/`.
 Es enthält sein Manifest, Atlanten, Gewinnerbilder, Gonganimation, Sounds,
@@ -141,23 +141,32 @@ abweichende Lizenzhinweise bei.
 
 ## Grafiken neu exportieren
 
-Die Retro-Figuren besitzen drei zusätzliche Ruheposen für Oberkörper- und
-Fußbewegungen, auch für aufgedeckte Figuren und beide Blickrichtungen.
-Vorderansichten erhalten zusätzlich eine Zwinkerpose mit geschlossenen Augen,
-die der Client zufällig auswählt und einmalig für 160 Millisekunden zeigt.
-Rückansichten erhalten keine Augenzeichnung.
+Die Retro-Figuren verwenden ihre vorhandenen Sprites auch für Ruhebewegungen.
+Leichte Drehungen (maximal 1,3 Grad) und Skalierungen (maximal 2,5 Prozent)
+ersetzen zusätzliche Figurenposen im Atlas. Da das Brett auf einer gemeinsamen
+Phaser-Canvas gezeichnet wird, erfolgen diese Verformungen direkt im Renderer.
+Vorderansichten zwinkern durch zwei Augen-Overlays mit einer gemeinsam genutzten,
+zur Laufzeit erzeugten 60×38-Pixel-Textur. Die Augen schließen für 160 Millisekunden;
+Rückansichten erhalten keine Augenzeichnung. Die Render-Schleife schläft zwischen
+den kurzen Animationen und wird erst zum nächsten Zufallszeitpunkt geweckt.
+Die Retro-Atlanten werden auch auf hochauflösenden Desktop-Bildschirmen in ihrer
+nativen Größe zur GPU übertragen: Die 272-Pixel-Zellen reichen für die maximal
+152 Pixel hohe Darstellung einer Figur auf einem 2×-Brett aus.
 Sichtbare Fallen/Attrappen bleiben statisch; als unbekannte Figur verdeckte
 Fallen bewegen sich weiterhin wie die anderen verdeckten Figuren.
 Der Client spielt kurze Bewegungen mit unabhängigen Zufallsabständen von
-2–8 Sekunden ab; die Einstellung für Animationen gilt auch hier mobil.
+10–40 Sekunden ab, fünfmal seltener als zuvor; die Einstellung für Animationen
+gilt auch hier mobil.
 Nach zehn Sekunden ohne Spielaktion beider Spieler gähnt der Schiedsrichter
 einmal mit `audio/original-yawn.wav`. Eine neue Aktion setzt die Wartezeit zurück;
 Pause, Verbindungsunterbrechung und ausgeblendete Seiten unterbrechen sie.
 Die Gähnpose ersetzt den rechten Fahnenarm durch einen angewinkelten Arm mit
 Hand vor dem Mund. Die linke Hand hält weiterhin die blaue Fahne.
 
-Nach den übrigen Atlasexportern die zusätzlichen Posen und alle Rastervarianten
-mit `node scripts/build-retro-idle.mjs [playwright-Modulpfad]` erzeugen.
+Nach den übrigen Atlasexportern entfernt
+`node scripts/build-retro-idle.mjs [playwright-Modulpfad]` frühere Figuren-Ruheposen
+und erzeugt die kompakten Rastervarianten. Nur die statische Gähnpose bleibt als
+zusätzlicher Atlas-Frame erhalten. Der PNG-Export wird verlustfrei komprimiert.
 `yawn.svg` enthält die einmalige Gähnanimation; `referee-yawn` ist ihre statische
 Atlasvariante bei reduzierter Bewegung. Gong und Schiri sind im mobilen
 Kopfbereich zweifach skaliert, ohne dessen reservierte Höhe zu verändern.

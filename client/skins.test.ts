@@ -331,7 +331,8 @@ test('bundled retro, classic and Arcade packs resolve to existing, correctly bou
   assert.notEqual(retro.colorTurnPortraits.blue, retro.colorTurnPortraits.red);
   assert.notEqual(retro.colorTurnPortraits.blue, retro.portrait);
   assert.notEqual(retro.colorTurnPortraits.red, retro.portrait);
-  assert.equal(Object.keys(retro.atlas!.frames).length, 153);
+  assert.equal(Object.keys(retro.atlas!.frames).length, 53);
+  assert.ok(Object.keys(retro.atlas!.frames).every(frame => !frame.includes('-fidget-')));
   assert.ok(retro.atlas!.frames['referee-yawn']);
   assert.deepEqual(retro.flagVictoryFrames, { blue: 'blue-front-flag-victory', red: 'red-front-flag-victory' });
   assert.deepEqual(retro.directionalTurnPortraits, {
@@ -351,7 +352,7 @@ test('bundled retro, classic and Arcade packs resolve to existing, correctly bou
       const piece = retro.teamPieces?.[color]?.own?.[kind];
       assert.ok(piece?.revealed?.frame, `${color}/${kind} has a revealed rear pose.`);
       assert.notEqual(piece.revealed.frame, piece.frame);
-      assert.equal(piece.revealed.animations?.idle?.frames.length, 4, 'Revealed figures also have fidget poses.');
+      assert.equal(piece.revealed.animations?.idle, undefined, 'Idle motion reuses the revealed base sprite.');
       for (const perspective of ['own', 'enemy'] as const) {
         assert.notEqual(retro.weapons?.[kind], retro.teamPieces?.[color]?.[perspective]?.[kind]?.frame,
           'Rules and choices have standalone weapon artwork.');
@@ -375,12 +376,7 @@ test('bundled retro, classic and Arcade packs resolve to existing, correctly bou
       for (const kind of ['rock', 'paper', 'scissors', 'flag', 'trap', 'unknown'] as const) {
         const piece = retro.teamPieces?.[color]?.[perspective]?.[kind];
         assert.ok(piece?.frame, `${color}/${perspective}/${kind} has artwork.`);
-        if (kind === 'trap') assert.equal(piece.animations?.idle, undefined, 'Visible decoys remain still.');
-        else {
-          assert.equal(piece.animations?.idle?.frames.length, perspective === 'enemy' ? 5 : 4, 'Front views also have a blink pose.');
-          assert.equal(piece.animations?.idle?.frames.some(frame => frame.endsWith('-fidget-blink')), perspective === 'enemy');
-          for (const frame of piece.animations!.idle!.frames) assert.ok(retro.atlas!.frames[frame]);
-        }
+        assert.equal(piece.animations?.idle, undefined, 'Idle motion needs no per-figure atlas clips.');
         assert.notEqual(piece.frame, retro.teamPieces?.[color === 'blue' ? 'red' : 'blue']?.[perspective]?.[kind]?.frame,
           'Each team retains its atlas slots, including the shared yellow trap artwork.');
         assert.notEqual(piece.frame, retro.teamPieces?.[color]?.[perspective === 'own' ? 'enemy' : 'own']?.[kind]?.frame,

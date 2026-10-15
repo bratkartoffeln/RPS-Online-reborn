@@ -1,13 +1,27 @@
 import type { GameView } from '../shared/game';
 
 /** Independent clocks keep neighbouring figures from moving in lockstep. */
-export function nextFidgetDelay(random = Math.random): number { return 2000 + random() * 6000; }
+export function nextFidgetDelay(random = Math.random): number { return 10_000 + random() * 30_000; }
 
-export function fidgetFrame(base: string, frames: string[], elapsed: number, variant: number): string {
-  if (elapsed < 0 || elapsed >= 720 || frames.length < 2) return base;
-  const frame = frames[1 + variant % (frames.length - 1)];
-  if (frame.endsWith('-fidget-blink')) return elapsed < 160 ? frame : base;
-  return Math.floor(elapsed / 180) % 2 === 0 ? frame : base;
+export function retroIdleFigure(frame: string): boolean {
+  return /^(blue|red)-(front|back)-(rock|paper|scissors|flag|unknown)(-revealed)?$/.test(frame);
+}
+
+/** Coordinates on a centred 128px figure; one eyelid texture serves every face. */
+export function idleEyes(frame: string): readonly number[] | null {
+  const match = /^(?:blue|red)-front-(rock|paper|scissors|flag|unknown)$/.exec(frame);
+  if (!match) return null;
+  const positions: Record<string, readonly number[]> = { rock: [40, 77], paper: [39, 76], scissors: [37, 73], flag: [35, 71], unknown: [44, 81] };
+  return positions[match[1]];
+}
+
+export function idleDeformation(elapsed: number, variant: number): { x: number; y: number; angle: number; blink: boolean; active: boolean } {
+  const duration = variant === 3 ? 160 : 720;
+  if (elapsed < 0 || elapsed >= duration) return { x: 1, y: 1, angle: 0, blink: false, active: false };
+  const wave = Math.sin(elapsed / duration * Math.PI * 2);
+  return variant === 3 ? { x: 1, y: 1, angle: 0, blink: true, active: true }
+    : variant === 2 ? { x: 1 + .015 * wave, y: 1 - .025 * wave, angle: 0, blink: false, active: true }
+    : { x: 1 + .008 * wave, y: 1, angle: wave * (variant === 0 ? 1.3 : -1.3), blink: false, active: true };
 }
 
 export const YAWN_AFTER_MS = 10_000;
