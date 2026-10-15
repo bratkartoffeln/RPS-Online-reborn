@@ -36,7 +36,7 @@ test('the winner raises their absolute team color and smiles, independently of t
   for (const winner of ['a', 'b'] as const) for (const viewer of ['a', 'b']) for (const finishReason of ['flag', 'no_moves', 'resign'] as const) {
     const view = { ...finished(winner), you: viewer, finishReason };
     const model = endgameModel(view)!;
-    assert.equal(model.title, winner === viewer ? 'Du hast gewonnen! (You win)' : 'Du hast verloren. (You lose)');
+    assert.equal(model.title, winner === viewer ? 'Du hast gewonnen!' : 'Du hast verloren.');
     assert.equal(model.winnerTeam, winner === 'a' ? 'blue' : 'red');
     assert.equal(model.left.team, 'blue');
     assert.equal(model.right.team, 'red');

@@ -148,12 +148,39 @@ export function isTextEntry(element: Element | null): boolean {
 }
 
 function artwork(skin: LoadedSkin, fighter: Combatant, size: number): string {
+  if (skin.id === 'icq-retro' || skin.id === 'icq-retro-dark') {
+    if (fighter.kind === 'paper') return paperSheet();
+    if (fighter.kind === 'scissors') return scissorsArtwork();
+  }
   return fighter.kind && WEAPONS.includes(fighter.kind as FighterKind)
     ? weaponIcon(skin, fighter.kind as FighterKind, size, fighter.team)
     : pieceIcon(skin, fighter.kind ?? 'unknown', size, fighter.own ? 'own' : 'enemy', fighter.kind !== null, fighter.team);
 }
 
 const CLOUD = '<svg class="combat-cloud" viewBox="0 0 240 150" aria-hidden="true"><path d="M44 110C16 110 9 81 29 64C15 35 47 15 70 28C81 0 121 6 132 25C160 4 190 24 188 44C225 35 246 70 224 92C243 120 208 145 183 129C168 153 132 145 120 131C89 149 60 134 62 120C56 122 48 119 44 110Z" fill="#f6f6df" stroke="#737b60" stroke-width="4"/><path d="M35 72Q53 58 67 74M153 35Q176 32 183 50M164 111Q184 94 202 109M66 112Q64 94 82 91" fill="none" stroke="#b6bba0" stroke-width="5" stroke-linecap="round"/><path d="m99 35 11 23 18-25-3 29 25-6-25 20 17 15-29-3-8 28-7-25-25 8 17-23-18-15 25 3Z" fill="#e3ba48" stroke="#7a6330" stroke-width="3"/></svg>';
+
+function paperSheet(): string {
+  return '<svg class="combat-paper-sheet" viewBox="0 0 128 128" aria-hidden="true"><path d="M24 12 108 18 102 116 17 108Z" fill="#fffef6" stroke="#10120e" stroke-width="4" stroke-linejoin="round"/><path d="m34 34 56 4m-58 14 56 4m-58 14 56 4m-58 14 39 3" fill="none" stroke="#bfc6be" stroke-width="2"/></svg>';
+}
+
+/** Two complete blade/handle assemblies, sharing the ICQ weapon silhouette. */
+function scissorsArtwork(blade?: number): string {
+  const halves = [
+    '<g class="combat-blade combat-blade-0"><path d="M117 119 139 128C149 154 166 190 177 232C152 218 129 186 109 147Z" fill="#bbc2c1"/><path d="M114 125C98 112 77 91 71 67C66 43 73 20 89 17C110 13 121 38 125 62C129 84 126 103 125 111L136 125Z M106 94C96 82 88 67 87 53C86 42 88 34 92 35C100 36 108 58 109 73C111 82 111 90 110 95Z" fill="#f3cf46" fill-rule="evenodd"/></g>',
+    '<g class="combat-blade combat-blade-1"><path d="M139 116 154 135C139 175 114 217 81 237C85 189 101 147 123 121Z" fill="#e3e8e5"/><path d="M131 144C119 173 108 198 93 220" fill="none" stroke="#fff" stroke-width="5"/><path d="M129 124C135 98 138 67 150 44C160 24 179 17 190 29C204 42 195 69 182 87C169 105 152 122 147 132Z M150 104C154 80 165 52 175 44C180 40 182 47 178 59C173 77 159 95 150 104Z" fill="#f3cf46" fill-rule="evenodd"/></g>',
+  ];
+  return `<svg viewBox="0 0 320 320" aria-hidden="true"><g transform="translate(32 32) rotate(24 128 128)" stroke="#10120e" stroke-width="8" stroke-linecap="round" stroke-linejoin="round">${blade === undefined ? halves.join('') + '<circle cx="133" cy="133" r="12" fill="#d9ded8" stroke-width="6"/>' : halves[blade]}</g></svg>`;
+}
+
+export function icqCombatScene(skin: LoadedSkin, model: CombatModel): 'wrap' | 'cut' | 'split' | 'standard' {
+  if (skin.id !== 'icq-retro' && skin.id !== 'icq-retro-dark') return 'standard';
+  const winner = [model.attacker, model.defender].find(piece => piece.result === 'winner');
+  const loser = [model.attacker, model.defender].find(piece => piece.result === 'loser');
+  if (winner?.kind === 'paper' && loser?.kind === 'rock') return 'wrap';
+  if (winner?.kind === 'scissors' && loser?.kind === 'paper') return 'cut';
+  if (winner?.kind === 'rock' && loser?.kind === 'scissors') return 'split';
+  return 'standard';
+}
 
 /** Persistent board overlay. Main delegates the existing data-action="duel" buttons. */
 export class CombatOverlay {
@@ -164,6 +191,7 @@ export class CombatOverlay {
   private active: CombatModel | null = null;
   private activeAction: GameActionView | null = null;
   private activeStarted = false;
+  private waitingForBoard = false;
   private waitingChoice: DuelChoiceState | null = null;
   private queue: QueuedCombat[] = [];
   private timers: Array<ReturnType<typeof setTimeout>> = [];
@@ -181,6 +209,7 @@ export class CombatOverlay {
     onBusyChange: (busy: boolean) => void;
     onCelebrate: (ownerId: string) => void;
     onBattleStart?: (action: GameActionView) => void;
+    beforeBattle?: () => Promise<void>;
   }) {
     root.classList.add('combat-overlay');
     root.hidden = true;
@@ -197,7 +226,7 @@ export class CombatOverlay {
     this.options = { ...options };
     this.identity = view ? matchKey(view) : null;
     if (!view) return;
-    if (!options.connected || view.paused) this.cancelBattles();
+    if (!options.connected || view.paused || view.players.some(player => !player.connected)) this.cancelBattles();
     if (!this.active && this.queue.length && options.connected && !view.paused) this.startNext();
     this.paint();
   }
@@ -260,6 +289,7 @@ export class CombatOverlay {
     this.active = null;
     this.activeAction = null;
     this.activeStarted = false;
+    this.waitingForBoard = false;
     this.waitingChoice = null;
     this.setBusy(false);
   }
@@ -274,6 +304,19 @@ export class CombatOverlay {
     this.waitingChoice = next?.choice ?? null;
     if (!this.active) { this.setBusy(false); return; }
     this.setBusy(true);
+    if (this.callbacks.beforeBattle) {
+      this.waitingForBoard = true;
+      this.root.hidden = true;
+      const epoch = this.epoch;
+      void this.callbacks.beforeBattle().then(() => {
+        if (epoch !== this.epoch || !this.active) return;
+        this.waitingForBoard = false;
+        this.revealBattle();
+      });
+    } else this.revealBattle();
+  }
+
+  private revealBattle(): void {
     if (this.waitingChoice) {
       this.paintRevealChoice();
       this.schedule(COMBAT_TIMING.choicePause, () => this.beginBattle());
@@ -343,6 +386,7 @@ export class CombatOverlay {
   }
 
   private paint(): void {
+    if (this.waitingForBoard) { this.root.hidden = true; return; }
     if (this.active) {
       if (this.waitingChoice) this.paintRevealChoice();
       else if (this.paintedSkin !== this.skin || this.root.dataset.mode !== 'battle') this.paintBattle();
@@ -364,6 +408,7 @@ export class CombatOverlay {
     const hadFocus = this.root.contains(this.root.ownerDocument.activeElement);
     this.rememberFocus();
     const model = this.active, skin = this.skin;
+    const scene = icqCombatScene(skin, model);
     const special = model.outcome === 'trap' || model.outcome === 'flag';
     const fighter = (piece: Combatant): string => {
       const tile = (name: string) => atlasIcon(skin, name, 104) ?? '';
@@ -373,8 +418,9 @@ export class CombatOverlay {
       // and viewing direction, rather than a separate decoy illustration.
       const art = special ? model.outcome === 'trap' || figure ? pieceIcon(skin, 'unknown', 104, perspective, false, piece.team) : tile('combat-figure-' + piece.team) : artwork(skin, piece, 104);
       const extras = model.outcome === 'trap' && piece.kind === 'trap' ? `<span class="combat-trap-hole">${tile('combat-trap-hole')}</span>` : model.outcome === 'flag' ? `<span class="combat-capture-flag">${tile('combat-flag-' + model.defender.team)}</span>${piece.result === 'loser' ? '<span class="combat-puff">' + tile('combat-puff') + '</span>' : ''}` : '';
-      const shards = !special && piece.result === 'loser' ? '<span class="combat-shards" aria-hidden="true">' + Array.from({ length: 6 }, (_, index) => `<span class="combat-shard combat-shard-${index}">${art}</span>`).join('') + '</span>' : '';
-      return `<div class="combat-fighter" data-kind="${piece.kind ?? 'unknown'}" data-piece-id="${esc(piece.id)}" data-owner-id="${esc(piece.ownerId)}" data-team-color="${piece.team}" data-result="${piece.result}"><p class="combat-fighter-role">${piece.role}</p><div class="combat-art"><span class="combat-art-main">${art}</span>${extras}${shards}</div><div class="combat-fighter-caption"><strong>${esc(piece.name)}</strong><span>${teamColorName(piece.team)} · ${LABELS[piece.kind ?? 'unknown']}</span><span class="combat-fighter-result">${piece.result === 'winner' ? 'Sieger' : piece.result === 'loser' ? 'Besiegt' : 'Neue Wahl'}</span></div></div>`;
+      const shards = !special && scene !== 'wrap' && piece.result === 'loser' ? '<span class="combat-shards" aria-hidden="true">' + Array.from({ length: scene === 'standard' ? 6 : 2 }, (_, index) => `<span class="combat-shard combat-shard-${index}">${scene === 'split' ? scissorsArtwork(index) : art}</span>`).join('') + '</span>' : '';
+      const wrap = scene === 'wrap' && piece.kind === 'rock' ? '<span class="combat-wrap" aria-hidden="true">' + paperSheet() + '</span>' : '';
+      return `<div class="combat-fighter" data-kind="${piece.kind ?? 'unknown'}" data-piece-id="${esc(piece.id)}" data-owner-id="${esc(piece.ownerId)}" data-team-color="${piece.team}" data-result="${piece.result}"><p class="combat-fighter-role">${piece.role}</p><div class="combat-art"><span class="combat-art-main">${art}</span>${extras}${wrap}${shards}</div><div class="combat-fighter-caption"><strong>${esc(piece.name)}</strong><span>${teamColorName(piece.team)} · ${LABELS[piece.kind ?? 'unknown']}</span><span class="combat-fighter-result">${piece.result === 'winner' ? 'Sieger' : piece.result === 'loser' ? 'Besiegt' : 'Neue Wahl'}</span></div></div>`;
     };
     this.root.hidden = false;
     this.root.dataset.mode = 'battle';
@@ -383,7 +429,7 @@ export class CombatOverlay {
     delete this.root.dataset.transition;
     delete this.root.dataset.duelId;
     delete this.root.dataset.duelRound;
-    this.root.innerHTML = `<section class="combat-stage" data-outcome="${model.outcome}" data-stage="${this.activeStage}" data-motion="${this.root.dataset.motion}" aria-label="Kampf" tabindex="-1"><header class="combat-heading"><p>${model.round ? 'DUELL · RUNDE ' + model.round : 'KAMPF · ZUG ' + model.turn}</p><h2>${esc(model.heading)}</h2></header><div class="combat-fighters">${fighter(model.attacker)}${fighter(model.defender)}${CLOUD}</div><p class="combat-result" role="status" aria-live="polite"></p></section>`;
+    this.root.innerHTML = `<section class="combat-stage" data-scene="${scene}" data-outcome="${model.outcome}" data-stage="${this.activeStage}" data-motion="${this.root.dataset.motion}" aria-label="Kampf" tabindex="-1"><header class="combat-heading"><p>${model.round ? 'DUELL · RUNDE ' + model.round : 'KAMPF · ZUG ' + model.turn}</p><h2>${esc(model.heading)}</h2></header><div class="combat-fighters">${fighter(model.attacker)}${fighter(model.defender)}${CLOUD}</div><p class="combat-result" role="status" aria-live="polite"></p></section>`;
     this.paintedSkin = skin;
     this.setStage(this.activeStage);
     if (hadFocus) this.root.querySelector<HTMLElement>('.combat-stage')?.focus({ preventScroll: true });

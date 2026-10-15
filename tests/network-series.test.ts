@@ -211,6 +211,7 @@ test('real room series coordinate scores, continuation generations and reconnect
       assert.equal(a.snapshot!.series.winner, aId);
       assert.equal(a.snapshot!.series.matchId, previous.matchId);
       assert.equal(a.snapshot!.players.find((player) => player.id === bId)!.connected, false);
+      assert.ok(a.snapshot!.board.every(piece => piece?.owner !== bId), 'expired reconnect removes the departed army');
       await rejected(a, 'restart', identity(a));
       await rejected(a, 'new_series', identity(a));
       await rejected(a, 'resign');

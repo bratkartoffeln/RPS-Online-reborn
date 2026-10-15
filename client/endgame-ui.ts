@@ -30,7 +30,7 @@ export function endgameModel(view: GameView | null): EndgameModel | null {
   const mood = (id: string) => !winner ? 'neutral' : id === winner.id ? 'happy' : 'sad';
   return {
     matchId: view.series.id + ':' + view.series.matchId,
-    title: winner ? winner.id === view.you ? 'Du hast gewonnen! (You win)' : 'Du hast verloren. (You lose)' : 'Unentschieden',
+    title: winner ? winner.id === view.you ? 'Du hast gewonnen!' : 'Du hast verloren.' : 'Unentschieden',
     winnerTeam: winner ? teamColorForSeat(winner.seat) : null,
     left: { name: left.name, team: teamColorForSeat(left.seat), mood: mood(left.id) },
     right: { name: right.name, team: teamColorForSeat(right.seat), mood: mood(right.id) },

@@ -3,7 +3,7 @@ import { startServer } from './app.js';
 import { APP_VERSION } from './version.js';
 
 const port = Number(process.env.PORT || 2567);
-const reconnectSeconds = Number(process.env.RECONNECT_SECONDS || 120);
+const reconnectSeconds = Number(process.env.RECONNECT_SECONDS || 20);
 if (!Number.isInteger(port) || port < 1 || port > 65535) throw new Error('PORT muss zwischen 1 und 65535 liegen.');
 if (!Number.isFinite(reconnectSeconds) || reconnectSeconds < 1 || reconnectSeconds > 600) throw new Error('RECONNECT_SECONDS muss zwischen 1 und 600 liegen.');
 

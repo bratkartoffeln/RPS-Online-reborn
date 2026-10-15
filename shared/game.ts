@@ -579,6 +579,17 @@ export function chooseDuel(game: GameState, id: string, kind: FighterKind): Acti
   return ok(game);
 }
 
+/** Permanent departure, after the reconnect window or an intentional leave. */
+export function leavePlayer(game: GameState, id: string): ActionResult {
+  const player = playerFor(game, id);
+  if (!player) return fail('Du gehörst nicht zu dieser Partie.');
+  setConnected(game, id, false);
+  if (game.phase !== 'finished' && otherPlayer(game, id)) resign(game, id);
+  game.board = game.board.map(piece => piece?.owner === id ? null : piece);
+  game.lastAction = null;
+  return ok(game);
+}
+
 export function resign(game: GameState, id: string): ActionResult {
   if (!playerFor(game, id)) return fail('Du gehörst nicht zu dieser Partie.');
   if (game.phase === 'finished') return fail('Die Partie ist bereits beendet.');

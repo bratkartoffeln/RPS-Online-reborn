@@ -1,7 +1,7 @@
 import assert from 'node:assert/strict';
 import test from 'node:test';
 import { readFileSync, existsSync } from 'node:fs';
-import { addPlayer, createGame, readyPlayer, viewFor } from '../shared/game';
+import { addPlayer, createGame, leavePlayer, readyPlayer, setConnected, viewFor } from '../shared/game';
 import { builtInSkin, parseSkinDefinition } from './skins';
 import { GameSounds, freshRefereeCue } from './sound';
 import { SOUND_CUES } from './skin-types';
@@ -30,6 +30,29 @@ test('referee speaks absolute turn colors and viewer-relative match results exac
     [after, { ...red, paused: true }], [after, { ...red, players: red.players.map(p => ({ ...p, connected: false })) }],
     [after, { ...red, series: { ...red.series, matchId: 'other' } }], [after, { ...red, you: 'b' }],
   ] as const) assert.equal(freshRefereeCue(previous, next), null);
+});
+
+test('an opponent leaving immediately or after reconnect expiry announces the winner once', () => {
+  for (const waitingForReconnect of [false, true]) for (const you of ['a', 'b']) {
+    const game = createGame();
+    addPlayer(game, 'a', 'Ada'); addPlayer(game, 'b', 'Ben');
+    readyPlayer(game, 'a'); readyPlayer(game, 'b');
+    const opponent = you === 'a' ? 'b' : 'a';
+    const playing = viewFor(game, you);
+    if (waitingForReconnect) {
+      setConnected(game, opponent, false);
+      assert.equal(freshRefereeCue(playing, viewFor(game, you)), null, 'no win during the reconnect window');
+    }
+    const before = viewFor(game, you);
+    leavePlayer(game, opponent);
+    const finished = viewFor(game, you);
+    assert.equal(freshRefereeCue(before, finished), 'youWin');
+    assert.equal(freshRefereeCue(finished, viewFor(game, you)), null, 'sync does not repeat the sound');
+    assert.equal(freshRefereeCue(null, finished), null, 'reload does not repeat the sound');
+    assert.equal(freshRefereeCue({ ...before, you: opponent }, finished), null);
+    assert.equal(freshRefereeCue(before, { ...finished, series: { ...finished.series, matchId: 'other' } }), null);
+    assert.equal(freshRefereeCue({ ...before, players: before.players.map(player => ({ ...player, connected: false })) }, finished), null, 'own reconnection does not replay the result');
+  }
 });
 
 test('every shipped design owns complete audio, licenses, artwork and correctly attributed non-silent speech', () => {
@@ -140,8 +163,10 @@ test('sample playback caches decoded buffers, respects mute, cancels pending loa
   sounds.setSkin(skin); await sounds.unlock();
   assert.equal(requests.length, 0, 'Muted packs do not preload audio');
   sounds.setEnabled(true); await sounds.unlock(); await flush();
-  sounds.playStartGong(380); await flush();
+  let gongEnded = false;
+  void sounds.playStartGong(380).then(() => { gongEnded = true; }); await flush();
   assert.deepEqual(starts, [{ when: 1.38, rate: 1.2 }]);
+  assert.equal(gongEnded, false, 'The gong animation must keep running while its source is playing');
   sounds.playStartGong(0); await flush();
   assert.equal(requests.filter(url => url.endsWith('/gong.ogg')).length, 1);
   sounds.playCue('moveBlue'); await flush();
@@ -155,6 +180,7 @@ test('sample playback caches decoded buffers, respects mute, cancels pending loa
   assert.equal(idle, false, 'Playback remains busy until the audio engine signals completion');
   for (const source of sources.slice(0, -1)) source.onended?.();
   await flush();
+  assert.equal(gongEnded, true, 'The gong completion follows its own audio source');
   assert.equal(idle, false, 'The last active sample also has to finish');
   sources.at(-1)!.onended?.();
   await flush();

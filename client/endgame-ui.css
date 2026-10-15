@@ -5,6 +5,7 @@
 .endgame-cast { display: grid; min-height: 0; flex-shrink: 1; grid-template-columns: minmax(0, 1fr) minmax(0, 1.25fr) minmax(0, 1fr); align-items: end; height: clamp(110px, 40cqw, 290px); }
 .endgame-cast figure { position: relative; min-width: 0; height: 100%; margin: 0; display: flex; flex-direction: column; align-items: center; justify-content: flex-end; }
 .endgame-cast img { display: block; width: 100%; flex: 1 1 0; min-height: 0; object-fit: contain; }
+.endgame-player img { scale: .8; transform-origin: center bottom; }
 .endgame-cast .endgame-referee { z-index: 1; padding-bottom: 10px; }
 .endgame-referee img { width: 135%; max-width: none; }
 /* Result artwork points right by default; blue always stands on the left. */

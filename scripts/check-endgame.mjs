@@ -37,7 +37,8 @@ try {
   async function verify(color) {
     for (const page of [blue, red]) {
       const root = page.locator('#endgame-overlay');
-      assert.equal(await root.locator('h2').innerText(), page === (color === 'blue' ? blue : red) ? 'Du hast gewonnen! (You win)' : 'Du hast verloren. (You lose)');
+      assert.equal(await root.locator('h2').innerText(), page === (color === 'blue' ? blue : red) ? 'Du hast gewonnen!' : 'Du hast verloren.');
+      assert.equal(await root.locator('.endgame-player img').first().evaluate(node => getComputedStyle(node).scale), '0.8');
       assert.equal(await root.getAttribute('data-winner-team'), color);
       const skin = await page.evaluate(() => document.documentElement.dataset.skin);
       const directory = `/skins/${skin}/endgame/`;

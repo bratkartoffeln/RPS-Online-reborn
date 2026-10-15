@@ -38,6 +38,7 @@ test('every pack has its own static or single-strike gong artwork', () => {
     const svg = readFileSync(`public/skins/${id}/${skin.definition.artwork!.gong!.strike}`, 'utf8');
     assert.match(svg, /xmlns="http:\/\/www.w3.org\/2000\/svg"/);
     assert.match(svg, /@keyframes gong-strike/);
+    assert.match(svg, /animation: gong-ring 90ms linear 380ms infinite/);
     assert.doesNotMatch(svg, /<script|(?:href|src)="https?:/);
     if (id.startsWith('icq')) assert.match(svg, /href="data:image\/png;base64,/);
     else assert.doesNotMatch(svg, /<image/);
