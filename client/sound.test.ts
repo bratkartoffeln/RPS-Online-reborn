@@ -88,6 +88,10 @@ test('every shipped design owns complete audio, licenses, artwork and correctly 
       assert.match(yawn, /class="yawn-arm"/);
       assert.match(yawn, /class="yawn-hand"/);
       assert.doesNotMatch(yawn, /M91\.7 69\.8|M107\.7 68\.2|M121\.7 71\.3|M107\.2 71 137\.9/);
+      const redYawn = readFileSync(directory + 'yawn-red.svg', 'utf8');
+      assert.match(redYawn, /class="yawn-hand"/);
+      assert.match(redYawn, /fill="url\(#ref-red\)"/);
+      assert.doesNotMatch(redYawn, /url\(#ref-blue\)/);
       assert.equal(skin.audio!.win!.file, skin.audio!.youWin!.file);
       assert.equal(skin.audio!.lose!.file, skin.audio!.youLose!.file);
       for (const cue of ['move', 'moveBlue', 'moveRed', 'rock', 'paper', 'scissors', 'flag', 'gong', 'win', 'lose', 'youWin', 'youLose', 'blueTurn', 'redTurn'] as const) {

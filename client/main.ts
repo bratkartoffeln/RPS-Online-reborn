@@ -587,10 +587,12 @@ function paintChatNotice(): void {
 }
 
 function refereeMarkup(size: number): string {
+  const state = refereePortrait(currentSkin.definition, refereeView());
   if (refereeInactivity.yawning && view && !view.paused && (view.phase === 'playing' || view.phase === 'duel')) {
     const animated = animationsPreferred && !reducedMotion.matches;
-    const image = animated ? '<img class="referee-yawn" src="' + esc(skinAssetUrl(currentSkin, 'yawn.svg')) + '?play=' + yawnSequence + '" width="' + size + '" height="' + size * .75 + '" alt="" />' : atlasIcon(currentSkin, 'referee-yawn', size);
-    return '<span class="referee-portrait" data-referee-state="yawn" role="img" aria-label="Der Schiedsrichter gähnt">' + image + '</span>';
+    const red = state.team === 'red' && !!currentSkin.definition.atlas?.frames['referee-yawn-red'];
+    const image = animated ? '<img class="referee-yawn" src="' + esc(skinAssetUrl(currentSkin, red ? 'yawn-red.svg' : 'yawn.svg')) + '?play=' + yawnSequence + '" width="' + size + '" height="' + size * .75 + '" alt="" />' : atlasIcon(currentSkin, red ? 'referee-yawn-red' : 'referee-yawn', size);
+    return '<span class="referee-portrait" data-referee-state="yawn" data-turn-team="' + (state.team ?? 'neutral') + '" role="img" aria-label="Der Schiedsrichter gähnt">' + image + '</span>';
   }
   if (view && (startCueActive || view.phase === 'waiting' || view.phase === 'setup' || view.phase === 'finished')) {
     if (startCueActive && size > 76) size = Math.round(size * 1.2);
@@ -599,7 +601,6 @@ function refereeMarkup(size: number): string {
     const image = resting ? '<span class="gong-scene" data-gong-style="' + currentSkin.id + '" data-animated="false">' + resting + '</span>' : gongMarkup(currentSkin, size, animated, startCueSequence);
     return '<span class="referee-portrait" data-referee-state="gong" role="img" aria-label="' + (startCueActive ? 'Die Partie beginnt: Gongschlag' : view.phase === 'finished' ? 'Gong: Partie beendet' : 'Gong: Bereit für den Spielbeginn') + '">' + image + '</span>';
   }
-  const state = refereePortrait(currentSkin.definition, refereeView());
   const image = atlasIcon(currentSkin, state.frame, size);
   if (!image) return '';
   return '<span class="referee-portrait" role="group" aria-label="' + esc(state.label) + '" title="' + esc(state.label) + '" data-turn-team="' + (state.team ?? 'neutral') + '" data-turn-direction="' + (state.direction ?? 'neutral') + '">' + image + '</span>';

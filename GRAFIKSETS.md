@@ -1,4 +1,4 @@
-# Grafiksets für RPS Arena v0.4.27
+# Grafiksets für RPS Arena v0.4.28
 
 Jedes eingebaute Design ist ein eigenständiges Paket unter `public/skins/<id>/`.
 Es enthält sein Manifest, Atlanten, Gewinnerbilder, Gonganimation, Sounds,
