@@ -1,5 +1,15 @@
 # Änderungen
 
+## 0.4.18
+
+- Beide Retro-Gongs verwenden das freigestellte Motiv aus der Bildvorlage statt einer nachgezeichneten Figur. Der originale Schlägerausschnitt wird mit Ausholen, beschleunigtem Schlag und sanftem Rückschwingen animiert; Bilddatei vorab laden, Klang am Auftreffmoment unverändert synchron halten.
+- Gongmotiv bereits während der Aufstellung sichtbar, anschließend einmaliger Schlag beim Spielstart. Ruhe- und Schlagpose in sämtlichen SVG-, PNG- und Mobilatlanten ergänzt, insbesondere für ICQ Retro und ICQ Retro Dark. Browserprüfungen kontrollieren die tatsächlich sichtbare Position auf Handy und Desktop.
+- Eigene Gewinnerbilder für Klassisch und Arcade: Linien-Schilde beziehungsweise Original-Arcade-Spielsteine mit Siegerkrone und passender Ergebnisanzeige. ICQ-Figuren erscheinen nur in Retro-Designs. Ein Designwechsel aktualisiert auch eine bereits sichtbare Ergebnisszene.
+- Neutrale sowie nach Teamfarbe und Spielfeldseite gerichtete Zuganzeigen für Klassisch und Arcade, mit derselben Zustandslogik wie bei ICQ Retro. SVG-Atlanten und Arcade-PNG gemeinsam ergänzt.
+- Die normale Schiedsrichterposition zeigt am Spielende ein ruhendes Gongmotiv statt eines zweiten Schiedsrichters. Die Schiedsrichterfigur bleibt im Retro-Gewinnerbild erhalten.
+- Einmaliger Startgong nach der zweiten Bereitschaftsbestätigung: nachgebaute Retro-Figur mit Yin-Yang-Gong, klassischer Liniengong oder kantiger Arcade-Gong. Schläger und Klang sind synchronisiert; während der kurzen Startszene bleibt die Figurensteuerung gesperrt.
+- Synthesierter metallischer Gong, hellerer klassischer Klang und Arcade-Startsignal beachten die Toneinstellung. Animationen beachten die Bewegungseinstellung. Synchronisieren, Neuladen und Wiederverbinden spielen den Start nicht erneut ab.
+
 ## 0.4.17
 
 - Feste Höhen für Schiedsrichter, Zughinweis und Spielernamen im kompakten Layout; Zugwechsel und Auswahlhinweise verschieben das Spielfeld nicht mehr.

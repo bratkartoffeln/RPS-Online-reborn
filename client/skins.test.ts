@@ -331,7 +331,7 @@ test('bundled retro, classic and Arcade packs resolve to existing, correctly bou
   assert.notEqual(retro.colorTurnPortraits.blue, retro.colorTurnPortraits.red);
   assert.notEqual(retro.colorTurnPortraits.blue, retro.portrait);
   assert.notEqual(retro.colorTurnPortraits.red, retro.portrait);
-  assert.equal(Object.keys(retro.atlas!.frames).length, 50);
+  assert.equal(Object.keys(retro.atlas!.frames).length, 52);
   assert.deepEqual(retro.flagVictoryFrames, { blue: 'blue-front-flag-victory', red: 'red-front-flag-victory' });
   assert.deepEqual(retro.directionalTurnPortraits, {
     blue: { top: 'referee-blue-top', bottom: 'referee-blue-turn' },
@@ -364,8 +364,11 @@ test('bundled retro, classic and Arcade packs resolve to existing, correctly bou
   const svgWidth = Number(svgRoot.match(/\bwidth=["']([0-9.]+)["']/)?.[1]);
   const svgHeight = Number(svgRoot.match(/\bheight=["']([0-9.]+)["']/)?.[1]);
   assert.deepEqual([svgWidth, svgHeight], [retroWidth, retroHeight], 'SVG and PNG share dimensions and frame coordinates.');
-  assert.doesNotMatch(retroSvg, /<script\b|<image\b|<foreignObject\b|(?:href|xlink:href)=["'](?!#)/i,
-    'The entire atlas consists of vector shapes with no embedded raster or remote dependencies.');
+  const vectorArtwork = retroSvg.replace(/<!-- gong-artwork -->[\s\S]*?<!-- end-gong-artwork -->/g, '');
+  assert.doesNotMatch(vectorArtwork, /<script\b|<image\b|<foreignObject\b|(?:href|xlink:href)=["'](?!#)/i,
+    'Existing artwork remains vector-only; only the supplied gong bitmap is embedded.');
+  assert.match(retroSvg, /href="data:image\/png;base64,/);
+  assert.doesNotMatch(retroSvg, /<script\b|<foreignObject\b|(?:href|xlink:href)=["']https?:/i);
   for (const color of ['blue', 'red'] as const) {
     for (const perspective of ['own', 'enemy'] as const) {
       for (const kind of ['rock', 'paper', 'scissors', 'flag', 'trap', 'unknown'] as const) {
@@ -382,7 +385,7 @@ test('bundled retro, classic and Arcade packs resolve to existing, correctly bou
   const classic = parseSkinDefinition(JSON.parse(readFileSync(new URL('classic/skin.json', root), 'utf8')));
   assert.deepEqual(classic.palette, DEFAULT_SKIN.palette);
   assert.equal(classic.atlas?.image, 'atlas.svg');
-  validateAtlasDimensions(classic, 896, 224);
+  validateAtlasDimensions(classic, 896, 448);
   assert.equal(classic.pieces, undefined, 'Classic pieces retain the built-in vector artwork.');
   const arcade = parseSkinDefinition(JSON.parse(readFileSync(new URL('arcade/skin.json', root), 'utf8')));
   assert.equal(arcade.atlas?.image, 'master.svg');
@@ -390,9 +393,9 @@ test('bundled retro, classic and Arcade packs resolve to existing, correctly bou
   const png = readFileSync(new URL(`arcade/${arcade.atlas!.fallbackImage}`, root));
   assert.deepEqual(png.subarray(0, 8), Buffer.from([137, 80, 78, 71, 13, 10, 26, 10]));
   const width = png.readUInt32BE(16), height = png.readUInt32BE(20);
-  assert.deepEqual([width, height], [1152, 1376]);
+  assert.deepEqual([width, height], [1152, 1600]);
   validateAtlasDimensions(arcade, width, height);
-  assert.equal(Object.keys(arcade.atlas!.frames).length, 154);
+  assert.equal(Object.keys(arcade.atlas!.frames).length, 161);
   assert.ok(arcade.board?.light && arcade.board.dark && arcade.logo);
   for (const team of ['own', 'enemy'] as const) {
     for (const kind of ['rock', 'paper', 'scissors', 'flag', 'trap', 'unknown'] as const) {
@@ -402,7 +405,7 @@ test('bundled retro, classic and Arcade packs resolve to existing, correctly bou
     }
   }
   const svg = readFileSync(new URL(`arcade/${arcade.atlas!.image}`, root), 'utf8');
-  assert.match(svg, /width="1152" height="1376"/);
+  assert.match(svg, /width="1152" height="1600"/);
   assert.match(svg, /id="enemy-unknown-lose-1"/);
   assert.doesNotMatch(svg, /<script|<image|href=/i);
 });

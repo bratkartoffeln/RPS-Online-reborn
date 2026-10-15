@@ -44,7 +44,21 @@ export class GameSounds {
     }
   }
 
-  private tone(frequency: number, duration: number, delay: number, type: OscillatorType): void {
+  playStartGong(style: 'retro' | 'classic' | 'arcade', delayMs: number): void {
+    if (!this.enabled || this.context?.state !== 'running' || document.hidden) return;
+    const delay = Math.max(0, delayMs) / 1000;
+    if (style === 'arcade') {
+      [220, 440, 880].forEach((frequency, index) => this.tone(frequency, .24, delay + index * .07, 'triangle', .025));
+      this.tone(110, .8, delay, 'sine', .025);
+      return;
+    }
+    const base = style === 'classic' ? 520 : 145;
+    [1, 1.47, 1.99, 2.73, 3.81, 5.1].forEach((ratio, index) => {
+      this.tone(base * ratio, 2.4 - index * .27, delay, 'sine', .022 / (1 + index * .65));
+    });
+  }
+
+  private tone(frequency: number, duration: number, delay: number, type: OscillatorType, volume = .035): void {
     const context = this.context;
     if (!context || this.active.size >= 20) return;
     const oscillator = context.createOscillator();
@@ -53,7 +67,7 @@ export class GameSounds {
     oscillator.type = type;
     oscillator.frequency.value = frequency;
     gain.gain.setValueAtTime(0, start);
-    gain.gain.linearRampToValueAtTime(.035, start + .008);
+    gain.gain.linearRampToValueAtTime(volume, start + .008);
     gain.gain.exponentialRampToValueAtTime(.0001, start + duration);
     oscillator.connect(gain);
     gain.connect(context.destination);

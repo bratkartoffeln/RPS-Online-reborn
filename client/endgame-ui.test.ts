@@ -2,6 +2,7 @@ import assert from 'node:assert/strict';
 import test from 'node:test';
 import { addPlayer, createGame, readyPlayer, resign, viewFor, type GameView } from '../shared/game';
 import { EndgameOverlay, endgameModel } from './endgame-ui';
+import { builtInSkin } from './skins';
 
 function finished(winner: 'a' | 'b' = 'a'): GameView {
   const game = createGame({ random: () => .5 });
@@ -10,6 +11,26 @@ function finished(winner: 'a' | 'b' = 'a'): GameView {
   resign(game, winner === 'a' ? 'b' : 'a');
   return viewFor(game, 'a');
 }
+
+test('skin changes repaint both players and the result referee with the matching artwork', () => {
+  let markup = '';
+  const root = { hidden: true, classList: { add() {} }, dataset: {},
+    set innerHTML(value: string) { markup = value; }, replaceChildren() {} } as unknown as HTMLElement;
+  const overlay = new EndgameOverlay(root);
+  const classic = builtInSkin();
+  const arcade = { ...classic, id: 'arcade' };
+  const retro = { ...classic, id: 'icq-retro', definition: { ...classic.definition, presentation: 'retro' as const } };
+  for (const winner of ['a', 'b'] as const) {
+    const view = finished(winner);
+    for (const skin of [classic, arcade, retro, classic]) {
+      overlay.update(view, false, skin);
+      const directory = skin === retro ? '/endgame/' : `/endgame/${skin.id}/`;
+      assert.ok(markup.includes(`src="${directory}referee-${winner === 'a' ? 'blue' : 'red'}.svg"`));
+      assert.equal((markup.match(new RegExp('src="' + directory.replaceAll('/', '\\/'), 'g')) ?? []).length, 3);
+      if (skin !== retro) assert.doesNotMatch(markup, /src="\/endgame\/(?:red|blue|referee)-/);
+    }
+  }
+});
 
 test('the winner raises their absolute team color and smiles, independently of the viewer and finish reason', () => {
   for (const winner of ['a', 'b'] as const) for (const viewer of ['a', 'b']) for (const finishReason of ['flag', 'no_moves', 'resign'] as const) {

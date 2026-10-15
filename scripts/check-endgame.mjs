@@ -38,7 +38,9 @@ try {
     for (const page of [blue, red]) {
       const root = page.locator('#endgame-overlay');
       assert.equal(await root.getAttribute('data-winner-team'), color);
-      assert.equal(await root.locator('.endgame-referee img').getAttribute('src'), '/endgame/referee-' + color + '.svg');
+      const skin = await page.evaluate(() => document.documentElement.dataset.skin);
+      const directory = skin === 'classic' || skin === 'arcade' ? `/endgame/${skin}/` : '/endgame/';
+      assert.equal(await root.locator('.endgame-referee img').getAttribute('src'), directory + 'referee-' + color + '.svg');
       assert.equal(await root.locator('[data-mood="happy"]').getAttribute('data-team-color'), color);
       assert.notEqual(await root.locator('[data-mood="sad"]').getAttribute('data-team-color'), color);
       assert.ok(await page.locator('#restart-button').isVisible());
@@ -64,7 +66,11 @@ try {
       assert.equal(bounds.overflow, false);
       assert.equal(bounds.fits, true, `${skin} ${width}x${height}: end scene fits board`);
       assert.equal(bounds.centered, true, `${skin} ${width}x${height}: end scene is vertically centered`);
-      if (skin.startsWith('icq-retro') && width === 390) await blue.locator('.board-surface').screenshot({ path: path.join(tmpdir(), `rps-endgame-${skin}.png`) });
+      const directory = skin === 'classic' || skin === 'arcade' ? `/endgame/${skin}/` : '/endgame/';
+      assert.ok(await blue.locator('#endgame-overlay img').evaluateAll((images, prefix) => images.every(img => img.getAttribute('src').startsWith(prefix) && img.complete && img.naturalWidth > 0), directory));
+      assert.equal(await blue.locator('.score-referee .gong-scene[data-animated="false"]').count(), 1, 'The regular referee position becomes a resting gong at game end');
+      assert.equal(await blue.locator('.score-referee [data-turn-team]').count(), 0, 'No second referee beside the winner scene');
+      if (width === 390) await blue.locator('.board-surface').screenshot({ path: path.join(tmpdir(), `rps-endgame-${skin}.png`) });
     }
     console.log(`${skin}: blue winner, sad red player and raised blue flag fit all viewport sizes`);
   }

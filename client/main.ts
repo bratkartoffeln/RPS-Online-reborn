@@ -23,6 +23,8 @@ import { CombatOverlay, COMBAT_TIMING } from './combat-ui';
 import { chatBubbleDuration, chatBubbleText, RoomChat } from './chat-ui';
 import { freshVictory } from './match-victory';
 import { EndgameOverlay } from './endgame-ui';
+import { freshMatchStart, gongMarkup, preloadGongArtwork, GONG_TIMING } from './gong-ui';
+import './gong-ui.css';
 
 const app = document.querySelector<HTMLDivElement>('#app')!;
 const legalLinks = '<nav aria-label="Rechtliche Informationen"><a href="/copyright.html" target="_blank" rel="noopener">Copyright<span class="sr-only"> (öffnet in neuem Tab)</span></a><a href="/impressum.html" target="_blank" rel="noopener">Impressum<span class="sr-only"> (öffnet in neuem Tab)</span></a></nav>';
@@ -72,6 +74,14 @@ let lastAnnouncement = '';
 let confirmAction: (() => void) | null = null;
 let lastModalFocus: HTMLElement | null = null;
 let currentSkin = builtInSkin();
+let startCueActive = false;
+let startCueTimer: ReturnType<typeof setTimeout> | undefined;
+
+function cancelStartCue(): void {
+  clearTimeout(startCueTimer);
+  startCueTimer = undefined;
+  startCueActive = false;
+}
 const fallbackEntry: SkinEntry = { id: 'classic', name: 'Klassisch', file: 'classic/skin.json' };
 let skinCatalog: SkinCatalog = { version: 1, default: 'classic', skins: [fallbackEntry] };
 let skinLoadSequence = 0;
@@ -97,6 +107,7 @@ const chat: RoomChat = new RoomChat(el('room-chat'), message => connection.send(
 const connection = new RpsConnection({
   onStatus(status) {
     networkStatus = status;
+    if (status !== 'connected') cancelStartCue();
     if (status === 'connecting' || status === 'connected') sessionEnd = null;
     if (status === 'reconnecting') {
       clearPending();
@@ -105,6 +116,15 @@ const connection = new RpsConnection({
     render();
   },
   onSnapshot(snapshot) {
+    const start = networkStatus === 'connected' && freshMatchStart(view, snapshot);
+    if (snapshot.phase !== 'playing' || view?.series.matchId !== snapshot.series.matchId) cancelStartCue();
+    if (start) {
+      cancelStartCue();
+      startCueActive = true;
+      const animated = animationsPreferred && !reducedMotion.matches;
+      sounds.playStartGong(currentSkin.definition.presentation === 'retro' ? 'retro' : currentSkin.id === 'arcade' ? 'arcade' : 'classic', animated ? GONG_TIMING.strike : 0);
+      startCueTimer = setTimeout(() => { cancelStartCue(); render(); }, animated ? GONG_TIMING.complete : 350);
+    }
     const action = networkStatus === 'connected' ? freshAction(view, snapshot) : null;
     const victory = networkStatus === 'connected' ? freshVictory(view, snapshot) : null;
     if (action?.kind === 'move') sounds.playAction(action, snapshot.you, 0);
@@ -165,7 +185,7 @@ const board = new ArenaBoard(el('board'), {
 });
 const endgame = new EndgameOverlay(el('endgame-overlay'));
 const combat = new CombatOverlay(el('combat-overlay'), {
-  onBusyChange(busy) { updateBoardInteraction(); endgame.update(view, busy); },
+  onBusyChange(busy) { updateBoardInteraction(); endgame.update(view, busy, currentSkin); },
   onCelebrate(ownerId) { board.celebrate(ownerId); },
   onBattleStart(action) {
     if (view) sounds.playAction(action, view.you, animationsPreferred && !reducedMotion.matches ? COMBAT_TIMING.shatter : 0);
@@ -174,8 +194,8 @@ const combat = new CombatOverlay(el('combat-overlay'), {
 el('board').addEventListener('pointerdown', () => el('board').focus({ preventScroll: true }));
 
 function updateBoardInteraction(): void {
-  board.update(view, selected, networkStatus === 'connected' && !pending && !combat.busy);
-  el('board').setAttribute('aria-busy', String(combat.busy));
+  board.update(view, selected, networkStatus === 'connected' && !pending && !combat.busy && !startCueActive);
+  el('board').setAttribute('aria-busy', String(combat.busy || startCueActive));
   el('board-hint').textContent = boardHint();
 }
 
@@ -202,6 +222,7 @@ function updateMotion(): void {
 
 function applySkin(skin: LoadedSkin): void {
   currentSkin = skin;
+  preloadGongArtwork(skin);
   skinPreviews.set(skin.id, skin);
   applyUiPalette(skin);
   board.setSkin(skin);
@@ -357,7 +378,7 @@ function phaseAnnouncement(snapshot: Snapshot): string {
 }
 
 function handleCell(index: number): void {
-  if (!view || pending || combat.busy || networkStatus !== 'connected' || view.paused) return;
+  if (!view || pending || combat.busy || startCueActive || networkStatus !== 'connected' || view.paused) return;
   const piece = view.board[index];
   if (view.phase === 'setup' || view.phase === 'waiting') {
     if (me()?.ready || piece?.owner !== view.you) return;
@@ -478,6 +499,12 @@ function paintChatNotice(): void {
 }
 
 function refereeMarkup(size: number): string {
+  if (view && (startCueActive || view.phase === 'waiting' || view.phase === 'setup' || view.phase === 'finished')) {
+    const animated = startCueActive && animationsPreferred && !reducedMotion.matches;
+    const resting = !animated && atlasIcon(currentSkin, 'gong-idle', size);
+    const image = resting ? '<span class="gong-scene" data-gong-style="' + (currentSkin.definition.presentation === 'retro' ? 'retro' : currentSkin.id === 'arcade' ? 'arcade' : 'classic') + '" data-animated="false">' + resting + '</span>' : gongMarkup(currentSkin, size, animated);
+    return '<span class="referee-portrait" data-referee-state="gong" role="img" aria-label="' + (startCueActive ? 'Die Partie beginnt: Gongschlag' : view.phase === 'finished' ? 'Gong: Partie beendet' : 'Gong: Bereit für den Spielbeginn') + '">' + image + '</span>';
+  }
   const state = refereePortrait(currentSkin.definition, view);
   const image = atlasIcon(currentSkin, state.frame, size);
   if (!image) return '';
@@ -487,7 +514,7 @@ function refereeMarkup(size: number): string {
 function phaseSection(label: string, title: string, copy: string, controls = '', classes = ''): string {
   const color = phaseTeamColor();
   const referee = view ? refereeMarkup(180) : '';
-  const showTurnWithReferee = !compactLayout.matches && currentSkin.definition.presentation === 'retro' && referee.includes('class="referee-portrait"') && view?.phase === 'playing' && !view.paused && networkStatus === 'connected';
+  const showTurnWithReferee = !compactLayout.matches && referee.includes('class="referee-portrait"') && view?.phase === 'playing' && !view.paused && networkStatus === 'connected';
   const heading = showTurnWithReferee
     ? '<h2 class="phase-referee-turn" aria-label="' + esc(title) + '">' + referee + '</h2>'
     : '<h2>' + esc(title) + '</h2>' + (referee ? '<div class="phase-referee">' + referee + '</div>' : '');
@@ -644,7 +671,7 @@ function render(): void {
   }
   el('preview-banner').hidden = true;
   const referee = refereePortrait(currentSkin.definition, view);
-  const headerReferee = '<div class="score-referee">' + (refereeMarkup(76) || icon('info', '', 28)) + '<span>' + esc(referee.caption) + '</span></div>';
+  const headerReferee = '<div class="score-referee">' + (refereeMarkup(76) || icon('info', '', 28)) + '<span>' + esc(startCueActive ? 'Die Partie beginnt' : referee.caption) + '</span></div>';
   const scores = view ? seriesScoreMarkup(view, headerReferee) : '';
   el('series-scoreboard').hidden = !view;
   if (el('series-scoreboard').innerHTML !== scores) {
@@ -687,7 +714,7 @@ function render(): void {
   chat.updateSession(view, networkStatus === 'connected');
   paintChatNotice();
   combat.update(view, currentSkin, { connected: networkStatus === 'connected', pending });
-  endgame.update(view, combat.busy);
+  endgame.update(view, combat.busy, currentSkin);
   updateBoardInteraction();
   fitBoardToViewport();
 }
