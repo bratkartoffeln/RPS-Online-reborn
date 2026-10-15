@@ -160,6 +160,9 @@ details[open] > summary::after { transform: rotate(45deg); }
 
 /* Compact mode also applies to narrow desktop windows and short displays. */
 .phase-top-host { min-width: 0; }
+/* Reserve text rows beside the board so changing referee messages cannot move the sidebar. */
+.game-mode:not(.compact-game) .phase-controls .phase-card > .body-copy { height: 4lh; max-width: none; overflow-y: auto; }
+.game-mode:not(.compact-game) .phase-controls .phase-card > h2:not(.phase-referee-turn) { height: 2lh; overflow-y: auto; }
 .game-mode .board-region { width: min(100%, calc(var(--board-max-height, 80svh) * 680 / 616)); margin-inline: auto; }
 :root .compact-game .arena-grid { display: grid; grid-template-columns: minmax(0, 1fr); gap: 10px; }
 .compact-game .phase-top-host { grid-row: 1; width: min(100%, 640px); justify-self: center; }

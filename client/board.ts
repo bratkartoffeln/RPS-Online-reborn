@@ -4,8 +4,8 @@ import { idleDeformation, idleEyes, nextFidgetDelay, retroIdleFigure } from './i
 import type { GameActionView, GameView, PieceView } from '../shared/game';
 import {
   artworkForPiece, artworkFrame, canContinueEffect, captureMotionFrame, CELEBRATION_MS,
-  celebrationOffset, clipDuration, FLAG_CELEBRATION_MS, flagCelebrationOffset, flagVictoryForView,
-  freshActionFromFrame, smoothStep, type FlagVictory, type MotionFrame,
+  celebrationOffset, FLAG_CELEBRATION_MS, flagCelebrationOffset, flagVictoryForView,
+  freshActionFromFrame, smoothStep, combatFacingFrame, combatStaging, NINJA_SPEED_FACTOR, FACEOFF_HOLD_MS, type FlagVictory, type MotionFrame,
 } from './board-motion';
 import type { ArtworkVariant, BoardPalette, LoadedSkin, SkinAnimationState, TeamColor } from './skin-types';
 import { builtInSkin, SKIN_LIMITS } from './skins';
@@ -836,7 +836,11 @@ class ArenaScene extends Phaser.Scene {
       visual.clipElapsed = 0;
     } else visual.clipElapsed += delta;
     const elapsed = visual.effectState ? visual.effectElapsed : visual.clipElapsed;
-    const frame = artworkFrame(visual.artwork, state, elapsed, this.animationsEnabled && (!this.mobile || !!this.effect || !!this.celebration));
+    const action = this.effect?.action;
+    const staging = action && action.kind !== 'move' ? combatStaging(this.position(action.from), this.position(action.to)) : null;
+    const facing = staging && (action!.attacker.id === visual.piece.id ? staging.attacker : action!.defender?.id === visual.piece.id ? staging.defender : null);
+    const frame = (facing && combatFacingFrame(this.skin.definition, this.teamColor(visual.piece.owner), facing.facing)) ||
+      artworkFrame(visual.artwork, state, elapsed, this.animationsEnabled && (!this.mobile || !!this.effect || !!this.celebration));
     if (!this.atlasFrames.has(frame)) return;
     if (frame !== visual.shownFrame) visual.sprite.setTexture(this.textureKey!, frame);
     const source = visual.sprite.frame;
@@ -950,6 +954,8 @@ class ArenaScene extends Phaser.Scene {
         visual.container.destroy();
         this.visuals.delete(id);
       } else {
+        visual.appearance = '';
+        this.paintVisual(visual);
         this.snapVisual(visual);
         this.animateArtwork(visual, 0);
       }
@@ -961,6 +967,7 @@ class ArenaScene extends Phaser.Scene {
   private startEffect(action: GameActionView): void {
     this.finishCelebration();
     if (!this.ready || !this.animationsEnabled) return;
+    if (action.kind === 'duel') return; // Both figures already met before the weapon choice.
     if (action.kind === 'move' && this.skin.definition.motion.moveMs <= 0) return;
     // Removed figures come only from the server's explicitly public battle event.
     for (const [piece, index] of [[action.attacker, action.from], [action.defender, action.to]] as const) {
@@ -975,16 +982,23 @@ class ArenaScene extends Phaser.Scene {
       for (const [id, visual] of this.visuals) if (visual.ghost) { visual.container.destroy(); this.visuals.delete(id); }
       return;
     }
-    const battleMs = this.skin.definition.motion.battleMs;
     const participants = [attacker, defender].filter((visual): visual is PieceVisual => !!visual);
-    const attackMs = Math.max(battleMs * .4, clipDuration(attacker.artwork, 'attack'),
-      action.kind === 'duel' ? clipDuration(defender?.artwork, 'attack') : 0);
-    const resultMs = Math.max(battleMs * .6, ...participants.map((visual) =>
-      action.winnerId === visual.piece.id ? clipDuration(visual.artwork, 'win') :
-        action.removedIds.includes(visual.piece.id) ? clipDuration(visual.artwork, 'lose') : 0));
+    const moveMs = Math.max(1, this.skin.definition.motion.moveMs * NINJA_SPEED_FACTOR);
+    if (action.kind !== 'move') {
+      const staging = combatStaging(this.position(action.from), this.position(action.to));
+      for (const visual of participants) {
+        const facing = visual === attacker ? staging.attacker.facing : staging.defender.facing;
+        const frame = combatFacingFrame(this.skin.definition, this.teamColor(visual.piece.owner), facing);
+        if (!frame || !this.textureKey || !this.atlasFrames.has(frame)) continue;
+        visual.artwork ??= { frame };
+        visual.vector.clear(); visual.question.setVisible(false); visual.marker.clear();
+        visual.sprite ??= this.add.sprite(0, 0, this.textureKey, frame);
+        if (!visual.container.exists(visual.sprite)) visual.container.addAt(visual.sprite, 2);
+        visual.sprite.setVisible(true);
+      }
+    }
     this.effect = {
-      action, elapsed: 0, moveMs: Math.max(1, this.skin.definition.motion.moveMs),
-      attackMs: Math.max(1, attackMs), resultMs: Math.max(1, resultMs),
+      action, elapsed: 0, moveMs, attackMs: moveMs, resultMs: FACEOFF_HOLD_MS,
     };
     this.pieces.bringToTop(attacker.container);
     this.applyEffect();
@@ -1014,48 +1028,24 @@ class ArenaScene extends Phaser.Scene {
       const leap = Math.sin(progress * Math.PI);
       attacker.container.setPosition(from.x + dx * progress, from.y + dy * progress - leap * 38)
         .setScale(1 + leap * .08, 1 - leap * .08);
-      this.override(attacker, 'move', elapsed);
+      this.override(attacker, 'move', elapsed / NINJA_SPEED_FACTOR);
       return;
     }
     if (elapsed >= effect.attackMs + effect.resultMs) { this.finishEffect(); return; }
-    if (defender) defender.container.setPosition(to.x, to.y).setScale(1).setAlpha(1);
-    const undecided = action.outcome === 'duel' || action.outcome === 'tie';
+    const staging = combatStaging(from, to);
+    if (defender) defender.container.setPosition(staging.defender.x, staging.defender.y).setScale(.8).setAlpha(1);
     if (elapsed < effect.attackMs) {
       const progress = smoothStep(elapsed / effect.attackMs);
-      const travel = undecided ? Math.sin(progress * Math.PI) * .42 : progress * .68;
       const leap = Math.sin(progress * Math.PI);
-      attacker.container.setPosition(from.x + dx * travel, from.y + dy * travel - leap * 38)
-        .setScale(1 + leap * .08, 1 - leap * .08).setAlpha(1);
+      attacker.container.setPosition(from.x + (staging.attacker.x - from.x) * progress, from.y + (staging.attacker.y - from.y) * progress - leap * 38)
+        .setScale(1 - .2 * progress + leap * .08, 1 - .2 * progress - leap * .08).setAlpha(1);
       this.override(attacker, 'attack', elapsed);
-      if (defender && action.kind === 'duel') this.override(defender, 'attack', elapsed);
       return;
     }
     const resultElapsed = elapsed - effect.attackMs;
-    const progress = Math.min(1, resultElapsed / effect.resultMs);
-    if (undecided) {
-      attacker.container.setPosition(from.x, from.y);
-      this.override(attacker, 'duel', resultElapsed);
-      this.override(defender, 'duel', resultElapsed);
-      return;
-    }
-    const attackerWins = action.winnerId === action.attacker.id;
-    const landing = .68 + .32 * smoothStep(Math.min(1, progress * 2.6));
-    attacker.container.setPosition(from.x + dx * (attackerWins ? landing : .68),
-      from.y + dy * (attackerWins ? landing : .68));
-    for (const visual of [attacker, defender]) {
-      if (!visual) continue;
-      if (action.removedIds.includes(visual.piece.id)) {
-        const fade = smoothStep(Math.max(0, (progress - .10) / .9));
-        visual.container.setAlpha(1 - fade).setScale(1 - fade * .18);
-        this.override(visual, 'lose', resultElapsed);
-      } else if (action.winnerId === visual.piece.id) {
-        const pulse = Math.sin(progress * Math.PI * 2) ** 2;
-        visual.container.setScale(1 + .10 * pulse).setAlpha(1);
-        visual.glow.clear().lineStyle(2, this.color('accent'), .7 * pulse)
-          .strokeRoundedRect(-33, -34, 66, 68, 11);
-        this.override(visual, 'win', resultElapsed);
-      }
-    }
+    attacker.container.setPosition(staging.attacker.x, staging.attacker.y).setScale(.8).setAlpha(1);
+    this.override(attacker, 'duel', resultElapsed);
+    this.override(defender, 'duel', resultElapsed);
   }
 }
 

@@ -36,6 +36,14 @@ export function freshRefereeCue(previous: GameView | null, next: GameView): Soun
 }
 
 const VOICES = new Set<SoundCue>(['redTurn', 'blueTurn', 'youWin', 'youLose']);
+/** Only public encounter data selects the weapon heard at contact. */
+export function combatWeaponCue(action: GameActionView): SoundCue | null {
+  if (action.kind === 'move') return null;
+  const winner = [action.attacker, action.defender].find(piece => piece?.id === action.winnerId);
+  const piece = winner ?? (action.attacker.kind === action.defender?.kind ? action.attacker : null);
+  if (piece?.revealed && (piece.kind === 'rock' || piece.kind === 'paper' || piece.kind === 'scissors')) return piece.kind;
+  return action.outcome === 'trap' || action.outcome === 'flag' ? action.outcome : null;
+}
 /** Local pack samples decoded once; the browser needs no TTS service or engine. */
 export class GameSounds {
   private context: AudioContext | null = null;
@@ -190,16 +198,25 @@ export class GameSounds {
       this.playCue(this.skin?.definition.audio?.[cue] ? cue : 'move');
       return;
     }
-    const impact: SoundCue = action.outcome === 'trap' ? 'trap' : action.outcome === 'flag' ? 'flag' :
-      action.attacker.kind === 'paper' ? 'paper' : action.attacker.kind === 'scissors' ? 'scissors' : 'rock';
-    this.playCue(impact, Math.min(resultAfterMs, 600));
+    const impact = combatWeaponCue(action);
+    if (impact) void this.playCue(impact, Math.min(resultAfterMs, 600));
     // The match result announces a flag victory after the final effect finishes.
     if (action.outcome === 'flag') return;
-    if (action.outcome === 'duel' || action.outcome === 'tie') this.playCue('duel', resultAfterMs);
-    else {
+    if (action.outcome !== 'duel' && action.outcome !== 'tie') {
       const winner = action.winnerId === action.attacker.id ? action.attacker : action.defender;
       this.playCue(winner?.owner === you ? 'win' : 'lose', resultAfterMs);
     }
+  }
+
+  playCombatWeapon(action: GameActionView): Promise<void> {
+    const cue = combatWeaponCue(action);
+    return cue ? this.playCue(cue) : Promise.resolve();
+  }
+
+  playCombatResult(action: GameActionView, you: string): void {
+    if (!action.winnerId || action.outcome === 'flag') return;
+    const winner = action.winnerId === action.attacker.id ? action.attacker : action.defender;
+    void this.playCue(winner?.owner === you ? 'win' : 'lose');
   }
 
   playStartGong(delayMs: number): Promise<void> { return this.playCue('gong', delayMs); }

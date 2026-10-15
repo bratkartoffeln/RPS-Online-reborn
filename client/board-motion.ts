@@ -122,6 +122,22 @@ export function smoothStep(progress: number): number {
   return p * p * (3 - 2 * p);
 }
 
+export const NINJA_SPEED_FACTOR = 2;
+export const FACEOFF_HOLD_MS = 550;
+export function combatFacingFrame(skin: SkinDefinition, color: TeamColor, facing: 'left' | 'right'): string | null {
+  const name = `battle-${color}-${facing}`;
+  return skin.atlas?.frames[name] ? name : null;
+}
+
+/** Screen-space staging also handles vertical attacks and a rotated board. */
+export function combatStaging(from: { x: number; y: number }, to: { x: number; y: number }) {
+  const attackerLeft = from.x !== to.x ? from.x < to.x : from.y > to.y;
+  return {
+    attacker: { x: to.x + (attackerLeft ? -25 : 25), y: to.y, facing: attackerLeft ? 'right' as const : 'left' as const },
+    defender: { x: to.x + (attackerLeft ? 25 : -25), y: to.y, facing: attackerLeft ? 'left' as const : 'right' as const },
+  };
+}
+
 const CELEBRATION_HOP_MS = 340;
 const CELEBRATION_STAGGER_MS = 24;
 const CELEBRATION_GROUPS = 5;

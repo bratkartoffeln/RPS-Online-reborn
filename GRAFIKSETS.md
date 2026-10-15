@@ -1,10 +1,18 @@
-# Grafiksets für RPS Arena v0.4.24
+# Grafiksets für RPS Arena v0.4.25
 
 Jedes eingebaute Design ist ein eigenständiges Paket unter `public/skins/<id>/`.
 Es enthält sein Manifest, Atlanten, Gewinnerbilder, Gonganimation, Sounds,
 editierbare Vorlagen und Audio-Lizenzen. Auch ICQ Retro Dark besitzt alle zur
 Laufzeit verwendeten Dateien selbst. Die zentrale Oberfläche liest die Ressourcen
 aus dem Manifest; neue Designs benötigen keine Abzweigungen nach Design-ID.
+
+Für die Gegenüberstellung vor einem Kampf enthalten die eingebauten Atlanten
+die waffenneutralen Frames `battle-blue-left`, `battle-blue-right`,
+`battle-red-left` und `battle-red-right`. Sie zeigen ausschließlich die Teamfarbe.
+Ohne diese optionalen Frames bleibt die normale Figur sichtbar. Die editierbare
+Vorlage liegt in `source/battle-poses.svg`; nach den übrigen Atlas-Exportern
+aktualisiert `node scripts/build-battle-poses.mjs` die SVG-, PNG- und mobilen
+WebP-Atlanten gemeinsam (benötigt das optionale Playwright-Grafikwerkzeug).
 
 ## Ein Design hinzufügen
 

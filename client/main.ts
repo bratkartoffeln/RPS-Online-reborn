@@ -22,7 +22,7 @@ import { RefereeDelay } from './referee-delay';
 import { readSeriesMode, seriesAnnouncement, seriesModeDescription, seriesModeLabel, seriesScoreMarkup, seriesInfoMarkup, seriesVoteStatus, seriesWinnerText } from './series-ui';
 import { refereePortrait } from './referee-ui';
 import { otherTeamColor, teamColorForPlayer, teamColorName } from './team-ui';
-import { CombatOverlay, COMBAT_TIMING } from './combat-ui';
+import { CombatOverlay } from './combat-ui';
 import { chatBubbleDuration, chatBubbleText, RoomChat } from './chat-ui';
 import { freshVictory } from './match-victory';
 import { EndgameOverlay } from './endgame-ui';
@@ -233,6 +233,7 @@ const connection = new RpsConnection({
     }
   },
   onProblem(message) {
+    combat.clearPreviewChoice();
     shuffleSoundPending = false;
     clearPending();
     render();
@@ -270,9 +271,8 @@ const combat = new CombatOverlay(el('combat-overlay'), {
   onBusyChange(busy) { updateBoardInteraction(); endgame.update(view, busy, currentSkin); if (!busy) announceReferee(); },
   onCelebrate(ownerId) { board.celebrate(ownerId); },
   beforeBattle() { return board.whenEffectsComplete(); },
-  onBattleStart(action) {
-    if (view) sounds.playAction(action, view.you, animationsPreferred && !reducedMotion.matches ? COMBAT_TIMING.shatter : 0);
-  },
+  onBattleEffect(action) { return sounds.playCombatWeapon(action); },
+  onBattleResult(action) { if (view) sounds.playCombatResult(action, view.you); },
 });
 el('board').addEventListener('pointerdown', () => el('board').focus({ preventScroll: true }));
 
@@ -433,6 +433,7 @@ function send(message: string, payload?: unknown): void {
   if (pending || networkStatus !== 'connected') return;
   pending = true;
   if (!connection.send(message, payload)) {
+    if (message === 'duel') combat.clearPreviewChoice();
     shuffleSoundPending = false;
     clearPending();
     toast('Bitte warte, bis die Verbindung wiederhergestellt ist.', true);
@@ -1005,7 +1006,8 @@ app.addEventListener('click', (event) => {
     selected = null;
     send(action === 'restart' ? 'restart' : 'new_series', { seriesId: view.series.id, matchId: view.series.matchId });
   }
-  if (action === 'duel' && view?.duel && !combat.busy && !view.paused && !view.duel.choiceLocked[view.you]) {
+  if (action === 'duel' && view?.duel && !pending && !combat.busy && !view.paused && !view.duel.choiceLocked[view.you]) {
+    combat.previewChoice(button.dataset.kind as FighterKind);
     send('duel', { kind: button.dataset.kind as FighterKind, duelId: view.duel.id, round: view.duel.round });
   }
   if (action === 'resign') confirm('Diese Partie aufgeben?', 'Dein Gegner erhält einen Sieg in dieser Serie. Danach entscheidet ihr gemeinsam, wie es im selben Raum weitergeht.', 'Partie aufgeben', () => send('resign'));
