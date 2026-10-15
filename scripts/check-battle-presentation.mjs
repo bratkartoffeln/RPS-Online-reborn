@@ -91,7 +91,7 @@ try {
       }
       await page.waitForFunction(() => document.querySelector('#combat').dataset.mode === 'battle');
       await page.waitForFunction(() => qa.effects.length === 1);
-      assert.equal(await page.evaluate(() => qa.effects[0].stage), 'shatter');
+      assert.equal(await page.evaluate(() => qa.effects[0].stage), 'impact');
       await page.evaluate(() => qa.choose());
       assert.equal(await page.locator('#combat').getAttribute('data-mode'), 'waiting');
       assert.equal(await page.locator('.combat-choice').count(), 0);

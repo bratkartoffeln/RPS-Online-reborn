@@ -366,9 +366,14 @@ test('bundled retro, classic and Arcade packs resolve to existing, correctly bou
   const svgWidth = Number(svgRoot.match(/\bwidth=["']([0-9.]+)["']/)?.[1]);
   const svgHeight = Number(svgRoot.match(/\bheight=["']([0-9.]+)["']/)?.[1]);
   assert.deepEqual([svgWidth, svgHeight], [retroWidth, retroHeight], 'SVG and PNG share dimensions and frame coordinates.');
-  const vectorArtwork = retroSvg.replace(/<!-- gong-artwork -->[\s\S]*?<!-- end-gong-artwork -->/g, '');
+  const battleArtwork = retroSvg.match(/<!-- battle-poses -->([\s\S]*?)<!-- end-battle-poses -->/)?.[1];
+  assert.ok(battleArtwork);
+  assert.equal((battleArtwork.match(/<image\b/g) ?? []).length, 4);
+  assert.doesNotMatch(battleArtwork.replace(/href="data:image\/png;base64,[A-Za-z0-9+/=]+"/g, ''), /(?:href|xlink:href)=|<script\b|<foreignObject\b/i);
+  const vectorArtwork = retroSvg.replace(/<!-- gong-artwork -->[\s\S]*?<!-- end-gong-artwork -->/g, '')
+    .replace(/<!-- battle-poses -->[\s\S]*?<!-- end-battle-poses -->/g, '');
   assert.doesNotMatch(vectorArtwork, /<script\b|<image\b|<foreignObject\b|(?:href|xlink:href)=["'](?!#)/i,
-    'Existing artwork remains vector-only; only the supplied gong bitmap is embedded.');
+    'Existing artwork remains vector-only outside the gong and extracted combat poses.');
   assert.match(retroSvg, /href="data:image\/png;base64,/);
   assert.doesNotMatch(retroSvg, /<script\b|<foreignObject\b|(?:href|xlink:href)=["']https?:/i);
   for (const color of ['blue', 'red'] as const) {

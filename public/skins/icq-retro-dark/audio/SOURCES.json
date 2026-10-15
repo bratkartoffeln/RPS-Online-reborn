@@ -113,7 +113,8 @@
         "cue": "move",
         "start": 51,
         "end": 51.66,
-        "sha256": "c3dc98c9b82e9b491b58ca6dd7519d6834273bf2bad35d96b639d7f91eea9b18"
+        "sha256": "fafa6119e5612cae89cc66138f8e8ca80f88dcc0215e7d4813a437604fe186c8",
+        "processing": "Locally edited audio supplied in the workspace; cut coordinates refer to the original source excerpt."
       },
       "original-paper.wav": {
         "cue": "paper",
@@ -167,13 +168,15 @@
         "cue": "moveBlue",
         "start": 51,
         "end": 51.66,
-        "sha256": "c3dc98c9b82e9b491b58ca6dd7519d6834273bf2bad35d96b639d7f91eea9b18"
+        "sha256": "66dbc98d10f3cc7e859b674a1833ae87dfe14fd7b0038c8724619e6b7a0d5403",
+        "processing": "Locally edited audio supplied in the workspace; cut coordinates refer to the original source excerpt."
       },
       "original-moveBlue2.wav": {
         "cue": "moveBlue",
         "start": 83.46,
         "end": 84.63,
-        "sha256": "a097ebb2e854823158267af3a91f139fcdf74888bd98733301725fc2c08ede03"
+        "sha256": "8d4a2559cd31200c3de044cfee75c996e9a579138307440b8c070e379bc2f715",
+        "processing": "Locally edited audio supplied in the workspace; cut coordinates refer to the original source excerpt."
       },
       "original-moveRed.wav": {
         "cue": "moveRed",
