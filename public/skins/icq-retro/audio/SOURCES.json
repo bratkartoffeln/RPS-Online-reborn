@@ -1,112 +1,6 @@
 {
   "retrieved": "2026-10-15",
-  "effects": {
-    "duel.ogg": {
-      "author": "Kenney Vleugels",
-      "url": "https://kenney.nl/assets/digital-audio",
-      "license": "CC0-1.0",
-      "original": "Audio/twoTone1.ogg",
-      "sha256": "8732f14d6398407a8f1df77b986c2099cfd88f6583e1272cb60497cb2fe8da1d"
-    },
-    "draw.ogg": {
-      "author": "Kenney Vleugels",
-      "url": "https://kenney.nl/assets/digital-audio",
-      "license": "CC0-1.0",
-      "original": "Audio/twoTone2.ogg",
-      "sha256": "e8e4a2d9faa4344f4722de9ef81103290858bbcd80f1dc686879128cae52e9f0"
-    },
-    "move.ogg": {
-      "author": "Kenney Vleugels",
-      "url": "https://kenney.nl/assets/impact-sounds",
-      "license": "CC0-1.0",
-      "original": "Audio/footstep_wood_001.ogg",
-      "sha256": "e4f68e1c9fd55b4dc8ca89ed2bbab6f200171bc54bdc18aa96b80d8e7336f462"
-    },
-    "rock.ogg": {
-      "author": "Kenney Vleugels",
-      "url": "https://kenney.nl/assets/impact-sounds",
-      "license": "CC0-1.0",
-      "original": "Audio/impactPunch_heavy_000.ogg",
-      "sha256": "b33a8f14068aec24ec69ba85e5e87fdc41228975f6a1a3e44a6e7d6fc3d9f8d8"
-    },
-    "paper.ogg": {
-      "author": "Kenney Vleugels",
-      "url": "https://kenney.nl/assets/impact-sounds",
-      "license": "CC0-1.0",
-      "original": "Audio/impactSoft_heavy_000.ogg",
-      "sha256": "49e7ca88743fca974bb8676ea138b751cfd8f9033b5e7af8736c2a215d6edbc1"
-    },
-    "scissors.ogg": {
-      "author": "Kenney Vleugels",
-      "url": "https://kenney.nl/assets/impact-sounds",
-      "license": "CC0-1.0",
-      "original": "Audio/impactTin_medium_000.ogg",
-      "sha256": "f4bbee66ca191ec744b84fc07ac9ed2a6fda955d51cfed8360f12b62815d3cbd"
-    },
-    "trap.ogg": {
-      "author": "Kenney Vleugels",
-      "url": "https://kenney.nl/assets/digital-audio",
-      "license": "CC0-1.0",
-      "original": "Audio/lowDown.ogg",
-      "sha256": "e0215fcfd8b9d7877f74d5c46b239a13d7db0d25998da97b80404931ef9eef5d"
-    },
-    "flag.ogg": {
-      "author": "Kenney Vleugels",
-      "url": "https://kenney.nl/assets/digital-audio",
-      "license": "CC0-1.0",
-      "original": "Audio/powerUp2.ogg",
-      "sha256": "83786b43d828a399e14ac20604b63a60ca05385977f5477d00304c2adc696204"
-    },
-    "win.ogg": {
-      "author": "Kenney Vleugels",
-      "url": "https://kenney.nl/assets/digital-audio",
-      "license": "CC0-1.0",
-      "original": "Audio/powerUp5.ogg",
-      "sha256": "528e7245a1b61c6fd94bcb8df1d747e6e9b76dce58a36e44be992cf9e09884f8"
-    },
-    "lose.ogg": {
-      "author": "Kenney Vleugels",
-      "url": "https://kenney.nl/assets/digital-audio",
-      "license": "CC0-1.0",
-      "original": "Audio/phaserDown1.ogg",
-      "sha256": "d2d046cd0247045f8819905fc9719a7237ccbd590b3128ce58a61a81f50d208b"
-    },
-    "gong.ogg": {
-      "author": "rubberduck",
-      "url": "https://opengameart.org/content/100-cc0-sfx",
-      "license": "CC0-1.0",
-      "original": "gong_01.ogg",
-      "sha256": "4780a38e91688b59899b3679cf3534b4b75654b45a177af9d9fb681c447f7f9a"
-    },
-    "moveBlue-1.ogg": {
-      "author": "Kenney Vleugels",
-      "url": "https://kenney.nl/assets/digital-audio",
-      "license": "CC0-1.0",
-      "original": "Audio/phaseJump1.ogg",
-      "sha256": "c60069ed7108678dd6a1306404d168a93cc2575cda37b06add9dd6c4d46352a3"
-    },
-    "moveBlue-2.ogg": {
-      "author": "Kenney Vleugels",
-      "url": "https://kenney.nl/assets/digital-audio",
-      "license": "CC0-1.0",
-      "original": "Audio/phaseJump2.ogg",
-      "sha256": "5d85717cfca231f7da7887cef5f44b2131bbe3308eb0c1fee0b4f9e61d59b571"
-    },
-    "moveRed-1.ogg": {
-      "author": "Kenney Vleugels",
-      "url": "https://kenney.nl/assets/digital-audio",
-      "license": "CC0-1.0",
-      "original": "Audio/pepSound4.ogg",
-      "sha256": "8afd1776651eb3155e1b588f26d6c9b5cc183e9c53297685763f51ac63e63673"
-    },
-    "moveRed-2.ogg": {
-      "author": "Kenney Vleugels",
-      "url": "https://kenney.nl/assets/digital-audio",
-      "license": "CC0-1.0",
-      "original": "Audio/pepSound5.ogg",
-      "sha256": "4dc9824b319efd915bac82d8e2767e51d5f6503224d358fda6e2d445f2934bc8"
-    }
-  },
+  "effects": {},
   "speech": {
     "engine": "eSpeak NG (espeak-ng npm 1.0.2), offline formant synthesis",
     "engineSource": "https://github.com/espeak-ng/espeak-ng",
@@ -128,7 +22,7 @@
     "title": "Rock Paper Scissors in ICQ (RPS)",
     "channel": "shachar700",
     "license": "No free license declared in the retrieved video metadata; not CC0. Source/game audio rights remain with their respective owners.",
-    "notes": "User-requested excerpts. Seconds refer to the downloaded audio timeline. No pitch change, no added speech. Gong tail ends before the next spoken turn cue. Missing isolated events retain the CC0 replacement sounds.",
+    "notes": "User-requested excerpts. Seconds refer to the downloaded audio timeline. No pitch change, no added speech. Gong tail ends before the next spoken turn cue. No OGG replacement effects are included.",
     "clips": {
       "gong": {
         "start": 22.52,
@@ -300,5 +194,11 @@
     "sha256": "4bb37206768984dc76ce1714cc50658b57c6d06ccfa6cde975801d5d0fd9b0c7",
     "source": "User-supplied extracted original-bling.wav; used unchanged.",
     "license": "Original game recording; no additional reuse license supplied."
+  },
+  "yawn": {
+    "file": "original-yawn.wav",
+    "source": "User-supplied original-yawn.wav; used unchanged.",
+    "license": "Original game recording; no additional reuse license supplied.",
+    "sha256": "f9ff9f1a9b3ab316515dcebfae290c37ff5208917c0f764d349d3f5bcecdb9e7"
   }
 }

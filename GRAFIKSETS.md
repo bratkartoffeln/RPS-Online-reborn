@@ -1,4 +1,4 @@
-# Grafiksets für RPS Arena v0.4.21
+# Grafiksets für RPS Arena v0.4.22
 
 Jedes eingebaute Design ist ein eigenständiges Paket unter `public/skins/<id>/`.
 Es enthält sein Manifest, Atlanten, Gewinnerbilder, Gonganimation, Sounds,
@@ -111,9 +111,9 @@ Originalausschnitte aus [Rock Paper Scissors in ICQ (RPS)](https://www.youtube.c
 von shachar700. Diese ersetzen die aktiven Retro-Zuordnungen für Gong, Bewegung,
 Stein, Papier, Schere, Flagge sowie „red turn“, „blue turn“, „you win“ und
 „you lose“. Auch die Kampfergebnisse `win` und `lose` verwenden die extrahierten
-Originalansagen; OGG-Dateien kommen nur bei Ereignissen ohne Originalaufnahme
-zum Einsatz. Die synthetischen Retro-WAVs bleiben als optionale Alternativen
-enthalten. Nicht isoliert extrahierte Ereignisse behalten ihre CC0-Ersatzsounds.
+Originalansagen. Beide Retro-Pakete enthalten keine OGG-Dateien oder OGG-Zuordnungen.
+Die synthetischen Retro-WAVs bleiben als optionale Alternativen enthalten.
+Für Ereignisse ohne Originalaufnahme greift der allgemeine synthetische Sound-Fallback.
 Klassisch und Arcade verwenden weiterhin lokal erzeugte Sprachansagen.
 Die rote Ansage stammt vollständig aus 05:18,10–05:19,45; der nächste
 Bewegungssound bleibt außerhalb dieses Ausschnitts. Zwei verschiedene
@@ -140,6 +140,27 @@ CC0-/Sprachgenerierung behält die aktiven Originalzuordnungen und deren
 abweichende Lizenzhinweise bei.
 
 ## Grafiken neu exportieren
+
+Die Retro-Figuren besitzen drei zusätzliche Ruheposen für Oberkörper- und
+Fußbewegungen, auch für aufgedeckte Figuren und beide Blickrichtungen.
+Vorderansichten erhalten zusätzlich eine Zwinkerpose mit geschlossenen Augen,
+die der Client zufällig auswählt und einmalig für 160 Millisekunden zeigt.
+Rückansichten erhalten keine Augenzeichnung.
+Sichtbare Fallen/Attrappen bleiben statisch; als unbekannte Figur verdeckte
+Fallen bewegen sich weiterhin wie die anderen verdeckten Figuren.
+Der Client spielt kurze Bewegungen mit unabhängigen Zufallsabständen von
+2–8 Sekunden ab; die Einstellung für Animationen gilt auch hier mobil.
+Nach zehn Sekunden ohne Spielaktion beider Spieler gähnt der Schiedsrichter
+einmal mit `audio/original-yawn.wav`. Eine neue Aktion setzt die Wartezeit zurück;
+Pause, Verbindungsunterbrechung und ausgeblendete Seiten unterbrechen sie.
+Die Gähnpose ersetzt den rechten Fahnenarm durch einen angewinkelten Arm mit
+Hand vor dem Mund. Die linke Hand hält weiterhin die blaue Fahne.
+
+Nach den übrigen Atlasexportern die zusätzlichen Posen und alle Rastervarianten
+mit `node scripts/build-retro-idle.mjs [playwright-Modulpfad]` erzeugen.
+`yawn.svg` enthält die einmalige Gähnanimation; `referee-yawn` ist ihre statische
+Atlasvariante bei reduzierter Bewegung. Gong und Schiri sind im mobilen
+Kopfbereich zweifach skaliert, ohne dessen reservierte Höhe zu verändern.
 
 `node scripts/build-gong-art.mjs` erzeugt die beiden Gong-SVGs aus
 `source/gong.svg` und `source/gong.css`. Die Retro-SVGs betten das freigestellte

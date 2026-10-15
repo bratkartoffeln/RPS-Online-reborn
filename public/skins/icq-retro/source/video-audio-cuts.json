@@ -3,7 +3,7 @@
   "title": "Rock Paper Scissors in ICQ (RPS)",
   "channel": "shachar700",
   "license": "No free license declared in the retrieved video metadata; not CC0. Source/game audio rights remain with their respective owners.",
-  "notes": "User-requested excerpts. Seconds refer to the downloaded audio timeline. No pitch change, no added speech. Gong tail ends before the next spoken turn cue. Missing isolated events retain the CC0 replacement sounds.",
+  "notes": "User-requested excerpts. Seconds refer to the downloaded audio timeline. No pitch change, no added speech. Gong tail ends before the next spoken turn cue. No OGG replacement effects are included.",
   "clips": {
     "gong": {
       "start": 22.52,
