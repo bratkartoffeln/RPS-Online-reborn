@@ -7,6 +7,7 @@ import type { RoomChat } from '../server/chat.js';
 import { CHAT_MIN_INTERVAL_MS } from '../shared/chat.js';
 import type { GameState } from '../shared/game.js';
 import type { ChatProblem, ChatState, ContinuationMessage, Snapshot } from '../shared/protocol.js';
+import { stageRock } from './helpers/rock-setup.js';
 
 async function until(predicate: () => boolean, description: string): Promise<void> {
   const deadline = Date.now() + 5000;
@@ -183,12 +184,7 @@ test('real room chat authenticates senders, stays separate from gameplay and sur
 
     await context.test('chat cannot alter a pending private duel choice, revision or last action', async () => {
       for (const [observer, target] of [[a, 30], [b, 9]] as const) {
-        const view = observer.snapshot!;
-        if (view.board[target]?.kind !== 'rock') {
-          const from = view.board.findIndex((piece) => piece?.owner === view.you && piece.kind === 'rock');
-          observer.room.send('swap', { from, to: target });
-          await observer.wait((updated) => updated.board[target]?.kind === 'rock');
-        }
+        await stageRock(observer, target);
       }
       a.room.send('ready');
       b.room.send('ready');
