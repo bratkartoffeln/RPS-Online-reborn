@@ -3,6 +3,7 @@ import assert from 'node:assert/strict';
 import { Client, type Room } from '@colyseus/sdk';
 import { startServer } from '../server/app.js';
 import type { Snapshot } from '../shared/protocol.js';
+import { stageRock } from './helpers/rock-setup.js';
 
 async function until(predicate: () => boolean, description: string) {
   const deadline = Date.now() + 4000;
@@ -67,12 +68,7 @@ test('real two-client sessions keep secrets, validate commands and recover seats
 
     await context.test('setup swaps and ready lead to a synchronized match', async () => {
       for (const [observer, target] of [[a, 30], [b, 9]] as const) {
-        const view = observer.snapshot!;
-        if (view.board[target]?.kind !== 'rock') {
-          const source = view.board.findIndex((piece) => piece?.owner === view.you && piece.kind === 'rock');
-          observer.room.send('swap', { from: source, to: target });
-          await observer.wait((updated) => updated.board[target]?.kind === 'rock');
-        }
+        await stageRock(observer, target);
       }
       a.room.send('ready');
       b.room.send('ready');

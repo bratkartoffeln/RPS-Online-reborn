@@ -1,5 +1,10 @@
 # Änderungen
 
+## 0.4.21
+
+- Zufallsabhängige Fehler in drei Netzwerk-Tests behoben: Flagge oder Falle werden vor dem Platzieren der Duell-Steine ausschließlich auf sichere Innenfelder verschoben. So erzeugt die gemeinsame Testvorbereitung keine verbotene Eckblockade mehr.
+- Netzwerk-Test meldet abgelehnte Befehle und Verbindungsfehler mit der tatsächlichen Servermeldung statt erst nach dem Warte-Timeout. Regressionstests decken beide reproduzierten Problemaufstellungen und 512 deterministische Aufstellungen ab.
+
 ## 0.4.20
 
 - Eigener Mischsound bei der ersten Aufstellung und beim erneuten Mischen: unverändertes `original-bling.wav` in beiden ICQ-Retro-Designs, lokal erzeugtes Rascheln für Klassisch und elektronische Tonfolge für Arcade. Stummschaltung gilt auch hier; Wiederverbinden spielt das Mischen nicht erneut ab.

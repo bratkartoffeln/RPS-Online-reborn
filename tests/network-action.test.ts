@@ -3,6 +3,46 @@ import test from 'node:test';
 import { Client, type Room } from '@colyseus/sdk';
 import { startServer } from '../server/app.js';
 import type { Snapshot } from '../shared/protocol.js';
+import { addPlayer, createGame, readyPlayer, swapSetup, viewFor } from '../shared/game.js';
+import { rockSetupSwaps, stageRock } from './helpers/rock-setup.js';
+
+function seededSetup(seed: number) {
+  let state = seed;
+  const game = createGame({ random: () => {
+    state = (Math.imul(state, 1664525) + 1013904223) >>> 0;
+    return state / 0x100000000;
+  } });
+  addPlayer(game, 'a', 'Ada'); addPlayer(game, 'b', 'Ben');
+  return game;
+}
+
+test('wire-test setup avoids the corner-blocking swaps reproduced by seeds 151 and 270', () => {
+  for (const [seed, owner, target] of [[151, 'b', 9], [270, 'a', 30]] as const) {
+    const game = seededSetup(seed);
+    const from = game.board.findIndex(piece => piece?.owner === owner && piece.kind === 'rock');
+    const rejected = swapSetup(structuredClone(game), owner, from, target);
+    assert.equal(rejected.ok, false, `Seed ${seed} reproduces the former setup failure`);
+    if (!rejected.ok) assert.match(rejected.error, /Ecke.*Flagge und Falle/);
+    for (const swap of rockSetupSwaps(viewFor(game, owner), target)) {
+      assert.deepEqual(swapSetup(game, owner, swap.from, swap.to), { ok: true });
+    }
+    assert.equal(game.board[target]?.kind, 'rock');
+    assert.equal(readyPlayer(game, owner).ok, true);
+  }
+});
+
+test('wire-test setup produces valid rock staging for both seats across 512 deterministic layouts', () => {
+  for (let seed = 0; seed < 512; seed++) {
+    const game = seededSetup(seed);
+    for (const [owner, target] of [['a', 30], ['b', 9]] as const) {
+      for (const swap of rockSetupSwaps(viewFor(game, owner), target)) {
+        assert.equal(swapSetup(game, owner, swap.from, swap.to).ok, true, `Seed ${seed}, ${owner}: valid swap`);
+      }
+      assert.equal(game.board[target]?.kind, 'rock');
+      assert.equal(readyPlayer(game, owner).ok, true, `Seed ${seed}, ${owner}: valid setup`);
+    }
+  }
+});
 
 async function until(predicate: () => boolean): Promise<void> {
   const deadline = Date.now() + 5000;
@@ -17,17 +57,43 @@ function observe(room: Room) {
     room,
     snapshot: undefined as Snapshot | undefined,
     received: 0,
+    problems: [] as string[],
+    check() {
+      if (observer.problems.length) throw new Error(`Serverfehler im Netzwerk-Test: ${observer.problems.join('; ')}`);
+    },
     async wait(predicate: (snapshot: Snapshot) => boolean) {
-      await until(() => !!observer.snapshot && predicate(observer.snapshot));
+      await until(() => {
+        observer.check();
+        return !!observer.snapshot && predicate(observer.snapshot);
+      });
       return observer.snapshot!;
     },
   };
   room.onMessage('snapshot', (snapshot: Snapshot) => { observer.snapshot = snapshot; observer.received += 1; });
-  room.onMessage('problem', () => {});
-  room.onError(() => {});
+  room.onMessage('chat', () => {});
+  room.onMessage('problem', (problem: { message: string }) => observer.problems.push(problem.message));
+  room.onError((code, message) => observer.problems.push(`${code}: ${message}`));
   room.send('sync');
   return observer;
 }
+
+test('wire-test waits report a rejected command with its server error instead of timing out', { timeout: 10000 }, async () => {
+  const running = await startServer({ port: 0, host: '127.0.0.1', reconnectSeconds: 1 });
+  let room: Room | undefined;
+  try {
+    room = await new Client(running.url).create('rps', { name: 'Ada' });
+    const observer = observe(room);
+    await observer.wait(view => view.phase === 'waiting');
+    room.send('swap', { from: -1, to: 30 });
+    await assert.rejects(observer.wait(() => false), /Serverfehler im Netzwerk-Test: Ungültige Felder/);
+  } finally {
+    if (room) {
+      room.reconnection.enabled = false;
+      if (room.connection.isOpen) await room.leave();
+    }
+    await running.close();
+  }
+});
 
 test('wire events keep movers and unsubmitted duel choices private and retain their ID on sync/reconnect', { timeout: 20000 }, async () => {
   const running = await startServer({ port: 0, host: '127.0.0.1', reconnectSeconds: 8 });
@@ -40,12 +106,7 @@ test('wire events keep movers and unsubmitted duel choices private and retain th
     rooms.push(b.room);
     await Promise.all([a.wait((view) => view.players.length === 2), b.wait((view) => view.players.length === 2)]);
     for (const [observer, target] of [[a, 30], [b, 9]] as const) {
-      const view = observer.snapshot!;
-      if (view.board[target]!.kind !== 'rock') {
-        const source = view.board.findIndex((piece) => piece?.owner === view.you && piece.kind === 'rock');
-        observer.room.send('swap', { from: source, to: target });
-        await observer.wait((snapshot) => snapshot.board[target]!.kind === 'rock');
-      }
+      await stageRock(observer, target);
     }
     a.room.send('ready');
     b.room.send('ready');
@@ -66,7 +127,7 @@ test('wire events keep movers and unsubmitted duel choices private and retain th
 
     const previousPackets = b.received;
     b.room.send('sync');
-    await until(() => b.received > previousPackets);
+    await until(() => { b.check(); return b.received > previousPackets; });
     assert.deepEqual(b.snapshot!.lastAction, opposingMove);
     const token = a.room.reconnectionToken;
     const identity = a.room.sessionId;
