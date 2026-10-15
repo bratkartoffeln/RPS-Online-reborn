@@ -108,3 +108,4 @@ for (const id of ['classic', 'arcade', 'icq-retro', 'icq-retro-dark']) {
   await writeFile(manifestFile, JSON.stringify(manifest, null, 2) + '\n');
   console.log(`${id}: themed CC0 effects, team movement variations and four local speech alternatives`);
 }
+await import('./build-shuffle-audio.mjs');

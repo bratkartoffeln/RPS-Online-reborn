@@ -118,6 +118,7 @@ class ArenaScene extends Phaser.Scene {
   private tileImages: Array<Phaser.GameObjects.Image | null> = [];
   private visuals = new Map<string, PieceVisual>();
   private effect: BoardEffect | null = null;
+  private effectWaiters = new Set<() => void>();
   private celebration: TeamCelebration | null = null;
   private flagVictory: FlagVictory | null = null;
   private gesture: Gesture | null = null;
@@ -863,6 +864,10 @@ class ArenaScene extends Phaser.Scene {
     });
   }
 
+  whenEffectsComplete(): Promise<void> {
+    return this.effect ? new Promise(resolve => this.effectWaiters.add(resolve)) : Promise.resolve();
+  }
+
   private finishEffect(): void {
     if (!this.effect) return;
     this.effect = null;
@@ -875,6 +880,8 @@ class ArenaScene extends Phaser.Scene {
         this.animateArtwork(visual, 0);
       }
     }
+    for (const resolve of this.effectWaiters) resolve();
+    this.effectWaiters.clear();
   }
 
   private startEffect(action: GameActionView): void {
@@ -1041,6 +1048,10 @@ export class ArenaBoard {
 
   whenReady(): Promise<void> {
     return this.scene.whenReady;
+  }
+
+  whenEffectsComplete(): Promise<void> {
+    return this.scene.whenEffectsComplete();
   }
 
   setAnimationsEnabled(enabled: boolean): void {

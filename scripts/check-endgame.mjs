@@ -37,6 +37,7 @@ try {
   async function verify(color) {
     for (const page of [blue, red]) {
       const root = page.locator('#endgame-overlay');
+      assert.equal(await root.locator('h2').innerText(), page === (color === 'blue' ? blue : red) ? 'Du hast gewonnen! (You win)' : 'Du hast verloren. (You lose)');
       assert.equal(await root.getAttribute('data-winner-team'), color);
       const skin = await page.evaluate(() => document.documentElement.dataset.skin);
       const directory = `/skins/${skin}/endgame/`;
@@ -66,10 +67,10 @@ try {
       await blue.waitForTimeout(250);
       const bounds = await blue.locator('#endgame-overlay').evaluate(root => {
         const overlay = root.getBoundingClientRect(), result = root.querySelector('.endgame-result').getBoundingClientRect();
-        return { overflow: document.documentElement.scrollWidth > innerWidth, fits: result.top >= overlay.top - 1 && result.bottom <= overlay.bottom + 1, centered: Math.abs((result.top + result.bottom) / 2 - (overlay.top + overlay.bottom) / 2) < 1 };
+        return { overlayHeight: overlay.height, resultHeight: result.height, overflow: document.documentElement.scrollWidth > innerWidth, fits: result.top >= overlay.top - 1 && result.bottom <= overlay.bottom + 1, centered: Math.abs((result.top + result.bottom) / 2 - (overlay.top + overlay.bottom) / 2) < 1 };
       });
       assert.equal(bounds.overflow, false);
-      assert.equal(bounds.fits, true, `${skin} ${width}x${height}: end scene fits board`);
+      assert.equal(bounds.fits, true, `${skin} ${width}x${height}: end scene fits board ${JSON.stringify(bounds)}`);
       assert.equal(bounds.centered, true, `${skin} ${width}x${height}: end scene is vertically centered`);
       const directory = `/skins/${skin}/endgame/`;
       assert.ok(await blue.locator('#endgame-overlay img').evaluateAll((images, prefix) => images.every(img => img.getAttribute('src').startsWith(prefix) && img.complete && img.naturalWidth > 0), directory));

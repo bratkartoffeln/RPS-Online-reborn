@@ -13,7 +13,7 @@ try {
   page.on('response', response => { if (response.status() >= 400) failures.push(response.url()); });
   for (const id of ['classic', 'arcade', 'icq-retro', 'icq-retro-dark']) {
     await page.goto(`${server.url}/skins/${id}/preview.html`);
-    await page.waitForFunction(() => document.querySelectorAll('audio').length >= 19);
+    await page.waitForFunction(() => document.querySelectorAll('audio').length >= 20);
     const samples = await page.evaluate(async () => {
       const context = new AudioContext(), rows = [];
       for (const audio of document.querySelectorAll('audio')) {
@@ -30,7 +30,7 @@ try {
       await context.close();
       return rows;
     });
-    assert.equal(samples.length, 19, `${id}: all cues and both team variants have preview controls`);
+    assert.equal(samples.length, 20, `${id}: all cues and both team variants have preview controls`);
     for (const sample of samples) {
       assert.ok(sample.peak > .001 && sample.peak * sample.volume <= 1, `${sample.file}: audible without clipping at its configured gain`);
       assert.ok(sample.duration > .03 && sample.duration <= 10, `${sample.file}: bounded duration`);
@@ -49,7 +49,7 @@ try {
     await first.evaluate(audio => audio.play());
     await page.waitForFunction(() => document.querySelector('audio').currentTime > .05);
     await first.evaluate(audio => audio.pause());
-    console.log(`${id}: 19 local clips decoded, playback, artwork, isolated speech and gong decay OK`);
+    console.log(`${id}: 20 local clips decoded, playback, artwork, isolated speech and gong decay OK`);
   }
   assert.deepEqual(errors, []);
   assert.deepEqual(failures, []);

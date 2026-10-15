@@ -906,13 +906,13 @@
       "rate": 1
     },
     "win": {
-      "file": "audio/win.ogg",
-      "volume": 0.55,
+      "file": "audio/original-youWin.wav",
+      "volume": 0.72,
       "rate": 1
     },
     "lose": {
-      "file": "audio/lose.ogg",
-      "volume": 0.55,
+      "file": "audio/original-youLose.wav",
+      "volume": 0.72,
       "rate": 1
     },
     "gong": {
@@ -955,6 +955,11 @@
       "variants": [
         "audio/original-moveRed2.wav"
       ]
+    },
+    "shuffle": {
+      "file": "audio/original-bling.wav",
+      "volume": 0.65,
+      "rate": 1
     }
   },
   "artwork": {

@@ -294,5 +294,11 @@
         "sha256": "a0f81433b3378cc370a633e4ca3a5760fbde8663a089e4009e5d4dc2daeb9386"
       }
     }
+  },
+  "shuffle": {
+    "file": "original-bling.wav",
+    "sha256": "4bb37206768984dc76ce1714cc50658b57c6d06ccfa6cde975801d5d0fd9b0c7",
+    "source": "User-supplied extracted original-bling.wav; used unchanged.",
+    "license": "Original game recording; no additional reuse license supplied."
   }
 }

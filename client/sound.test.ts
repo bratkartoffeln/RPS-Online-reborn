@@ -54,8 +54,18 @@ test('every shipped design owns complete audio, licenses, artwork and correctly 
       assert.ok(peak > 1000, `${id}: ${cue} contains audible PCM`);
     }
     const credits = JSON.parse(readFileSync(directory + 'audio/SOURCES.json', 'utf8'));
+    assert.equal(skin.audio!.shuffle!.file, id.startsWith('icq') ? 'audio/original-bling.wav' : 'audio/shuffle.wav');
+    assert.equal(credits.shuffle.file, skin.audio!.shuffle!.file.replace('audio/', ''));
     assert.match(credits.speech.voice, /^cmn/);
     if (id.startsWith('icq')) {
+      assert.equal(skin.audio!.win!.file, skin.audio!.youWin!.file);
+      assert.equal(skin.audio!.lose!.file, skin.audio!.youLose!.file);
+      for (const cue of ['move', 'moveBlue', 'moveRed', 'rock', 'paper', 'scissors', 'flag', 'gong', 'win', 'lose', 'youWin', 'youLose', 'blueTurn', 'redTurn'] as const) {
+        const clip = skin.audio![cue]!;
+        for (const file of [clip.file, ...clip.variants ?? []]) {
+          assert.ok(credits.video.files[file.replace('audio/', '')], `${id}: ${cue} uses extracted originals exclusively`);
+        }
+      }
       assert.equal(credits.video.source, 'https://www.youtube.com/watch?v=Q2sDtTbzHiI');
       assert.match(readFileSync(directory + 'audio/LICENSE.txt', 'utf8'), /NOT ALL FILES ARE CC0/);
       for (const cue of ['blueTurn', 'redTurn', 'youWin', 'youLose', 'gong', 'rock', 'paper', 'scissors'] as const) {
@@ -89,6 +99,7 @@ test('pack parser rejects unsafe or unsupported sound paths, values and unknown 
 
 test('sample playback caches decoded buffers, respects mute, cancels pending loads and switches packs without stale audio', async t => {
   const starts: Array<{ when: number; rate: number }> = [], stops: object[] = [], requests: string[] = [], playedIds: number[] = [];
+  const sources: Array<{ onended: (() => void) | null }> = [];
   let finishFetch: (() => void) | undefined;
   class FakeContext {
     state = 'running'; currentTime = 1; destination = {};
@@ -98,6 +109,7 @@ test('sample playback caches decoded buffers, respects mute, cancels pending loa
     createBufferSource() {
       const source = { buffer: null, playbackRate: { value: 1 }, connect() {}, disconnect() {}, onended: null,
         start(when: number) { starts.push({ when, rate: source.playbackRate.value }); playedIds.push((source.buffer as unknown as { id: number }).id); }, stop() { stops.push(source); } };
+      sources.push(source);
       return source;
     }
     createGain() { return { gain: { value: 0 }, connect() {}, disconnect() {} }; }
@@ -130,10 +142,21 @@ test('sample playback caches decoded buffers, respects mute, cancels pending loa
   sounds.playCue('moveBlue'); await flush();
   sounds.playCue('moveBlue'); await flush();
   assert.deepEqual(playedIds.slice(-4), [10, 20, 11, 10], 'Each absolute team keeps its own rotating sound bank');
+  let idle = false;
+  void sounds.whenIdle().then(() => { idle = true; });
+  await flush();
+  assert.equal(idle, false, 'Playback remains busy until the audio engine signals completion');
+  for (const source of sources.slice(0, -1)) source.onended?.();
+  await flush();
+  assert.equal(idle, false, 'The last active sample also has to finish');
+  sources.at(-1)!.onended?.();
+  await flush();
+  assert.equal(idle, true);
+  sounds.playStartGong(0); await flush();
   sounds.playCue('blueTurn'); sounds.setSkin({ ...skin, id: 'replacement' });
   finishFetch?.(); await flush();
-  assert.equal(starts.length, 6, 'Old speech cannot play after changing skin');
+  assert.equal(starts.length, 7, 'Old speech cannot play after changing skin');
   sounds.setEnabled(false); sounds.playStartGong(0); await flush();
-  assert.equal(starts.length, 6);
-  assert.ok(stops.length >= 2, 'Mute/skin changes stop scheduled sources');
+  assert.equal(starts.length, 7);
+  assert.ok(stops.length >= 1, 'Mute/skin changes stop scheduled sources');
 });

@@ -25,6 +25,7 @@ document.getElementById('speech-note').textContent = skin.audio?.redTurn?.file.s
  : 'Englische Schiedsrichteransagen mit lokal synthetisiertem Mandarin-Sprachprofil. Keine menschlichen Sprecheraufnahmen.';
 for (const [key,value] of Object.entries(skin.palette?.ui ?? {})) document.body.style.setProperty('--'+key,value);
 const labels = {redTurn:'Red turn',blueTurn:'Blue turn',youWin:'You win',youLose:'You lose',gong:'Startgong',move:'Zug (Standard)',moveBlue:'Blau bewegt',moveRed:'Rot bewegt',rock:'Stein',paper:'Papier',scissors:'Schere',trap:'Falle',flag:'Flagge',duel:'Duell',win:'Kampf gewonnen',lose:'Kampf verloren',draw:'Unentschieden'};
+labels.shuffle = 'Mischen / Aufstellung';
 for (const [cue,clip] of Object.entries(skin.audio ?? {})) {
  for(const [index,file] of [clip.file,...clip.variants??[]].entries()) {
  const article=document.createElement('article'), title=document.createElement('h3'), audio=document.createElement('audio');
