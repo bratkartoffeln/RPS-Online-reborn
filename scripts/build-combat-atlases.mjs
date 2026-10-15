@@ -19,7 +19,7 @@ for (const id of ['classic', 'arcade', 'icq-retro', 'icq-retro-dark']) {
   const oldHeight = manifest.atlas.frames[names[0]]?.y ?? metadata.height;
   const width = Math.max(metadata.width, size * names.length);
   const height = oldHeight + size;
-  const source = await readFile(new URL('design/combat/' + id + '.svg', root), 'utf8');
+  const source = await readFile(new URL('public/skins/' + id + '/source/combat.svg', root), 'utf8');
   const body = source.replace(/^[\s\S]*?<svg\b[^>]*>/, '').replace(/<\/svg>\s*$/, '').replace(/<title>[\s\S]*?<\/title>/, '');
   const scaledBody = '<g transform="scale(' + size / 128 + ')">' + body + '</g>';
   const row = '<g transform="translate(0 ' + oldHeight + ')">' + scaledBody + '</g>';

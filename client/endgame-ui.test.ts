@@ -24,10 +24,10 @@ test('skin changes repaint both players and the result referee with the matching
     const view = finished(winner);
     for (const skin of [classic, arcade, retro, classic]) {
       overlay.update(view, false, skin);
-      const directory = skin === retro ? '/endgame/' : `/endgame/${skin.id}/`;
+      const directory = `/skins/${skin.id}/endgame/`;
       assert.ok(markup.includes(`src="${directory}referee-${winner === 'a' ? 'blue' : 'red'}.svg"`));
       assert.equal((markup.match(new RegExp('src="' + directory.replaceAll('/', '\\/'), 'g')) ?? []).length, 3);
-      if (skin !== retro) assert.doesNotMatch(markup, /src="\/endgame\/(?:red|blue|referee)-/);
+      assert.doesNotMatch(markup, /src="\/endgame\//);
     }
   }
 });
@@ -37,10 +37,10 @@ test('the winner raises their absolute team color and smiles, independently of t
     const view = { ...finished(winner), you: viewer, finishReason };
     const model = endgameModel(view)!;
     assert.equal(model.winnerTeam, winner === 'a' ? 'blue' : 'red');
-    assert.equal(model.right.team, model.winnerTeam);
-    assert.equal(model.right.mood, 'happy');
-    assert.equal(model.left.mood, 'sad');
-    assert.notEqual(model.left.team, model.right.team);
+    assert.equal(model.left.team, 'blue');
+    assert.equal(model.right.team, 'red');
+    assert.equal(model.left.mood, winner === 'a' ? 'happy' : 'sad');
+    assert.equal(model.right.mood, winner === 'b' ? 'happy' : 'sad');
   }
 });
 

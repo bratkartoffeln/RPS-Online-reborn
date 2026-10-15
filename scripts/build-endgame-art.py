@@ -7,8 +7,8 @@ ROOT = Path(__file__).resolve().parent.parent
 SVG = 'http://www.w3.org/2000/svg'
 ET.register_namespace('', SVG)
 ET.register_namespace('xlink', 'http://www.w3.org/1999/xlink')
-source = ROOT / 'design/icq-retro-source'
-output = ROOT / 'public/endgame'
+source = ROOT / 'public/skins/icq-retro/source'
+output = ROOT / 'public/skins/icq-retro/endgame'
 output.mkdir(parents=True, exist_ok=True)
 heroes = ET.parse(source / 'flag-victory.svg').getroot()
 referees = ET.parse(source / 'referees.svg').getroot()
@@ -59,11 +59,16 @@ for color in ['blue', 'red']:
 
 for color, frame in [('blue', 'referee-blue-top'), ('red', 'referee-red-turn'), ('neutral', 'referee-neutral')]:
     group = deepcopy(next(node for node in referees.iter() if node.get('id') == frame))
-    # The winner is always on the right of the result scene. These source poses
-    # raise the colored flag on the left; mirror the whole pose, including gaze.
+    # Export winner poses pointing right, including flag and gaze.
+    # The overlay mirrors blue with CSS to face the fixed left seat.
     if color != 'neutral':
         wrapper = ET.Element(f'{{{SVG}}}g', {'transform': 'translate(320 0) scale(-1 1)'})
         wrapper.append(group)
         group = wrapper
     export(f'referee-{color}', group, referees.find(f'{{{SVG}}}defs'), '0 0 320 240', f'Schiedsrichter: {color}')
-print('Nine SVG endgame poses exported to public/endgame.')
+print('Nine SVG endgame poses exported to public/skins/icq-retro/endgame.')
+from shutil import copyfile
+dark = ROOT / 'public/skins/icq-retro-dark/endgame'
+dark.mkdir(parents=True, exist_ok=True)
+for image in output.glob('*.svg'):
+    copyfile(image, dark / image.name)

@@ -30,16 +30,17 @@ test('gong plays only after a live second ready confirmation in the same game', 
 });
 
 test('every pack has its own static or single-strike gong artwork', () => {
-  const classic = builtInSkin();
-  for (const [style, skin] of [
-    ['classic', classic], ['arcade', { ...classic, id: 'arcade' }],
-    ['retro', { ...classic, definition: { ...classic.definition, presentation: 'retro' as const } }],
-  ] as const) {
-    assert.ok(gongMarkup(skin, 76).includes(`data-gong-style="${style}" data-animated="false"`));
+  for (const id of ['classic', 'arcade', 'icq-retro', 'icq-retro-dark']) {
+    const skin = { ...builtInSkin(), id, definition: parseSkinDefinition(JSON.parse(readFileSync(`public/skins/${id}/skin.json`, 'utf8'))) };
+    assert.ok(gongMarkup(skin, 76).includes(`data-gong-style="${id}" data-animated="false"`));
     assert.ok(gongMarkup(skin, 180, true).includes('data-animated="true"'));
-    assert.doesNotMatch(gongMarkup(skin, 180, true), /<script|href="https?:/);
-    if (style === 'retro') assert.ok(gongMarkup(skin, 180, true).includes('href="/gong/icq-original-cutout.png"'));
-    else assert.doesNotMatch(gongMarkup(skin, 180, true), /<image/);
+    assert.ok(gongMarkup(skin, 180, true, 5).includes(`/skins/${id}/gong/strike.svg?play=5`));
+    const svg = readFileSync(`public/skins/${id}/${skin.definition.artwork!.gong!.strike}`, 'utf8');
+    assert.match(svg, /xmlns="http:\/\/www.w3.org\/2000\/svg"/);
+    assert.match(svg, /@keyframes gong-strike/);
+    assert.doesNotMatch(svg, /<script|(?:href|src)="https?:/);
+    if (id.startsWith('icq')) assert.match(svg, /href="data:image\/png;base64,/);
+    else assert.doesNotMatch(svg, /<image/);
   }
 });
 

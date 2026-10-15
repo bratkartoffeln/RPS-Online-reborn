@@ -1,4 +1,5 @@
 import { mobileGraphics } from './mobile-graphics';
+import { SOUND_CUES } from './skin-types';
 import type {
   ArtworkVariant, AtlasFrame, BoardPalette, LoadedSkin, PerspectivePieces, PieceArtwork, PieceSet, PortraitDirection, SkinAnimation,
   SkinAnimationState, SkinAtlas, SkinCatalog, SkinDefinition, SkinEntry, SkinPiece, SkinTeam, SkinWeapon, TeamColor, UiPalette,
@@ -17,6 +18,7 @@ export const DEFAULT_SKIN: SkinDefinition = {
   version: 1,
   name: 'Klassisch',
   presentation: 'modern',
+  artwork: { endgame: 'endgame', gong: { idle: 'gong/idle.svg', strike: 'gong/strike.svg', strikeMs: 380, durationMs: 1500 } },
   palette: {
     ui: {
       background: '#11171a', panel: '#1a2125', border: '#303a3f', text: '#eff2ec',
@@ -88,6 +90,14 @@ function number(value: unknown, minimum: number, maximum: number, label: string,
 function frameName(value: unknown, label: string): string {
   if (typeof value !== 'string' || !/^[A-Za-z0-9][A-Za-z0-9_-]{0,63}$/.test(value) || RESERVED_NAMES.has(value)) {
     invalid(`${label} enthält einen ungültigen Frame-Namen. Erlaubt sind bis zu 64 Buchstaben, Ziffern, - und _.`);
+  }
+  return value;
+}
+
+function relativeAssetPath(value: unknown, label: string, extension?: RegExp): string {
+  if (typeof value !== 'string' || value.length > 200 || !value || (extension && !extension.test(value)) ||
+      value.split('/').some(segment => !/^[A-Za-z0-9][A-Za-z0-9_.-]{0,63}$/.test(segment)) || /[\\:%?#]/.test(value)) {
+    invalid(`${label} muss ein relativer Pfad innerhalb dieses Designs sein.`);
   }
   return value;
 }
@@ -178,7 +188,7 @@ export function parseSkinCatalog(value: unknown): SkinCatalog {
 /** Pure, strict parser; partial optional palettes/artwork retain vector fallbacks. */
 export function parseSkinDefinition(value: unknown): SkinDefinition {
   const source = record(value, 'Grafikset');
-  keys(source, ['version', 'name', 'assetPack', 'presentation', 'palette', 'atlas', 'weapons', 'weaponAtlas', 'mobileAtlas', 'board', 'logo', 'chatNotice', 'portrait', 'turnPortraits', 'colorTurnPortraits', 'directionalTurnPortraits', 'flagVictoryFrames', 'pieces', 'teamPieces', 'motion'], 'Grafikset');
+  keys(source, ['version', 'name', 'assetPack', 'presentation', 'audio', 'artwork', 'palette', 'atlas', 'weapons', 'weaponAtlas', 'mobileAtlas', 'board', 'logo', 'chatNotice', 'portrait', 'turnPortraits', 'colorTurnPortraits', 'directionalTurnPortraits', 'flagVictoryFrames', 'pieces', 'teamPieces', 'motion'], 'Grafikset');
   if (source.version !== 1) invalid('Das Grafikset muss version: 1 verwenden.');
   if (source.presentation !== undefined && source.presentation !== 'modern' && source.presentation !== 'retro') {
     invalid('presentation muss „modern“ oder „retro“ sein.');
@@ -201,6 +211,41 @@ export function parseSkinDefinition(value: unknown): SkinDefinition {
     },
   };
 
+  if (source.audio !== undefined) {
+    const audio = record(source.audio, 'audio');
+    keys(audio, SOUND_CUES, 'audio');
+    skin.audio = {};
+    for (const cue of SOUND_CUES) {
+      if (audio[cue] === undefined) continue;
+      const clip = record(audio[cue], `audio.${cue}`);
+      keys(clip, ['file', 'volume', 'rate', 'variants'], `audio.${cue}`);
+      skin.audio[cue] = {
+        file: relativeAssetPath(clip.file, `audio.${cue}.file`, /\.(ogg|mp3|wav|m4a)$/i),
+        volume: clip.volume === undefined ? .7 : number(clip.volume, 0, 1, `audio.${cue}.volume`),
+        rate: clip.rate === undefined ? 1 : number(clip.rate, .5, 2, `audio.${cue}.rate`),
+      };
+      if (clip.variants !== undefined) {
+        if (!Array.isArray(clip.variants) || clip.variants.length > 5) invalid(`audio.${cue}.variants benötigt höchstens fünf alternative Dateien.`);
+        skin.audio[cue]!.variants = clip.variants.map(file => relativeAssetPath(file, `audio.${cue}.variants`, /\.(ogg|mp3|wav|m4a)$/i));
+      }
+    }
+  }
+  if (source.artwork !== undefined) {
+    const artwork = record(source.artwork, 'artwork');
+    keys(artwork, ['endgame', 'gong'], 'artwork');
+    skin.artwork = {};
+    if (artwork.endgame !== undefined) skin.artwork.endgame = relativeAssetPath(artwork.endgame, 'artwork.endgame');
+    if (artwork.gong !== undefined) {
+      const gong = record(artwork.gong, 'artwork.gong');
+      keys(gong, ['idle', 'strike', 'strikeMs', 'durationMs'], 'artwork.gong');
+      const durationMs = number(gong.durationMs, 100, 5000, 'artwork.gong.durationMs');
+      skin.artwork.gong = {
+        idle: relativeImagePath(gong.idle, 'artwork.gong.idle', true),
+        strike: relativeImagePath(gong.strike, 'artwork.gong.strike', true),
+        strikeMs: number(gong.strikeMs, 0, durationMs, 'artwork.gong.strikeMs'), durationMs,
+      };
+    }
+  }
   if (source.assetPack !== undefined) {
     if (typeof source.assetPack !== 'string' || !/^[a-z0-9][a-z0-9_-]{0,47}$/.test(source.assetPack) || RESERVED_NAMES.has(source.assetPack)) {
       invalid('assetPack muss eine lokale Grafikset-ID mit höchstens 48 Zeichen sein.');

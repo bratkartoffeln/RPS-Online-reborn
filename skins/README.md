@@ -37,3 +37,9 @@ Ein neuer Containerbau ist dafür nicht nötig.
 
 Alles in diesem Ordner ist über `/skins/` im Spielserver öffentlich erreichbar.
 Hier gehören ausschließlich die Grafiken und JSON-Dateien der Grafiksets hinein.
+
+## Vollstaendige Designpakete
+
+Seit 0.4.19 liegen alle Laufzeitressourcen einschliesslich Audio, Gong und Gewinnerbildern im jeweiligen Designordner. Unter `source/` liegen editierbare Quellen; unter `audio/` stehen auch Lizenzen und Herkunftsnachweise.
+
+Zum Erstellen eines neuen Designs einen kompletten Ordner aus `public/skins/` nach `skins/<neue-id>/` kopieren, `skin.json` anpassen und den Eintrag im eigenen `skins/index.json` ergaenzen. Die Manifestfelder `audio` und `artwork` verwenden relative Pfade im neuen Paket. Die Datei `preview.html` bietet eine Bild- und Soundvorschau. Die vollstaendige Anleitung steht in `GRAFIKSETS.md`.

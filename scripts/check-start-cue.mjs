@@ -14,14 +14,15 @@ try {
     const context = await browser.newContext({ viewport, reducedMotion: 'no-preference', isMobile: viewport.width === 390, hasTouch: viewport.width === 390 });
     await context.addInitScript(skin => {
       localStorage.setItem('rps-arena:skin', skin);
-      localStorage.setItem('rps-arena:sounds', 'on');
+      // Fresh browsers hear the gong without first opening settings.
+      localStorage.removeItem('rps-arena:sounds');
       localStorage.setItem('rps-arena:animations', 'on');
-      window.gongTones = [];
-      const original = AudioContext.prototype.createOscillator;
-      AudioContext.prototype.createOscillator = function () {
+      window.gongSamples = [];
+      const original = AudioContext.prototype.createBufferSource;
+      AudioContext.prototype.createBufferSource = function () {
         const oscillator = original.call(this);
         const start = oscillator.start.bind(oscillator);
-        oscillator.start = when => { window.gongTones.push({ frequency: oscillator.frequency.value, delay: when - this.currentTime }); start(when); };
+        oscillator.start = when => { window.gongSamples.push({ duration: oscillator.buffer?.duration, delay: when - this.currentTime }); start(when); };
         return oscillator;
       };
     }, skin);
@@ -46,12 +47,15 @@ try {
     await red.waitForFunction(() => document.querySelector('.score-referee .gong-scene[data-animated="true"]'));
     assert.ok(await red.locator('.gong-scene[data-animated="true"]:visible').isVisible(), 'The actual visible referee position animates');
     assert.equal(await red.locator('#board').getAttribute('aria-busy'), 'true');
-    const tones = await red.evaluate(() => window.gongTones);
-    assert.equal(tones.length, skin === 'arcade' ? 4 : 6, 'Exactly one start chime is synthesized');
-    assert.ok(tones[0].delay >= .3 && tones[0].delay <= .4, 'The sound is scheduled at the mallet impact');
+    await red.waitForFunction(() => window.gongSamples.length > 0);
+    const tones = await red.evaluate(() => window.gongSamples);
+    assert.equal(tones.length, 1, 'Exactly one local gong sample is scheduled');
+    assert.ok(tones[0].duration > .5, 'The decoded gong has actual audio frames');
+    assert.ok(tones[0].delay >= .2 && tones[0].delay <= .4, 'The sound is scheduled at the mallet impact');
     await red.waitForTimeout(230);
     await red.locator('.gong-scene:visible').screenshot({ path: path.join(tmpdir(), `rps-start-${skin}-${viewport.width}.png`) });
     await red.waitForFunction(() => !document.querySelector('.score-referee .gong-scene'));
+    await red.waitForFunction(() => window.gongSamples.length === 2);
     const portrait = red.locator('.score-referee .referee-portrait');
     assert.equal(await portrait.getAttribute('data-turn-team'), 'blue');
     assert.equal(await portrait.getAttribute('data-turn-direction'), 'top');
@@ -61,7 +65,7 @@ try {
     await red.reload();
     await red.waitForFunction(() => !document.querySelector('#app').inert && document.querySelector('#shell').dataset.phase === 'playing');
     assert.equal(await red.locator('.gong-scene').count(), 0, 'Reloading never replays the start');
-    assert.equal(await red.evaluate(() => window.gongTones.length), 0);
+    assert.equal(await red.evaluate(() => window.gongSamples.length), 0);
     assert.deepEqual(errors, []);
     console.log(`${skin} ${viewport.width}px: visible setup/start gong, synchronized audio, both directions and reload OK`);
     await context.close();

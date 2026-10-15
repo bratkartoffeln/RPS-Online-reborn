@@ -1,5 +1,15 @@
 # Änderungen
 
+## 0.4.19
+
+- Vollständige Designpakete unter `public/skins/<id>/`: Atlanten, Gewinnerbilder, Gonggrafiken, Audiodateien, editierbare Quellen und Audio-Lizenzen. Manifestfelder `artwork` und `audio` ersetzen Sonderfälle nach Design-ID.
+- CC0-Kampfgeräusche von Kenney und Gongaufnahmen von rubberduck, mit passenden analogen, Retro- und elektronischen Klangprofilen. Englische Schiedsrichteransagen lokal mit Mandarin-Sprachprofil erzeugt; kein TTS-Dienst zur Laufzeit.
+- ICQ Retro und Retro Dark verwenden auf Nutzerwunsch Originalausschnitte aus dem angegebenen ICQ-Video: Gong, Bewegung, drei Waffen, Flagge und die vier Ansagen. Vollständiges „red turn“ aus einer ruhigen späteren Passage, längerer Hallausklang für den Gong und je zwei wechselnde Bewegungsgeräusche pro Team. Reproduzierbare Schnitte, Normalisierung und Herkunftsnachweise; Videoausschnitte ausdrücklich getrennt von CC0-Dateien gekennzeichnet.
+- Getrennte Bewegungsvarianten für Blau und Rot auch in Klassisch und Arcade, gesteuert durch `moveBlue`, `moveRed` und optionale `variants` im Designmanifest.
+- Einmalige Zug- und Ergebnisansagen nach Gong beziehungsweise Kampfanimation; Synchronisieren, Neuladen und Wiederverbinden wiederholen keine Ansagen. Designwechsel und Stummschaltung stoppen auch geplante Sounds.
+- Gewinner-Overlay mit festen Seiten (Blau links, Rot rechts), passenden Sieger- und Verliererposen und zum Gewinner gerichteter Schiedsrichteranzeige. Unteren Rahmen ergänzt.
+- Startgong lauter abgestimmt; Spielsounds ohne gespeicherte Einstellung standardmäßig aktiviert. Eine gespeicherte Stummschaltung bleibt erhalten.
+
 ## 0.4.18
 
 - Beide Retro-Gongs verwenden das freigestellte Motiv aus der Bildvorlage statt einer nachgezeichneten Figur. Der originale Schlägerausschnitt wird mit Ausholen, beschleunigtem Schlag und sanftem Rückschwingen animiert; Bilddatei vorab laden, Klang am Auftreffmoment unverändert synchron halten.

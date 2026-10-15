@@ -863,5 +863,107 @@
       }
     }
   },
-  "chatNotice": "chat-notice"
+  "chatNotice": "chat-notice",
+  "audio": {
+    "duel": {
+      "file": "audio/duel.ogg",
+      "volume": 0.55,
+      "rate": 1
+    },
+    "draw": {
+      "file": "audio/draw.ogg",
+      "volume": 0.55,
+      "rate": 1
+    },
+    "move": {
+      "file": "audio/original-move.wav",
+      "volume": 0.35,
+      "rate": 1
+    },
+    "rock": {
+      "file": "audio/original-rock.wav",
+      "volume": 0.72,
+      "rate": 1
+    },
+    "paper": {
+      "file": "audio/original-paper.wav",
+      "volume": 0.72,
+      "rate": 1
+    },
+    "scissors": {
+      "file": "audio/original-scissors.wav",
+      "volume": 0.72,
+      "rate": 1
+    },
+    "trap": {
+      "file": "audio/trap.ogg",
+      "volume": 0.55,
+      "rate": 1
+    },
+    "flag": {
+      "file": "audio/original-flag.wav",
+      "volume": 0.72,
+      "rate": 1
+    },
+    "win": {
+      "file": "audio/win.ogg",
+      "volume": 0.55,
+      "rate": 1
+    },
+    "lose": {
+      "file": "audio/lose.ogg",
+      "volume": 0.55,
+      "rate": 1
+    },
+    "gong": {
+      "file": "audio/original-gong.wav",
+      "volume": 0.8,
+      "rate": 1
+    },
+    "redTurn": {
+      "file": "audio/original-redTurn.wav",
+      "volume": 0.72,
+      "rate": 1
+    },
+    "blueTurn": {
+      "file": "audio/original-blueTurn.wav",
+      "volume": 0.72,
+      "rate": 1
+    },
+    "youWin": {
+      "file": "audio/original-youWin.wav",
+      "volume": 0.72,
+      "rate": 1
+    },
+    "youLose": {
+      "file": "audio/original-youLose.wav",
+      "volume": 0.72,
+      "rate": 1
+    },
+    "moveBlue": {
+      "file": "audio/original-moveBlue.wav",
+      "volume": 0.35,
+      "rate": 1,
+      "variants": [
+        "audio/original-moveBlue2.wav"
+      ]
+    },
+    "moveRed": {
+      "file": "audio/original-moveRed.wav",
+      "volume": 0.35,
+      "rate": 1,
+      "variants": [
+        "audio/original-moveRed2.wav"
+      ]
+    }
+  },
+  "artwork": {
+    "endgame": "endgame",
+    "gong": {
+      "idle": "gong/idle.svg",
+      "strike": "gong/strike.svg",
+      "strikeMs": 380,
+      "durationMs": 1500
+    }
+  }
 }

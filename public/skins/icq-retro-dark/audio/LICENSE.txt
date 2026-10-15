@@ -1,0 +1,8 @@
+MIXED AUDIO SOURCES - NOT ALL FILES ARE CC0
+
+original-*.wav: excerpts from the user-specified video https://www.youtube.com/watch?v=Q2sDtTbzHiI (shachar700).
+No free reuse license was declared in the retrieved video metadata. Rights remain with the respective game/audio owners. These excerpts are NOT relicensed as CC0.
+
+Other .ogg effects: CC0-1.0 (Kenney Vleugels, rubberduck).
+Other .wav speech: locally generated with eSpeak NG, dedicated to CC0-1.0.
+Exact source times, source/clip hashes and processing: SOURCES.json and ../source/video-audio-cuts.json.

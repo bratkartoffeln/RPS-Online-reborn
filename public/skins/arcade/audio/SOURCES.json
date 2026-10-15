@@ -1,0 +1,126 @@
+{
+  "retrieved": "2026-10-15",
+  "effects": {
+    "duel.ogg": {
+      "author": "Kenney Vleugels",
+      "url": "https://kenney.nl/assets/digital-audio",
+      "license": "CC0-1.0",
+      "original": "Audio/twoTone1.ogg",
+      "sha256": "8732f14d6398407a8f1df77b986c2099cfd88f6583e1272cb60497cb2fe8da1d"
+    },
+    "draw.ogg": {
+      "author": "Kenney Vleugels",
+      "url": "https://kenney.nl/assets/digital-audio",
+      "license": "CC0-1.0",
+      "original": "Audio/twoTone2.ogg",
+      "sha256": "e8e4a2d9faa4344f4722de9ef81103290858bbcd80f1dc686879128cae52e9f0"
+    },
+    "move.ogg": {
+      "author": "Kenney Vleugels",
+      "url": "https://kenney.nl/assets/digital-audio",
+      "license": "CC0-1.0",
+      "original": "Audio/pepSound1.ogg",
+      "sha256": "f2f44effce087e47683f0fea05a71002bd8dca78fb10bf93d9f0b38d49f9590e"
+    },
+    "rock.ogg": {
+      "author": "Kenney Vleugels",
+      "url": "https://kenney.nl/assets/digital-audio",
+      "license": "CC0-1.0",
+      "original": "Audio/zap1.ogg",
+      "sha256": "4e4bf11c671a4be0723022a7177f8e122329fa32a0c59555581f4193ed111585"
+    },
+    "paper.ogg": {
+      "author": "Kenney Vleugels",
+      "url": "https://kenney.nl/assets/digital-audio",
+      "license": "CC0-1.0",
+      "original": "Audio/phaserUp1.ogg",
+      "sha256": "4423d459fc15fdd8593a4584d71e272ec2e5f8bdc11b759db623fc613ffd957c"
+    },
+    "scissors.ogg": {
+      "author": "Kenney Vleugels",
+      "url": "https://kenney.nl/assets/digital-audio",
+      "license": "CC0-1.0",
+      "original": "Audio/laser1.ogg",
+      "sha256": "0bf468769b48a834dc1c6e38e457f2c71159b010225a9aedf84316795e8cc3e5"
+    },
+    "trap.ogg": {
+      "author": "Kenney Vleugels",
+      "url": "https://kenney.nl/assets/digital-audio",
+      "license": "CC0-1.0",
+      "original": "Audio/spaceTrash1.ogg",
+      "sha256": "8f702781627c95cf9f91724dab3bcdb46bb87cc0ccf2a350748798dba6bc82aa"
+    },
+    "flag.ogg": {
+      "author": "Kenney Vleugels",
+      "url": "https://kenney.nl/assets/digital-audio",
+      "license": "CC0-1.0",
+      "original": "Audio/powerUp6.ogg",
+      "sha256": "d1007bc67852cc767fad077a6b7ee016c0eb3d52a2032f1496726d7ab590e22d"
+    },
+    "win.ogg": {
+      "author": "Kenney Vleugels",
+      "url": "https://kenney.nl/assets/digital-audio",
+      "license": "CC0-1.0",
+      "original": "Audio/threeTone1.ogg",
+      "sha256": "bdf21eb12e65507f091d074886fdac820e1ccae51d060caa168e5567acadb84b"
+    },
+    "lose.ogg": {
+      "author": "Kenney Vleugels",
+      "url": "https://kenney.nl/assets/digital-audio",
+      "license": "CC0-1.0",
+      "original": "Audio/phaserDown3.ogg",
+      "sha256": "19fd2f5bb8448e022381f1a72c36117d4adcb521ebeb697e888bfaf7945cfa56"
+    },
+    "gong.ogg": {
+      "author": "rubberduck",
+      "url": "https://opengameart.org/content/100-cc0-sfx",
+      "license": "CC0-1.0",
+      "original": "gong_02.ogg",
+      "sha256": "eb53bd74d92ed2422568ed5770615b177b0a4d281f55959e6aa263d756412524"
+    },
+    "moveBlue-1.ogg": {
+      "author": "Kenney Vleugels",
+      "url": "https://kenney.nl/assets/digital-audio",
+      "license": "CC0-1.0",
+      "original": "Audio/pepSound1.ogg",
+      "sha256": "f2f44effce087e47683f0fea05a71002bd8dca78fb10bf93d9f0b38d49f9590e"
+    },
+    "moveBlue-2.ogg": {
+      "author": "Kenney Vleugels",
+      "url": "https://kenney.nl/assets/digital-audio",
+      "license": "CC0-1.0",
+      "original": "Audio/pepSound2.ogg",
+      "sha256": "5a33494e622c15c4587e0a19447cf55c86283faac0e6c1238b550f43a30f16a3"
+    },
+    "moveRed-1.ogg": {
+      "author": "Kenney Vleugels",
+      "url": "https://kenney.nl/assets/digital-audio",
+      "license": "CC0-1.0",
+      "original": "Audio/phaseJump4.ogg",
+      "sha256": "90e1c90b9da3d0be66b54f4daa926f0fde79eba867dec7e9d1eef10524756e19"
+    },
+    "moveRed-2.ogg": {
+      "author": "Kenney Vleugels",
+      "url": "https://kenney.nl/assets/digital-audio",
+      "license": "CC0-1.0",
+      "original": "Audio/phaseJump5.ogg",
+      "sha256": "322d62ab7da973880d86c5ad217a2da85916ed95aa6c8d29991de392fd0f7522"
+    }
+  },
+  "speech": {
+    "engine": "eSpeak NG (espeak-ng npm 1.0.2), offline formant synthesis",
+    "engineSource": "https://github.com/espeak-ng/espeak-ng",
+    "engineLicense": "GPL-3.0-or-later (tool only; not shipped)",
+    "voice": "cmn+croak",
+    "speed": 165,
+    "pitch": 46,
+    "language": "English phrases spoken using the Mandarin voice",
+    "note": "Synthetic voice, no human recording or voice imitation. Generated WAV assets dedicated to CC0-1.0.",
+    "phrases": {
+      "redTurn": "Red turn",
+      "blueTurn": "Blue turn",
+      "youWin": "You win",
+      "youLose": "You lose"
+    }
+  }
+}
