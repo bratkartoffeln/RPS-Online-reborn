@@ -1,24 +1,36 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import { fidgetFrame, nextFidgetDelay, RefereeInactivity } from './idle-motion';
+import { idleDeformation, idleEyes, nextFidgetDelay, RefereeInactivity, retroIdleFigure } from './idle-motion';
 
 test('figures rest between short independent fidgets', () => {
-  assert.equal(nextFidgetDelay(() => 0), 2000);
-  assert.equal(nextFidgetDelay(() => .5), 5000);
-  const frames = ['base', 'sway-left', 'sway-right', 'foot'];
-  assert.equal(fidgetFrame('base', frames, -1, 2), 'base');
-  assert.equal(fidgetFrame('base', frames, 10, 2), 'foot');
-  assert.equal(fidgetFrame('base', frames, 200, 1), 'base');
-  assert.equal(fidgetFrame('base', frames, 400, 1), 'sway-right');
-  assert.equal(fidgetFrame('base', frames, 720, 1), 'base');
+  assert.equal(nextFidgetDelay(() => 0), 10_000);
+  assert.equal(nextFidgetDelay(() => .5), 25_000);
+  assert.equal(nextFidgetDelay(() => 1), 40_000);
+  assert.equal(idleDeformation(-1, 0).active, false);
+  assert.equal(idleDeformation(180, 0).angle, 1.3);
+  assert.equal(idleDeformation(180, 1).angle, -1.3);
+  assert.equal(idleDeformation(180, 2).y, .975);
+  assert.deepEqual(idleDeformation(720, 2), { x: 1, y: 1, angle: 0, blink: false, active: false });
 });
 
 test('a random blink briefly closes the eyes once without repeated squinting', () => {
-  const frames = ['base', 'sway', 'foot', 'base-fidget-blink'];
-  assert.equal(fidgetFrame('base', frames, 0, 2), 'base-fidget-blink');
-  assert.equal(fidgetFrame('base', frames, 159, 2), 'base-fidget-blink');
-  assert.equal(fidgetFrame('base', frames, 160, 2), 'base');
-  assert.equal(fidgetFrame('base', frames, 400, 2), 'base');
+  assert.equal(idleDeformation(0, 3).blink, true);
+  assert.equal(idleDeformation(159, 3).blink, true);
+  assert.equal(idleDeformation(160, 3).blink, false);
+  assert.equal(idleDeformation(400, 3).active, false);
+});
+
+test('overlays follow public front artwork; visible traps and rear views never receive eyes', () => {
+  for (const color of ['blue', 'red']) {
+    assert.deepEqual(idleEyes(`${color}-front-rock`), [40, 77]);
+    assert.equal(idleEyes(`${color}-back-rock-revealed`), null);
+    assert.equal(idleEyes(`${color}-front-trap`), null);
+    assert.equal(retroIdleFigure(`${color}-front-trap`), false);
+    assert.equal(retroIdleFigure(`${color}-back-trap`), false);
+    assert.equal(retroIdleFigure(`${color}-front-unknown`), true);
+    assert.equal(retroIdleFigure(`${color}-back-rock-revealed`), true);
+    assert.equal(retroIdleFigure(`${color}-front-flag-victory`), false);
+  }
 });
 
 test('referee yawns once after ten seconds; either player activity or pause resets the clock', () => {

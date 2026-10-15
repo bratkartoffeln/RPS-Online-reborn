@@ -1,6 +1,6 @@
 import { mobileGraphics, mobileRenderScale } from './mobile-graphics';
 import Phaser from 'phaser';
-import { fidgetFrame, nextFidgetDelay } from './idle-motion';
+import { idleDeformation, idleEyes, nextFidgetDelay, retroIdleFigure } from './idle-motion';
 import type { GameActionView, GameView, PieceView } from '../shared/game';
 import {
   artworkForPiece, artworkFrame, canContinueEffect, captureMotionFrame, CELEBRATION_MS,
@@ -65,8 +65,10 @@ type PieceVisual = {
   shownFrame: string | null;
   clipState: SkinAnimationState | null;
   clipElapsed: number;
-  fidgetWait: number;
+  fidgetAt: number;
+  fidgetStarted: number;
   fidgetVariant: number;
+  eyelids: Phaser.GameObjects.Container | null;
   effectState: SkinAnimationState | null;
   effectElapsed: number;
 };
@@ -156,6 +158,7 @@ class ArenaScene extends Phaser.Scene {
   }
 
   private wakeFrame: number | null = null;
+  private idleWakeTimer: ReturnType<typeof setTimeout> | null = null;
 
   requestRender(): void {
     if (!this.ready || document.hidden || this.sys.game.loop.running || this.wakeFrame !== null) return;
@@ -191,11 +194,24 @@ class ArenaScene extends Phaser.Scene {
     }
     for (const visual of this.visuals.values()) this.animateArtwork(visual, elapsed);
     // Only the visual clock sleeps. Network, chat and combat timers stay alive.
-    const animated = (!this.mobile || this.retro) && this.animationsEnabled && !this.view?.paused && [...this.visuals.values()].some(visual => {
+    const now = performance.now();
+    const animated = this.animationsEnabled && !this.view?.paused && [...this.visuals.values()].some(visual => {
+      if (this.idleEligible(visual)) return idleDeformation(now - visual.fidgetStarted, visual.fidgetVariant).active;
+      if (this.mobile) return false;
       const frames = visual.artwork?.animations?.[this.normalState(visual)]?.frames;
       return visual.sprite && frames && new Set(frames).size > 1;
     });
-    if (!this.effect && !this.celebration && !this.gesture?.dragging && !animated) this.sys.game.loop.sleep();
+    if (this.idleWakeTimer !== null) clearTimeout(this.idleWakeTimer);
+    this.idleWakeTimer = null;
+    if (!this.effect && !this.celebration && !this.gesture?.dragging && !animated) {
+      this.sys.game.loop.sleep();
+      const next = this.animationsEnabled && !this.view?.paused
+        ? Math.min(...[...this.visuals.values()].filter(visual => this.idleEligible(visual)).map(visual => visual.fidgetAt)) : Infinity;
+      if (Number.isFinite(next)) this.idleWakeTimer = setTimeout(() => {
+        this.idleWakeTimer = null;
+        this.requestRender();
+      }, Math.max(16, next - now));
+    }
   }
 
   setView(view: GameView | null, selected: number | null, enabled: boolean): void {
@@ -507,7 +523,10 @@ class ArenaScene extends Phaser.Scene {
       const renderer = this.sys.game.renderer;
       const gpuLimit = 'getMaxTextureSize' in renderer ? renderer.getMaxTextureSize() : SKIN_LIMITS.imageDimension;
       const limit = Math.min(SKIN_LIMITS.imageDimension, Number.isFinite(gpuLimit) && gpuLimit > 0 ? gpuLimit : SKIN_LIMITS.imageDimension);
-      const factor = Math.min(this.renderScale, limit / image.naturalWidth, limit / image.naturalHeight);
+      // Retro cells are already 272px high for figures drawn at 76px. Their
+      // native density covers a 2x board without inflating the GPU texture.
+      const density = this.skin.id === 'icq-retro' || this.skin.id === 'icq-retro-dark' ? 1 : this.renderScale;
+      const factor = Math.min(density, limit / image.naturalWidth, limit / image.naturalHeight);
       const canvas = document.createElement('canvas');
       canvas.width = Math.min(limit, Math.ceil(image.naturalWidth * factor));
       canvas.height = Math.min(limit, Math.ceil(image.naturalHeight * factor));
@@ -555,12 +574,15 @@ class ArenaScene extends Phaser.Scene {
 
   private dispose(): void {
     this.touchTap = null;
+    if (this.idleWakeTimer !== null) clearTimeout(this.idleWakeTimer);
+    this.idleWakeTimer = null;
     if (this.wakeFrame !== null) cancelAnimationFrame(this.wakeFrame);
     this.wakeFrame = null;
     this.finishCelebration();
     this.finishEffect();
     this.gesture = null;
     this.clearArtwork();
+    if (this.textures.exists('arena-idle-eyelid')) this.textures.remove('arena-idle-eyelid');
     this.ready = false;
   }
 
@@ -688,7 +710,7 @@ class ArenaScene extends Phaser.Scene {
     const visual: PieceVisual = {
       piece, index, ghost, container, vector, question, marker, glow, sprite: null,
       artwork: undefined, appearance: '', shownFrame: null, clipState: null, clipElapsed: 0,
-      fidgetWait: nextFidgetDelay(), fidgetVariant: 0,
+      fidgetAt: performance.now() + nextFidgetDelay(), fidgetStarted: -Infinity, fidgetVariant: 0, eyelids: null,
       effectState: null, effectElapsed: 0,
     };
     this.visuals.set(piece.id, visual);
@@ -724,6 +746,7 @@ class ArenaScene extends Phaser.Scene {
     const appearance = JSON.stringify([visual.piece.kind, visual.piece.revealed, own, color, selected, visual.ghost, heroFrame]);
     if (appearance === visual.appearance) return;
     visual.appearance = appearance;
+    visual.eyelids?.setVisible(false);
     const artwork = heroFrame ? { frame: heroFrame } : artworkForPiece(this.skin.definition, own, visual.piece.kind, visual.piece.revealed, color);
     visual.artwork = artwork && this.textureKey && this.atlasFrames.has(artwork.frame) ? artwork : undefined;
     visual.vector.clear();
@@ -813,24 +836,60 @@ class ArenaScene extends Phaser.Scene {
       visual.clipElapsed = 0;
     } else visual.clipElapsed += delta;
     const elapsed = visual.effectState ? visual.effectElapsed : visual.clipElapsed;
-    let frame = artworkFrame(visual.artwork, state, elapsed, this.animationsEnabled && (!this.mobile || !!this.effect || !!this.celebration));
-    const idleFrames = visual.artwork.animations?.idle?.frames;
-    if (this.retro && idleFrames && (state === 'idle' || state === 'selected')) {
-      if (this.animationsEnabled && !this.view?.paused) {
-        visual.fidgetWait -= delta;
-        if (visual.fidgetWait < -720) {
-          visual.fidgetWait = nextFidgetDelay();
-          visual.fidgetVariant = Math.floor(Math.random() * (idleFrames.length - 1));
-        }
-        frame = fidgetFrame(visual.artwork.frame, idleFrames, -visual.fidgetWait, visual.fidgetVariant);
-      } else frame = visual.artwork.frame;
-    }
-    if (frame === visual.shownFrame || !this.atlasFrames.has(frame)) return;
-    visual.sprite.setTexture(this.textureKey!, frame);
+    const frame = artworkFrame(visual.artwork, state, elapsed, this.animationsEnabled && (!this.mobile || !!this.effect || !!this.celebration));
+    if (!this.atlasFrames.has(frame)) return;
+    if (frame !== visual.shownFrame) visual.sprite.setTexture(this.textureKey!, frame);
     const source = visual.sprite.frame;
     const size = this.retro ? 76 : 64;
-    visual.sprite.setScale(Math.min(size / source.width, size / source.height));
+    const scale = Math.min(size / source.width, size / source.height);
+    visual.sprite.setScale(scale).setAngle(0).setPosition(0, 0);
+    visual.eyelids?.setVisible(false);
+    if (this.idleEligible(visual) && this.animationsEnabled && !this.view?.paused) {
+      const now = performance.now();
+      if (now >= visual.fidgetAt) {
+        visual.fidgetStarted = now;
+        visual.fidgetVariant = Math.floor(Math.random() * (idleEyes(frame) ? 4 : 3));
+        visual.fidgetAt = now + 720 + nextFidgetDelay();
+      }
+      const motion = idleDeformation(now - visual.fidgetStarted, visual.fidgetVariant);
+      visual.sprite.setScale(scale * motion.x, scale * motion.y).setAngle(motion.angle).setY(size * .5 * (1 - motion.y));
+      if (motion.blink) this.showEyelids(visual);
+    } else {
+      visual.fidgetStarted = -Infinity;
+      if (visual.fidgetAt <= performance.now()) visual.fidgetAt = performance.now() + nextFidgetDelay();
+    }
     visual.shownFrame = frame;
+  }
+
+  private idleEligible(visual: PieceVisual): boolean {
+    const state = this.normalState(visual);
+    return this.retro && !!visual.sprite && !!visual.artwork && !visual.ghost &&
+      (state === 'idle' || state === 'selected') && this.gesture?.pieceId !== visual.piece.id && retroIdleFigure(visual.artwork.frame);
+  }
+
+  private showEyelids(visual: PieceVisual): void {
+    const eyes = idleEyes(visual.artwork!.frame);
+    if (!eyes) return;
+    // A single tiny procedural texture is shared by every eye in both retro packs.
+    const key = 'arena-idle-eyelid';
+    if (!this.textures.exists(key)) {
+      const texture = this.textures.createCanvas(key, 60, 38)!;
+      const ctx = texture.context;
+      const skin = ctx.createLinearGradient(0, 0, 0, 38);
+      skin.addColorStop(0, '#fcc995'); skin.addColorStop(1, '#f7c594');
+      ctx.fillStyle = skin; ctx.beginPath(); ctx.roundRect(0, 0, 60, 38, 6); ctx.fill();
+      ctx.strokeStyle = '#171b22'; ctx.lineWidth = 3.6; ctx.lineCap = 'round';
+      ctx.beginPath(); ctx.moveTo(8, 18); ctx.quadraticCurveTo(30, 28, 52, 18); ctx.stroke();
+      texture.refresh();
+    }
+    // Rebuild only when a public appearance changes to another face shape.
+    if (!visual.eyelids || visual.eyelids.name !== visual.artwork!.frame) {
+      visual.eyelids?.destroy();
+      visual.eyelids = this.add.container(-38, -38, eyes.map(x => this.add.image(x - 15, 51, key).setOrigin(0).setScale(.5)))
+        .setScale(76 / 128).setName(visual.artwork!.frame);
+      visual.container.add(visual.eyelids);
+    }
+    visual.eyelids.setVisible(true);
   }
 
   private isEffectPiece(id: string): boolean {
