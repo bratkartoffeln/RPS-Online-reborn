@@ -6,10 +6,12 @@ const defs = /<defs>([\s\S]*?)<\/defs>/.exec(source)[1];
 const animation = '<style>@keyframes referee-speech{0%,100%{transform:scaleY(.12)}20%{transform:scaleY(1)}45%{transform:scaleY(.25)}70%{transform:scaleY(.85)}}.speech-mouth{transform-box:fill-box;transform-origin:50% 35%;animation:referee-speech 240ms ease-in-out infinite}@media(prefers-reduced-motion:reduce){.speech-mouth{animation:none}}</style>';
 function speaking(svg) {
   let changed = false;
-  svg = svg.replace(/<path d="M(71\.4 58\.1|73\.2 59\.8)[^>]*\/>\s*<path[^>]*\/>\s*<path[^>]*\/>/, (_, pose) => {
+  // The narrow white shapes higher on the face are eyes. The mouth is the
+  // curved line below the cheek, pointing toward the flag-holding arm.
+  svg = svg.replace(/<path d="M(62\.5 65\.5|63\.9 65C)[^>]*\/>/, (_, pose) => {
     changed = true;
-    const y = pose.startsWith('71') ? 60.5 : 63;
-    return `<g class="speech-mouth"><ellipse cx="79" cy="${y}" rx="5.8" ry="3.4" fill="#582b22" stroke="#6c532c" stroke-width=".8"/><path d="M74 ${y - 1.7}Q79 ${y - .5} 84 ${y - 1.7}" fill="none" stroke="#fffdf1" stroke-width="1.5"/><path d="M77 ${y + 2}q2-1 4 0" fill="none" stroke="#d98b78" stroke-width="1"/></g>`;
+    const [x, y] = pose.startsWith('62') ? [68, 66.8] : [68.9, 66.3];
+    return `<g transform="rotate(14 ${x} ${y})"><g class="speech-mouth"><ellipse cx="${x}" cy="${y}" rx="4.9" ry="2.3" fill="#582b22" stroke="#6d502b" stroke-width=".85"/><path d="M${x - 3.8} ${y - 1}q3.8 .8 7.6 0" fill="none" stroke="#fffdf1" stroke-width="1"/><path d="M${x - 1.5} ${y + 1.3}q1.5-.7 3 0" fill="none" stroke="#d98b78" stroke-width=".7"/></g></g>`;
   });
   svg = svg.replace(/<path d="M76\.6 74\.8[^>]*\/>/, () => {
     changed = true;

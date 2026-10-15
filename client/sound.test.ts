@@ -93,7 +93,13 @@ test('every shipped design owns complete audio, licenses, artwork and correctly 
       assert.match(redYawn, /fill="url\(#ref-red\)"/);
       assert.doesNotMatch(redYawn, /url\(#ref-blue\)/);
       for (const frame of ['blue-turn', 'blue-top', 'red-turn', 'red-bottom', 'neutral']) {
-        assert.match(readFileSync(directory + 'speech/referee-' + frame + '.svg', 'utf8'), /class="speech-mouth"/);
+        const speech = readFileSync(directory + 'speech/referee-' + frame + '.svg', 'utf8');
+        assert.match(speech, /class="speech-mouth"/);
+        if (frame !== 'neutral') {
+          assert.match(speech, /<path d="M(?:71\.4 58\.1|73\.2 59\.8)/, 'The original narrow eye remains intact');
+          assert.match(speech, /<path d="M(?:73\.5 59\.1|74\.4 60\.9)/, 'The original pupil remains intact');
+          assert.match(speech, /class="speech-mouth"><ellipse cx="68(?:\.9)?"/, 'Speech animates the lower mouth toward the arm');
+        }
       }
       assert.equal(skin.audio!.win!.file, skin.audio!.youWin!.file);
       assert.equal(skin.audio!.lose!.file, skin.audio!.youLose!.file);
