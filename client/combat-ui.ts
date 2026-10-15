@@ -7,7 +7,7 @@ import { teamColorForSeat, teamColorName } from './team-ui';
 
 const WEAPONS: FighterKind[] = ['rock', 'paper', 'scissors'];
 const LABELS = { rock: 'Stein', paper: 'Papier', scissors: 'Schere', trap: 'Falle', flag: 'Flagge', unknown: 'Verdeckte Figur' };
-export const COMBAT_TIMING = Object.freeze({ choicePause: 600, impact: 600, shatter: 1200, winner: 1900, complete: 3000, reduced: 350 });
+export const COMBAT_TIMING = Object.freeze({ impact: 600, shatter: 1200, winner: 1900, complete: 3000, reduced: 350 });
 export type CombatStage = 'approach' | 'impact' | 'shatter' | 'winner' | 'result';
 export interface CombatOptions { connected: boolean; pending: boolean }
 export interface Combatant {
@@ -45,7 +45,6 @@ export interface DuelChoiceState {
 interface QueuedCombat {
   model: CombatModel;
   action: GameActionView;
-  choice: DuelChoiceState | null;
 }
 
 /** One animation endpoint, with a bounded fallback for missing CSS/events. Returns an idempotent cancellation. */
@@ -123,23 +122,6 @@ export function duelChoiceState(view: Snapshot | null, options: CombatOptions, b
   return { identity: JSON.stringify([matchKey(view), duel.id, duel.round]), duelId: duel.id, round: duel.round, team: teamColorForSeat(player.seat), selected, locked, disabled, status };
 }
 
-/** Hold only the viewer's confirmed weapon; the opponent and result are painted after the pause. */
-export function confirmedDuelChoice(model: CombatModel, previous: DuelChoiceState | null): DuelChoiceState | null {
-  if (model.round === null) return null;
-  const own = model.attacker.own ? model.attacker : model.defender.own ? model.defender : null;
-  if (!own) return null;
-  const sameRound = previous?.round === model.round ? previous : null;
-  // The second submitter may receive the resolved action without an intermediate
-  // yourChoice snapshot. Their own public action piece confirms that selection.
-  const selected = own.kind && WEAPONS.includes(own.kind as FighterKind) ? own.kind as FighterKind : null;
-  return {
-    identity: sameRound?.identity ?? JSON.stringify([model.identity, model.actionId, 'confirmed-choice']),
-    duelId: sameRound?.duelId ?? 'confirmed-' + model.actionId,
-    round: model.round, team: own.team, selected, locked: true, disabled: true,
-    status: 'Beide Waffen sind bestätigt. Der Kampf beginnt gleich …',
-  };
-}
-
 /** An arriving choice must not interrupt a message or another text entry. */
 export function isTextEntry(element: Element | null): boolean {
   if (!element) return false;
@@ -147,7 +129,7 @@ export function isTextEntry(element: Element | null): boolean {
   return element.tagName === 'INPUT' && !['button', 'checkbox', 'color', 'file', 'hidden', 'image', 'radio', 'range', 'reset', 'submit'].includes((element as HTMLInputElement).type);
 }
 
-function artwork(skin: LoadedSkin, fighter: Combatant, size: number): string {
+function artwork(skin: LoadedSkin, fighter: Pick<Combatant, 'kind' | 'team' | 'own'>, size: number): string {
   if (skin.id === 'icq-retro' || skin.id === 'icq-retro-dark') {
     if (fighter.kind === 'paper') return paperSheet();
     if (fighter.kind === 'scissors') return scissorsArtwork();
@@ -192,7 +174,10 @@ export class CombatOverlay {
   private activeAction: GameActionView | null = null;
   private activeStarted = false;
   private waitingForBoard = false;
-  private waitingChoice: DuelChoiceState | null = null;
+  private effectPlayed = false;
+  private resultPlayed = false;
+  private effectPlayback: Promise<void> | null = null;
+  private provisionalChoice: { identity: string; kind: FighterKind } | null = null;
   private queue: QueuedCombat[] = [];
   private timers: Array<ReturnType<typeof setTimeout>> = [];
   private cancelAnimation: (() => void) | null = null;
@@ -209,6 +194,8 @@ export class CombatOverlay {
     onBusyChange: (busy: boolean) => void;
     onCelebrate: (ownerId: string) => void;
     onBattleStart?: (action: GameActionView) => void;
+    onBattleEffect?: (action: GameActionView) => Promise<void>;
+    onBattleResult?: (action: GameActionView) => void;
     beforeBattle?: () => Promise<void>;
   }) {
     root.classList.add('combat-overlay');
@@ -217,13 +204,21 @@ export class CombatOverlay {
   }
 
   get busy(): boolean { return this.busyState; }
-  get waitingForReveal(): boolean { return this.waitingChoice !== null; }
+
+  previewChoice(kind: FighterKind): void {
+    const choice = duelChoiceState(this.view, this.options);
+    if (choice && WEAPONS.includes(kind)) this.provisionalChoice = { identity: choice.identity, kind };
+  }
+
+  clearPreviewChoice(): void { this.provisionalChoice = null; }
 
   update(view: Snapshot | null, skin: LoadedSkin, options: CombatOptions): void {
     if (!view || this.identity !== null && this.identity !== matchKey(view)) this.reset();
     this.view = view;
     this.skin = skin;
     this.options = { ...options };
+    const choice = duelChoiceState(view, this.options);
+    if (this.provisionalChoice?.identity !== choice?.identity) this.provisionalChoice = null;
     this.identity = view ? matchKey(view) : null;
     if (!view) return;
     if (!options.connected || view.paused || view.players.some(player => !player.connected)) this.cancelBattles();
@@ -235,13 +230,11 @@ export class CombatOverlay {
     const model = combatModel(action, view);
     if (!model || view.paused || view.players.some((player) => !player.connected)) return;
     if (this.identity !== null && this.identity !== model.identity) this.reset();
-    const previousChoice = duelChoiceState(this.view, this.options);
     this.identity = model.identity;
     this.view = view;
     this.queue.push({
       model,
       action: { ...action, attacker: { ...action.attacker }, defender: action.defender ? { ...action.defender } : null, removedIds: [...action.removedIds] },
-      choice: action.kind === 'duel' ? confirmedDuelChoice(model, previousChoice) : null,
     });
     if (!this.active && this.skin && this.options.connected) this.startNext();
   }
@@ -290,7 +283,8 @@ export class CombatOverlay {
     this.activeAction = null;
     this.activeStarted = false;
     this.waitingForBoard = false;
-    this.waitingChoice = null;
+    this.provisionalChoice = null;
+    this.effectPlayback = null;
     this.setBusy(false);
   }
 
@@ -301,10 +295,12 @@ export class CombatOverlay {
     this.active = next?.model ?? null;
     this.activeAction = next?.action ?? null;
     this.activeStarted = false;
-    this.waitingChoice = next?.choice ?? null;
+    this.effectPlayed = false;
+    this.resultPlayed = false;
+    this.effectPlayback = null;
     if (!this.active) { this.setBusy(false); return; }
     this.setBusy(true);
-    if (this.callbacks.beforeBattle) {
+    if (this.callbacks.beforeBattle && this.activeAction?.kind !== 'duel') {
       this.waitingForBoard = true;
       this.root.hidden = true;
       const epoch = this.epoch;
@@ -317,16 +313,12 @@ export class CombatOverlay {
   }
 
   private revealBattle(): void {
-    if (this.waitingChoice) {
-      this.paintRevealChoice();
-      this.schedule(COMBAT_TIMING.choicePause, () => this.beginBattle());
-    } else this.beginBattle();
+    this.beginBattle();
   }
 
   private beginBattle(): void {
     if (!this.active || !this.activeAction || this.activeStarted) return;
     this.clearTimers();
-    this.waitingChoice = null;
     this.activeStarted = true;
     this.activeReduced = !this.animationsEnabled || this.root.ownerDocument.defaultView?.matchMedia?.('(prefers-reduced-motion: reduce)').matches === true;
     this.activeStage = this.activeReduced ? 'result' : 'approach';
@@ -339,8 +331,16 @@ export class CombatOverlay {
   private continueBattle(): void {
     this.clearTimers();
     if (!this.active) return;
+    if (!this.effectPlayed && this.activeAction && (this.activeStage === 'shatter' ||
+        this.activeStage === 'impact' && !this.active.winnerOwnerId || this.activeStage === 'result' && this.activeReduced)) {
+      this.effectPlayed = true;
+      this.effectPlayback = this.callbacks.onBattleEffect?.(this.activeAction) ?? null;
+    }
     if (this.activeReduced || this.activeStage === 'result') {
-      this.schedule(this.activeReduced ? COMBAT_TIMING.reduced : COMBAT_TIMING.complete - COMBAT_TIMING.shatter, () => this.finish());
+      const epoch = this.epoch;
+      const finish = () => { if (epoch === this.epoch && this.active) this.finish(); };
+      this.schedule(this.activeReduced ? COMBAT_TIMING.reduced : COMBAT_TIMING.complete - COMBAT_TIMING.shatter,
+        () => { if (this.effectPlayback) void this.effectPlayback.then(finish); else finish(); });
       return;
     }
     const stages = {
@@ -353,22 +353,24 @@ export class CombatOverlay {
     const epoch = this.epoch;
     this.cancelAnimation = waitForCombatAnimation(this.root.querySelector(stage.selector), stage.name, stage.duration + 1000, () => {
       if (epoch !== this.epoch || !this.active) return;
-      if (stage.next === null) this.finish();
-      else {
-        this.setStage(stage.next);
-        this.continueBattle();
-      }
+      const advance = () => {
+        if (epoch !== this.epoch || !this.active) return;
+        if (stage.next === null) this.finish();
+        else { this.setStage(stage.next); this.continueBattle(); }
+      };
+      if (this.effectPlayback) void this.effectPlayback.then(advance);
+      else advance();
     });
   }
 
   private finish(): void {
     const model = this.active;
     if (!model) return;
+    if (this.activeReduced) this.playResult();
     this.clearTimers();
     this.active = null;
     this.activeAction = null;
     this.activeStarted = false;
-    this.waitingChoice = null;
     if (this.queue.length) this.startNext();
     else { this.setBusy(false); this.paint(); }
     if (model.winnerOwnerId && this.view && model.identity === this.identity && this.options.connected && !this.view.paused) {
@@ -377,6 +379,7 @@ export class CombatOverlay {
   }
 
   private setStage(stage: CombatStage): void {
+    if (stage === 'winner') this.playResult();
     this.activeStage = stage;
     this.root.dataset.stage = stage;
     const stageElement = this.root.querySelector<HTMLElement>('.combat-stage');
@@ -388,13 +391,22 @@ export class CombatOverlay {
   private paint(): void {
     if (this.waitingForBoard) { this.root.hidden = true; return; }
     if (this.active) {
-      if (this.waitingChoice) this.paintRevealChoice();
-      else if (this.paintedSkin !== this.skin || this.root.dataset.mode !== 'battle') this.paintBattle();
+      if (this.paintedSkin !== this.skin || this.root.dataset.mode !== 'battle') this.paintBattle();
       return;
     }
     const choice = duelChoiceState(this.view, this.options);
-    if (choice && this.skin) this.paintChoice(choice);
+    if (choice && this.skin) {
+      const selected = choice.selected ?? (this.provisionalChoice?.identity === choice.identity ? this.provisionalChoice.kind : null);
+      if (choice.locked || this.provisionalChoice?.identity === choice.identity) this.paintWaitingBattle(choice, selected);
+      else this.paintChoice(choice);
+    }
     else this.hide();
+  }
+
+  private playResult(): void {
+    if (this.resultPlayed || !this.activeAction || !this.active?.winnerOwnerId) return;
+    this.resultPlayed = true;
+    this.callbacks.onBattleResult?.(this.activeAction);
   }
 
   private rememberFocus(): void {
@@ -437,10 +449,15 @@ export class CombatOverlay {
     this.continueBattle();
   }
 
-  private paintRevealChoice(): void {
-    if (!this.waitingChoice) return;
-    this.paintChoice(this.waitingChoice);
-    this.root.dataset.transition = 'reveal';
+  private paintWaitingBattle(choice: DuelChoiceState, selected: FighterKind | null): void {
+    if (!this.skin || !this.view) return;
+    const markup = `<section class="combat-stage" data-stage="waiting" aria-label="Kampf vorbereitet"><header class="combat-heading"><p>DUELL · RUNDE ${choice.round}</p><h2>Waffen werden aufgedeckt …</h2></header><div class="combat-fighters"><div class="combat-fighter" data-team-color="${choice.team}"><p class="combat-fighter-role">Deine Waffe</p><div class="combat-art"><span class="combat-art-main">${selected ? artwork(this.skin, { kind: selected, team: choice.team, own: true }, 104) : icon('unknown', '', 104)}</span></div></div><div class="combat-fighter"><p class="combat-fighter-role">Gegnerische Waffe</p><div class="combat-art"><span class="combat-art-main">${icon('unknown', '', 104)}</span></div></div></div><p class="combat-result" role="status">${esc(choice.status)}</p></section>`;
+    this.root.hidden = false;
+    this.root.dataset.mode = 'waiting';
+    delete this.root.dataset.stage;
+    delete this.root.dataset.actionId;
+    if (this.root.innerHTML !== markup) this.root.innerHTML = markup;
+    this.mountedChoice = null;
   }
 
   private paintChoice(choice: DuelChoiceState): void {

@@ -19,7 +19,7 @@ test('mobile atlas is a complete raster replacement; desktop SVG is preserved', 
   assert.equal(skin.mobileAtlas?.image, 'atlas-mobile.webp');
   for (const [name, frame] of Object.entries(skin.mobileAtlas!.frames)) {
     assert.ok(skin.atlas!.frames[name]);
-    assert.ok(frame.x + frame.width <= 1008 && frame.y + frame.height <= 1310);
+    assert.ok(frame.x + frame.width <= 1008 && frame.y + frame.height <= 1374);
   }
   delete source.mobileAtlas.frames['blue-back-rock'];
   assert.throws(() => parseSkinDefinition(source), /alle Frames/);
