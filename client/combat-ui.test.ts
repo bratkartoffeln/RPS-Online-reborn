@@ -331,7 +331,7 @@ test('weapon effects begin with the visible action and finish before the winner 
   h.overlay.present(action('rock', 'paper', 'defender'), view);
   assert.equal(effects, 0);
   h.left.dispatchEvent(animationEnd('combat-approach-left'));
-  assert.equal(effects, 0);
+  assert.equal(effects, 1, 'The weapon starts at contact, before destruction');
   h.cloud.dispatchEvent(animationEnd('combat-impact'));
   assert.equal(effects, 1);
   assert.equal(h.root.dataset.stage, 'shatter');

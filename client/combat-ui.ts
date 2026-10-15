@@ -331,8 +331,8 @@ export class CombatOverlay {
   private continueBattle(): void {
     this.clearTimers();
     if (!this.active) return;
-    if (!this.effectPlayed && this.activeAction && (this.activeStage === 'shatter' ||
-        this.activeStage === 'impact' && !this.active.winnerOwnerId || this.activeStage === 'result' && this.activeReduced)) {
+    if (!this.effectPlayed && this.activeAction && (this.activeStage === 'impact' ||
+        this.activeStage === 'result' && this.activeReduced)) {
       this.effectPlayed = true;
       this.effectPlayback = this.callbacks.onBattleEffect?.(this.activeAction) ?? null;
     }
@@ -358,7 +358,8 @@ export class CombatOverlay {
         if (stage.next === null) this.finish();
         else { this.setStage(stage.next); this.continueBattle(); }
       };
-      if (this.effectPlayback) void this.effectPlayback.then(advance);
+      // Contact starts the weapon sample; its duration must not postpone the visible attack.
+      if (this.effectPlayback && this.activeStage !== 'impact') void this.effectPlayback.then(advance);
       else advance();
     });
   }

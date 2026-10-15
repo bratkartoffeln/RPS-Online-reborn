@@ -7,8 +7,14 @@ import { deflateSync, inflateSync } from 'node:zlib';
 const { chromium } = createRequire(import.meta.url)(process.argv[2] || 'playwright');
 const root = new URL('../public/skins/', import.meta.url);
 const browser = await chromium.launch({ headless: true, channel: 'msedge' });
+const videoProfiles = Object.fromEntries(await Promise.all(['blue', 'red'].map(async team => [team,
+  (await readFile(new URL(`icq-retro/source/video-side-${team}.png`, root))).toString('base64')])));
 
 function profile(style, team) {
+  if (style.startsWith('icq')) {
+    // Original red faces left; normalize the source so the existing facing transform applies.
+    return `<g${team === 'red' ? ' transform="translate(128 0) scale(-1 1)"' : ''}><image href="data:image/png;base64,${videoProfiles[team]}" x="9" y="6" width="110" height="116" preserveAspectRatio="xMidYMax meet"/></g>`;
+  }
   const retro = style.startsWith('icq');
   const color = team === 'blue' ? (retro ? '#306ac5' : '#75a8ff') : (retro ? '#cc423a' : '#f48b83');
   const ink = style === 'classic' ? color : '#171b22';
