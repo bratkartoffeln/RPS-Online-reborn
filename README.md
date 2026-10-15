@@ -11,6 +11,8 @@ Ein taktisches Browserspiel für zwei Personen: Stelle dein Team auf, entdecke d
 
 Der Raumersteller spielt Blau, der zweite Spieler Rot. Deine eigenen Figuren stehen in deiner Ansicht unten, die gegnerischen oben. In der ersten Partie beginnt der Raumersteller; danach wechselt der Startspieler nach jeder Partie.
 
+Wenn beide bereit sind, eröffnet ein kurzer Gongschlag die Partie. Motiv und Klang passen zum gewählten Design; Animationen und Spielsounds lassen sich unter „Design“ einstellen.
+
 ## Spielfeld und Team
 
 Das Brett hat sieben Spalten und sechs Reihen. Jede Mannschaft startet in ihren beiden eigenen Reihen; die zwei mittleren Reihen bleiben zunächst frei.

@@ -339,6 +339,18 @@
         "y": 2016,
         "width": 272,
         "height": 272
+      },
+      "gong-idle": {
+        "x": 0,
+        "y": 2288,
+        "width": 272,
+        "height": 204
+      },
+      "gong-strike": {
+        "x": 272,
+        "y": 2288,
+        "width": 272,
+        "height": 204
       }
     }
   },
@@ -836,6 +848,18 @@
         "y": 1008,
         "width": 136,
         "height": 136
+      },
+      "gong-idle": {
+        "x": 0,
+        "y": 1144,
+        "width": 136,
+        "height": 102
+      },
+      "gong-strike": {
+        "x": 136,
+        "y": 1144,
+        "width": 136,
+        "height": 102
       }
     }
   },

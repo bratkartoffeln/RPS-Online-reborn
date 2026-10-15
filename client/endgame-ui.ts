@@ -1,7 +1,13 @@
 import type { GameView } from '../shared/game';
 import { escapeHtml as esc } from './icons';
 import { teamColorForSeat } from './team-ui';
-import type { TeamColor } from './skin-types';
+import type { LoadedSkin, TeamColor } from './skin-types';
+
+/** Keep ICQ characters within retro packs; other packs have their own symbols. */
+export function endgameArtDirectory(skin?: LoadedSkin): string {
+  if (!skin || skin.definition.presentation === 'retro') return '/endgame/';
+  return skin.id === 'arcade' ? '/endgame/arcade/' : '/endgame/classic/';
+}
 
 export interface EndgameModel {
   matchId: string;
@@ -35,7 +41,7 @@ export class EndgameOverlay {
     root.hidden = true;
   }
 
-  update(view: GameView | null, battleBusy: boolean): void {
+  update(view: GameView | null, battleBusy: boolean, skin?: LoadedSkin): void {
     const model = endgameModel(view);
     this.root.hidden = !model || battleBusy;
     if (!model) {
@@ -45,8 +51,9 @@ export class EndgameOverlay {
       return;
     }
     this.root.dataset.winnerTeam = model.winnerTeam ?? 'draw';
-    const figure = (player: EndgameModel['left'] | EndgameModel['right']) => '<figure class="endgame-player" data-team-color="' + player.team + '" data-mood="' + player.mood + '"><img src="/endgame/' + player.team + '-' + player.mood + '.svg" alt="' + (player.mood === 'happy' ? 'Der Gewinner freut sich' : player.mood === 'sad' ? 'Der Verlierer ist traurig' : 'Unentschieden') + '" /><figcaption>' + esc(player.name) + '</figcaption></figure>';
-    const markup = '<section class="endgame-result" data-match-id="' + esc(model.matchId) + '" role="status" aria-live="polite" aria-atomic="true"><h2>' + esc(model.title) + '</h2><div class="endgame-cast">' + figure(model.left) + '<figure class="endgame-referee"><img src="/endgame/referee-' + (model.winnerTeam ?? 'neutral') + '.svg" alt="' + (model.winnerTeam ? 'Der Schiedsrichter hebt die ' + (model.winnerTeam === 'blue' ? 'blaue' : 'rote') + ' Gewinnerfahne' : 'Der Schiedsrichter zeigt ein Unentschieden') + '" /></figure>' + figure(model.right) + '</div></section>';
+    const directory = endgameArtDirectory(skin);
+    const figure = (player: EndgameModel['left'] | EndgameModel['right']) => '<figure class="endgame-player" data-team-color="' + player.team + '" data-mood="' + player.mood + '"><img src="' + directory + player.team + '-' + player.mood + '.svg" alt="' + (player.mood === 'happy' ? 'Siegerteam' : player.mood === 'sad' ? 'Unterlegenes Team' : 'Unentschieden') + '" /><figcaption>' + esc(player.name) + '</figcaption></figure>';
+    const markup = '<section class="endgame-result" data-match-id="' + esc(model.matchId) + '" role="status" aria-live="polite" aria-atomic="true"><h2>' + esc(model.title) + '</h2><div class="endgame-cast">' + figure(model.left) + '<figure class="endgame-referee"><img src="' + directory + 'referee-' + (model.winnerTeam ?? 'neutral') + '.svg" alt="' + (model.winnerTeam ? 'Siegeranzeige: ' + (model.winnerTeam === 'blue' ? 'Blau' : 'Rot') + ', rechts' : 'Unentschieden') + '" /></figure>' + figure(model.right) + '</div></section>';
     if (markup !== this.markup) { this.root.innerHTML = markup; this.markup = markup; }
   }
 }

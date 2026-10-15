@@ -1,0 +1,25 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="320" height="320" viewBox="0 0 320 320"><title>arcade: blue, happy</title><g transform="translate(47 57) scale(2.35)">
+<polygon points="7,6 8.75,9.25 12,11 8.75,12.75 7,16 5.25,12.75 2,11 5.25,9.25" fill="#d4f57b" stroke="none" stroke-width="1" stroke-linejoin="round"/>
+<polygon points="88,10 89.75,13.25 93,15 89.75,16.75 88,20 86.25,16.75 83,15 86.25,13.25" fill="#d4f57b" stroke="none" stroke-width="1" stroke-linejoin="round"/>
+<polygon points="89,80 90.4,82.6 93,84 90.4,85.4 89,88 87.6,85.4 85,84 87.6,82.6" fill="#d4f57b" stroke="none" stroke-width="1" stroke-linejoin="round"/>
+<polygon points="8,75 9.4,77.6 12,79 9.4,80.4 8,83 6.6,80.4 4,79 6.6,77.6" fill="#d4f57b" stroke="none" stroke-width="1" stroke-linejoin="round"/>
+<polygon points="49,0 50.05,1.95 52,3 50.05,4.05 49,6 47.95,4.05 46,3 47.95,1.95" fill="#d4f57b" stroke="none" stroke-width="1" stroke-linejoin="round"/>
+<polygon points="20,14 76,14 87,25 87,77 75,90 21,90 9,78 9,25" fill="#09151e" stroke="none" stroke-width="1" stroke-linejoin="round"/>
+<polygon points="20,8 76,8 87,19 87,71 75,84 21,84 9,72 9,19" fill="#d4f57b" stroke="none" stroke-width="1" stroke-linejoin="round"/>
+<polygon points="22,10 74,10 85,21 85,69 73,82 23,82 11,70 11,21" fill="#132e64" stroke="none" stroke-width="1" stroke-linejoin="round"/>
+<polygon points="21,13 75,13 82,21 82,67 73,77 23,77 14,68 14,21" fill="#205dc1" stroke="none" stroke-width="1" stroke-linejoin="round"/>
+<polygon points="21,13 75,13 82,21 82,34 14,47 14,21" fill="#337ddb" stroke="none" stroke-width="1" stroke-linejoin="round"/>
+<polyline points="24,16 72,16" fill="none" stroke="#9bcaff" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round"/>
+<polyline points="23,79 73,79" fill="none" stroke="#132e64" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+<ellipse cx="18.5" cy="23.5" rx="1.5" ry="1.5" fill="#9bcaff" stroke="none" stroke-width="1"/>
+<ellipse cx="77.5" cy="23.5" rx="1.5" ry="1.5" fill="#9bcaff" stroke="none" stroke-width="1"/>
+<rect x="39" y="73" width="3" height="2" fill="#9bcaff"/>
+<rect x="47" y="73" width="3" height="2" fill="#9bcaff"/>
+<rect x="55" y="73" width="3" height="2" fill="#9bcaff"/>
+<polygon points="48,22 68,32 65,52 57,63 48,69 39,63 31,52 28,32" fill="#9bcaff" stroke="none" stroke-width="1.0" stroke-linejoin="round"/>
+<polygon points="48,26 64,34 61,52 55,60 48,65 41,60 35,52 32,34" fill="#111f27" stroke="none" stroke-width="1.0" stroke-linejoin="round"/>
+<polyline points="41,39 41,35 45,32 51,32 55,35 55,40 48,46 48,49" fill="none" stroke="#ecf5ff" stroke-width="3.5" stroke-linecap="round" stroke-linejoin="round"/>
+<ellipse cx="48" cy="56" rx="1.9" ry="1.9" fill="#ecf5ff" stroke="none" stroke-width="3.0"/>
+<polygon points="36,10 34,2 43,6 48,0 53,6 62,2 60,10" fill="#d4f57b" stroke="none" stroke-width="1" stroke-linejoin="round"/>
+<polyline points="30,83 66,83" fill="none" stroke="#d4f57b" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"/>
+</g><g fill="#ffcf7e" stroke="#111f27" stroke-width="5" stroke-linejoin="round"><path d="m99 66-9-35 43 20 27-32 27 32 43-20-9 35Z"/></g></svg>

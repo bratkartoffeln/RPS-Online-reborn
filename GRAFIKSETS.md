@@ -1,4 +1,33 @@
-# Grafiksets für RPS Arena v0.4.17
+# Grafiksets für RPS Arena v0.4.18
+
+Klassisch und Arcade verwenden eigene Spielende-SVGs unter
+`public/endgame/classic/` und `public/endgame/arcade/`. Der reproduzierbare Export
+`node scripts/build-style-referees.mjs` erzeugt diese Motive und ergänzt je fünf
+Zuganzeigen in den beiden Atlanten, einschließlich Arcade-PNG. Als erstes Argument
+kann der installierte `sharp`-Modulpfad übergeben werden. Arcade übernimmt seine
+Original-Spielsteine mit Sieger- und Verliererposen; Klassisch verwendet Linienmotive.
+Die bestehenden Manifestfelder `portrait` und `directionalTurnPortraits` steuern
+Teamfarbe, neutrale Zustände und Richtung mit derselben Logik wie ICQ Retro.
+Die exportierten Zuganzeigen liegen zusätzlich in `design/turn-indicators/`.
+Nach einem Neubau der Grund- und Kampf-Atlanten diesen Export zuletzt ausführen.
+
+Die Gongmotive werden in `client/gong-ui.ts` eingebunden. Beide Retro-Sets verwenden
+das freigestellte Bildmotiv aus der Nutzervorlage unter
+`public/gong/icq-original-cutout.png`, keine nachgezeichnete Ersatzfigur.
+`client/retro-gong-art.ts` trennt die vorhandenen Schlägerpixel über SVG-Masken
+von der ruhenden Grafik. Die Atlanten betten dieses PNG direkt ein; alle übrigen
+Retro-Motive behalten ihre Vektorpfade. Klassisch und Arcade besitzen eigene
+Vektorvarianten. `client/gong-ui.css` steuert den
+einmaligen Schlägerschlag, `client/sound.ts` den dazu synchronisierten Klang.
+Am Spielende ersetzt das ruhende Gongmotiv die normale Schiedsrichterposition.
+
+Das ruhende Gongmotiv erscheint ebenfalls während der Aufstellung. Der Export
+`node --import tsx scripts/build-gong-atlases.mjs` ergänzt `gong-idle` und
+`gong-strike` in allen vier Atlanten und ihren Raster-/Mobilvarianten. Er verwendet
+dieselbe SVG-Quelle wie die laufende Animation und schreibt eine Vorschau je Set
+nach `design/gong/`. Als erstes Argument kann der `sharp`-Modulpfad folgen.
+Diesen Export nach allen anderen Atlasexporten zuletzt ausführen. Ruheposen lädt
+die Oberfläche aus dem Atlas; beim Start animiert sie die zugehörigen SVG-Teile.
 
 Das Spielende verwendet eigenständige SVG-Posen in `public/endgame/`, abgeleitet
 aus den vorhandenen ICQ-Retro-Figuren. `scripts/build-endgame-art.py` exportiert

@@ -1,0 +1,16 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="320" height="320" viewBox="0 0 320 320"><title>arcade: red, neutral</title><g transform="translate(47 57) scale(2.35)">
+<polygon points="20,14 76,14 87,25 87,77 75,90 21,90 9,78 9,25" fill="#09151e" stroke="none" stroke-width="1" stroke-linejoin="round"/>
+<polygon points="20,9 76,9 87,20 87,72 75,85 21,85 9,73 9,20" fill="#ff8b84" stroke="none" stroke-width="1" stroke-linejoin="round"/>
+<polygon points="22,11 74,11 85,22 85,70 73,83 23,83 11,71 11,22" fill="#641f29" stroke="none" stroke-width="1" stroke-linejoin="round"/>
+<polygon points="21,14 75,14 82,22 82,68 73,78 23,78 14,69 14,22" fill="#b9333e" stroke="none" stroke-width="1" stroke-linejoin="round"/>
+<polygon points="21,14 75,14 82,22 82,35 14,48 14,22" fill="#db4e55" stroke="none" stroke-width="1" stroke-linejoin="round"/>
+<polyline points="24,17 72,17" fill="none" stroke="#ffb5ad" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round"/>
+<polyline points="23,80 73,80" fill="none" stroke="#641f29" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+<ellipse cx="18.5" cy="24.5" rx="1.5" ry="1.5" fill="#ffb5ad" stroke="none" stroke-width="1"/>
+<ellipse cx="77.5" cy="24.5" rx="1.5" ry="1.5" fill="#ffb5ad" stroke="none" stroke-width="1"/>
+<polygon points="48,72 53,75 48,78 43,75" fill="#ffb5ad" stroke="none" stroke-width="1" stroke-linejoin="round"/>
+<polygon points="48,23 68,33 65,53 57,64 48,70 39,64 31,53 28,33" fill="#ffb5ad" stroke="none" stroke-width="1.0" stroke-linejoin="round"/>
+<polygon points="48,27 64,35 61,53 55,61 48,66 41,61 35,53 32,35" fill="#111f27" stroke="none" stroke-width="1.0" stroke-linejoin="round"/>
+<polyline points="41,40 41,36 45,33 51,33 55,36 55,41 48,47 48,50" fill="none" stroke="#fff1ed" stroke-width="3.5" stroke-linecap="round" stroke-linejoin="round"/>
+<ellipse cx="48" cy="57" rx="1.9" ry="1.9" fill="#fff1ed" stroke="none" stroke-width="3.0"/>
+</g></svg>
