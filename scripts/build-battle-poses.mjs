@@ -7,13 +7,14 @@ import { deflateSync, inflateSync } from 'node:zlib';
 const { chromium } = createRequire(import.meta.url)(process.argv[2] || 'playwright');
 const root = new URL('../public/skins/', import.meta.url);
 const browser = await chromium.launch({ headless: true, channel: 'msedge' });
-const videoProfiles = Object.fromEntries(await Promise.all(['blue', 'red'].map(async team => [team,
-  (await readFile(new URL(`icq-retro/source/video-side-${team}.png`, root))).toString('base64')])));
+const retroProfile = (await readFile(new URL('icq-retro/source/side-profile.svg', root), 'utf8'))
+  .replace(/<svg\b[^>]*>|<\/svg>|<title>[\s\S]*?<\/title>/g, '').trim();
 
 function profile(style, team) {
   if (style.startsWith('icq')) {
-    // Original red faces left; normalize the source so the existing facing transform applies.
-    return `<g${team === 'red' ? ' transform="translate(128 0) scale(-1 1)"' : ''}><image href="data:image/png;base64,${videoProfiles[team]}" x="9" y="6" width="110" height="116" preserveAspectRatio="xMidYMax meet"/></g>`;
+    return team === 'blue' ? retroProfile : retroProfile.replaceAll('#306ac5', '#c73d2e')
+      .replaceAll('#538de0', '#ec5941').replaceAll('#22529b', '#9e2a22')
+      .replaceAll('#204786', '#962b24').replaceAll('#659be5', '#ff8a60');
   }
   const retro = style.startsWith('icq');
   const color = team === 'blue' ? (retro ? '#306ac5' : '#75a8ff') : (retro ? '#cc423a' : '#f48b83');

@@ -368,8 +368,8 @@ test('bundled retro, classic and Arcade packs resolve to existing, correctly bou
   assert.deepEqual([svgWidth, svgHeight], [retroWidth, retroHeight], 'SVG and PNG share dimensions and frame coordinates.');
   const battleArtwork = retroSvg.match(/<!-- battle-poses -->([\s\S]*?)<!-- end-battle-poses -->/)?.[1];
   assert.ok(battleArtwork);
-  assert.equal((battleArtwork.match(/<image\b/g) ?? []).length, 4);
-  assert.doesNotMatch(battleArtwork.replace(/href="data:image\/png;base64,[A-Za-z0-9+/=]+"/g, ''), /(?:href|xlink:href)=|<script\b|<foreignObject\b/i);
+  assert.doesNotMatch(battleArtwork, /<image\b|(?:href|xlink:href)=|<script\b|<foreignObject\b/i,
+    'Redrawn side profiles are vector paths without embedded video crops.');
   const vectorArtwork = retroSvg.replace(/<!-- gong-artwork -->[\s\S]*?<!-- end-gong-artwork -->/g, '')
     .replace(/<!-- battle-poses -->[\s\S]*?<!-- end-battle-poses -->/g, '');
   assert.doesNotMatch(vectorArtwork, /<script\b|<image\b|<foreignObject\b|(?:href|xlink:href)=["'](?!#)/i,
