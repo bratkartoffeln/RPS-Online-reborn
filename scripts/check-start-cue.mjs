@@ -74,6 +74,13 @@ try {
     assert.ok(tones[0].delay >= .2 && tones[0].delay <= .4, 'The sound is scheduled at the mallet impact');
     await red.waitForTimeout(230);
     await red.locator('.gong-scene:visible').screenshot({ path: path.join(tmpdir(), `rps-start-${skin}-${viewport.width}.png`) });
+    await red.waitForFunction(() => {
+      const sample = window.gongSamples[0];
+      return sample.ended !== null || performance.now() >= sample.started + (sample.delay + sample.duration) * 1000 - 100;
+    });
+    if (await red.evaluate(() => window.gongSamples[0].ended === null)) {
+      assert.ok(await red.locator('.gong-scene[data-animated="true"]:visible').isVisible(), 'The gong still vibrates near the end of its actual sample');
+    }
     await red.waitForFunction(() => !document.querySelector('.score-referee .gong-scene'));
     await red.waitForFunction(() => window.gongSamples.length === 2);
     const portrait = red.locator('.score-referee .referee-portrait');

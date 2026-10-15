@@ -65,6 +65,20 @@ try {
           overlay.clearTimers();
           overlay.setStage(stage);
         },
+        weapons(winner, loser, stage, reverse) {
+          overlay.reset();
+          const view = game('scissors');
+          const event = view.lastAction;
+          event.attacker.kind = reverse ? loser : winner;
+          event.defender.kind = reverse ? winner : loser;
+          event.outcome = reverse ? 'defender' : 'attacker';
+          event.winnerId = reverse ? event.defender.id : event.attacker.id;
+          event.removedIds = [reverse ? event.attacker.id : event.defender.id];
+          overlay.update(view, this.skin, { connected: true, pending: false });
+          overlay.present(event, view);
+          overlay.clearTimers();
+          overlay.setStage(stage);
+        },
       };
     });
     for (const skin of ['classic', 'arcade', 'icq-retro', 'icq-retro-dark']) {
@@ -98,7 +112,23 @@ try {
         await page.evaluate(() => qa.overlay.setStage('winner'));
         assert.equal(await page.locator('[data-result="loser"] .combat-art-main').evaluate(node => getComputedStyle(node).opacity), '0');
       }
-      console.log(`${skin} / ${touch ? 'mobile atlas' : 'desktop atlas'}: fixed heights, trap fall and flag capture OK`);
+      if (skin.startsWith('icq-retro')) {
+        for (const [winner, loser, scene] of [['paper', 'rock', 'wrap'], ['scissors', 'paper', 'cut'], ['rock', 'scissors', 'split']]) {
+          for (const reverse of [false, true]) {
+            await page.evaluate(({ winner, loser, reverse }) => qa.weapons(winner, loser, 'shatter', reverse), { winner, loser, reverse });
+            assert.equal(await page.locator('.combat-stage').getAttribute('data-scene'), scene);
+            assert.equal(await page.locator('.combat-shard').count(), scene === 'wrap' ? 0 : 2);
+            if (scene === 'wrap') {
+              assert.equal(await page.locator('[data-kind="rock"] .combat-art-main').evaluate(node => getComputedStyle(node).opacity), '1');
+              await page.waitForTimeout(750);
+              assert.equal(await page.locator('.combat-wrap').evaluate(node => getComputedStyle(node).opacity), '1');
+            }
+            if (scene === 'split') assert.equal(await page.locator('.combat-shard .combat-blade').count(), 2);
+            await page.locator('.board-surface').screenshot({ path: path.join(tmpdir(), `rps-${skin}-${scene}-${reverse ? 'defend' : 'attack'}-${touch ? 'mobile' : 'desktop'}.png`) });
+          }
+        }
+      }
+      console.log(`${skin} / ${touch ? 'mobile atlas' : 'desktop atlas'}: fixed heights, trap fall, flag capture and weapon encounters OK`);
     }
     assert.deepEqual(errors, []);
     await context.close();

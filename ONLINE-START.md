@@ -34,7 +34,7 @@ dort als normalen Commit. Die neue ZIP enthält keine Git-Historie.
 | Bereitschaft | `/ready` |
 | Erreichbarkeit des Prozesses | `/health` |
 | Browser und Spielverbindung | Gemeinsame Adresse; HTTPS und WSS über Render |
-| Wiederbeitritt | 120 Sekunden bei vorübergehendem Verbindungsabbruch |
+| Wiederbeitritt | 20 Sekunden bei vorübergehendem Verbindungsabbruch |
 
 Render setzt den Serverport über `PORT` (standardmäßig 10000). Der Server liest
 ihn bereits aus der Umgebung und bindet auf `0.0.0.0`. Deshalb sind weder eine

@@ -2,7 +2,7 @@ import assert from 'node:assert/strict';
 import test from 'node:test';
 import {
   BOARD_COLS, BOARD_ROWS, BOARD_SIZE, MAX_TURNS,
-  addPlayer, chooseDuel, createGame, movePiece, readyPlayer, resign, restartVote,
+  addPlayer, chooseDuel, createGame, leavePlayer, movePiece, readyPlayer, resign, restartVote,
   setConnected, shuffleSetup, swapSetup, viewFor,
   type ActionResult, type FighterKind, type GameState, type PieceKind,
 } from '../shared/game.js';
@@ -38,6 +38,26 @@ function startedGame(): GameState {
   success(readyPlayer(game, 'b'));
   return game;
 }
+
+test('temporary disconnect keeps the army; permanent departure clears it even after the match ended', () => {
+  for (const finished of [false, true]) {
+    const game = startedGame();
+    if (finished) success(resign(game, 'b'));
+    const survivors = game.board.filter(piece => piece?.owner === 'a');
+    success(setConnected(game, 'b', false));
+    assert.equal(game.board.filter(piece => piece?.owner === 'b').length, 14);
+    success(setConnected(game, 'b', true));
+    assert.equal(game.board.filter(piece => piece?.owner === 'b').length, 14);
+    success(leavePlayer(game, 'b'));
+    assert.equal(game.phase, 'finished');
+    assert.equal(game.winner, 'a');
+    assert.equal(game.series.completedGames, 1);
+    assert.equal(game.board.some(piece => piece?.owner === 'b'), false);
+    assert.deepEqual(game.board.filter(Boolean), survivors);
+    success(leavePlayer(game, 'b'));
+    assert.equal(game.series.completedGames, 1);
+  }
+});
 
 let fixtureId = 0;
 function put(game: GameState, cell: number, owner: string, kind: PieceKind, revealed = false): void {

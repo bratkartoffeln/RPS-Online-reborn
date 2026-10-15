@@ -2,7 +2,7 @@
 import { CloseCode, Room, type Client } from '@colyseus/core';
 import { randomInt } from 'node:crypto';
 import {
-  addPlayer, chooseDuel, createGame, isSeriesMode, movePiece,
+  addPlayer, chooseDuel, createGame, isSeriesMode, leavePlayer, movePiece,
   newSeriesVote, readyPlayer, resign, restartVote, setConnected,
   shuffleSetup, swapSetup, viewFor,
   type ActionResult, type FighterKind, type GameState,
@@ -42,7 +42,7 @@ export class RpsRoom extends Room {
   patchRate = null;
 
   private game!: GameState;
-  private reconnectSeconds = 120;
+  private reconnectSeconds = 20;
   private shuttingDown = false;
   private deployGateRegistered = false;
   private readonly chat = new RoomChat();
@@ -99,7 +99,7 @@ export class RpsRoom extends Room {
         random: () => randomInt(0, 0x100000000) / 0x100000000,
       });
 
-      this.reconnectSeconds = options.reconnectSeconds ?? 120;
+      this.reconnectSeconds = options.reconnectSeconds ?? 20;
 
       await this.setMatchmaking({
         private: true,
@@ -348,18 +348,7 @@ export class RpsRoom extends Room {
       return;
     }
 
-    setConnected(
-      this.game,
-      client.sessionId,
-      false,
-    );
-
-    if (
-      this.game.players.length === 2 &&
-      this.game.phase !== 'finished'
-    ) {
-      resign(this.game, client.sessionId);
-    }
+    leavePlayer(this.game, client.sessionId);
 
     this.sendViews();
   }

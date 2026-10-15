@@ -2,7 +2,7 @@ import assert from 'node:assert/strict';
 import test, { type TestContext } from 'node:test';
 import type { FighterKind, GameActionView, PieceKind } from '../shared/game';
 import type { Snapshot } from '../shared/protocol';
-import { CombatOverlay, combatModel, confirmedDuelChoice, duelChoiceState, isTextEntry, waitForCombatAnimation, type CombatModel, type CombatStage, type DuelChoiceState } from './combat-ui';
+import { CombatOverlay, combatModel, confirmedDuelChoice, duelChoiceState, icqCombatScene, isTextEntry, waitForCombatAnimation, type CombatModel, type CombatStage, type DuelChoiceState } from './combat-ui';
 import { builtInSkin } from './skins';
 
 function animationEnd(name: string, bubbledTarget?: EventTarget): Event {
@@ -211,7 +211,7 @@ test('duel and match identity change only when the corresponding displayed round
 });
 
 /** Keep the real queue, epoch guards and animation waits; substitute only DOM painting. */
-function overlayHarness(t: TestContext, systemReduced = false) {
+function overlayHarness(t: TestContext, systemReduced = false, beforeBattle?: () => Promise<void>) {
   const left = new EventTarget(), cloud = new EventTarget(), winner = new EventTarget();
   const nodes: Record<string, EventTarget> = {
     '.combat-fighter:first-child .combat-art': left,
@@ -228,6 +228,7 @@ function overlayHarness(t: TestContext, systemReduced = false) {
     onBusyChange: (busy) => busyChanges.push(busy),
     onCelebrate: (owner) => celebrations.push(owner),
     onBattleStart: (event) => starts.push(event),
+    beforeBattle,
   });
   const paint = overlay as unknown as {
     active: CombatModel | null; activeStage: CombatStage; activeReduced: boolean;
@@ -252,6 +253,52 @@ function overlayHarness(t: TestContext, systemReduced = false) {
 function resolvedChoice(id = 8): GameActionView {
   return { ...action('paper', 'rock'), id, kind: 'duel', duelRound: 1 };
 }
+
+test('the overlay stays hidden until the board movement completes; a cancelled wait cannot reveal a stale fight', async (t) => {
+  for (const cancel of [false, true]) {
+    let landed!: () => void;
+    const movement = new Promise<void>(resolve => { landed = resolve; });
+    const h = overlayHarness(t, false, () => movement), view = fixture();
+    h.overlay.update(view, h.skin, { connected: true, pending: false });
+    h.overlay.present(action(), view);
+    h.overlay.update(view, h.skin, { connected: true, pending: false });
+    assert.equal(h.overlay.busy, true);
+    assert.equal(h.root.hidden, true);
+    assert.equal(h.starts.length, 0);
+    if (cancel) h.overlay.reset();
+    landed();
+    await movement;
+    assert.equal(h.starts.length, cancel ? 0 : 1);
+    assert.equal(h.root.hidden, cancel);
+    h.overlay.reset();
+  }
+});
+
+test('both ICQ designs select the physical encounter for either attack direction', () => {
+  for (const id of ['icq-retro', 'icq-retro-dark']) {
+    const skin = { ...builtInSkin(), id };
+    for (const [winner, loser, scene] of [['paper', 'rock', 'wrap'], ['scissors', 'paper', 'cut'], ['rock', 'scissors', 'split']] as const) {
+      assert.equal(icqCombatScene(skin, combatModel(action(winner, loser), fixture())!), scene);
+      assert.equal(icqCombatScene(skin, combatModel(action(loser, winner, 'defender'), fixture())!), scene);
+    }
+    assert.equal(icqCombatScene(skin, combatModel(action('rock', 'rock', null), fixture())!), 'standard');
+  }
+  assert.equal(icqCombatScene(builtInSkin(), combatModel(action('paper', 'rock'), fixture())!), 'standard');
+});
+
+test('a permanent departure cancels a queued fight even when the final snapshot is not paused', async (t) => {
+  let landed!: () => void;
+  const movement = new Promise<void>(resolve => { landed = resolve; });
+  const h = overlayHarness(t, false, () => movement), view = fixture();
+  h.overlay.update(view, h.skin, { connected: true, pending: false });
+  h.overlay.present(action(), view);
+  h.overlay.update({ ...view, phase: 'finished', players: view.players.map(player => ({ ...player, connected: player.id === 'a' })) }, h.skin, { connected: true, pending: false });
+  landed();
+  await movement;
+  assert.equal(h.root.hidden, true);
+  assert.equal(h.overlay.busy, false);
+  assert.equal(h.starts.length, 0);
+});
 
 test('confirmed choice pause contains only the viewer weapon, including the second submitter without a private acknowledgement', () => {
   for (const you of ['a', 'b']) {

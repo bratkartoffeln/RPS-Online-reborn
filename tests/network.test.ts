@@ -129,6 +129,7 @@ test('real two-client sessions keep secrets, validate commands and recover seats
       a.room.reconnection.enabled = false;
       a.room.connection.close(4010, 'test reload');
       await b.wait((view) => view.paused);
+      assert.ok(b.snapshot!.board.some(piece => piece?.owner === oldSession), 'army stays during the reconnect window');
       const errorCount = b.problems.length;
       const ownFighter = b.snapshot!.board.findIndex((piece) => piece?.owner === b.room.sessionId && piece.kind === 'rock');
       b.room.send('move', { from: ownFighter, to: ownFighter + 7, revision: b.snapshot!.revision });
@@ -156,6 +157,7 @@ test('real two-client sessions keep secrets, validate commands and recover seats
       assert.ok(a.snapshot!.players.every((player) => !player.ready));
       await b.room.leave();
       await a.wait((view) => view.phase === 'finished');
+      assert.ok(a.snapshot!.board.every(piece => piece?.owner !== b.room.sessionId), 'intentional leave removes the entire army');
       await assert.rejects(client.joinById(a.room.roomId, { name: 'Replacement' }));
     });
   } finally {

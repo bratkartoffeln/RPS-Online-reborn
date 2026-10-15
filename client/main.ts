@@ -123,6 +123,7 @@ function announceReferee(): void {
 }
 
 function cancelStartCue(): void {
+  startCueSequence++;
   clearTimeout(startCueTimer);
   startCueTimer = undefined;
   startCueActive = false;
@@ -187,8 +188,17 @@ const connection = new RpsConnection({
       startCueSequence++;
       const animated = animationsPreferred && !reducedMotion.matches;
       const gong = currentSkin.definition.artwork?.gong;
-      sounds.playStartGong(animated ? gong?.strikeMs ?? GONG_TIMING.strike : 0);
-      startCueTimer = setTimeout(() => { cancelStartCue(); render(); }, animated ? gong?.durationMs ?? GONG_TIMING.complete : 350);
+      const sequence = startCueSequence;
+      const playback = sounds.playStartGong(animated ? gong?.strikeMs ?? GONG_TIMING.strike : 0);
+      const strike = new Promise<void>(resolve => {
+        startCueTimer = setTimeout(resolve, animated ? gong?.durationMs ?? GONG_TIMING.complete : 350);
+      });
+      // Keep the ringing artwork mounted until the actual audio source ends.
+      void Promise.all([strike, playback]).then(() => {
+        if (!startCueActive || sequence !== startCueSequence) return;
+        cancelStartCue();
+        render();
+      });
     }
     const action = networkStatus === 'connected' ? freshAction(view, snapshot) : null;
     if (action) cancelReferee();
@@ -259,6 +269,7 @@ const endgame = new EndgameOverlay(el('endgame-overlay'));
 const combat = new CombatOverlay(el('combat-overlay'), {
   onBusyChange(busy) { updateBoardInteraction(); endgame.update(view, busy, currentSkin); if (!busy) announceReferee(); },
   onCelebrate(ownerId) { board.celebrate(ownerId); },
+  beforeBattle() { return board.whenEffectsComplete(); },
   onBattleStart(action) {
     if (view) sounds.playAction(action, view.you, animationsPreferred && !reducedMotion.matches ? COMBAT_TIMING.shatter : 0);
   },

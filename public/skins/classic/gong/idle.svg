@@ -2,7 +2,7 @@
 .referee-portrait { display: inline-flex; align-items: center; justify-content: center; max-width: 100%; }
 .gong-scene { display: block; max-width: 100%; flex-shrink: 0; overflow: visible; }
 .gong-scene[data-animated="true"] .gong-mallet { will-change: transform; transform-box: view-box; animation: gong-strike 1500ms both; }
-.gong-scene[data-animated="true"] .gong-disc { will-change: transform; animation: gong-ring 1500ms linear both; transform-origin: 130px 115px; }
+.gong-scene[data-animated="true"] .gong-disc { will-change: transform; animation: gong-ring 90ms linear 380ms infinite; transform-origin: 130px 115px; }
 @keyframes gong-strike {
   0% { transform: rotate(0); animation-timing-function: cubic-bezier(.2,.65,.4,1); }
   10% { transform: rotate(9deg); animation-timing-function: cubic-bezier(.55,0,.85,.45); }
@@ -10,7 +10,7 @@
   59% { transform: rotate(5deg); animation-timing-function: cubic-bezier(.35,0,.3,1); }
   88%, 100% { transform: rotate(0); }
 }
-@keyframes gong-ring { 0%, 25.333% { transform: translateX(0); } 28% { transform: translateX(-2px); } 31% { transform: translateX(1.8px); } 34% { transform: translateX(-1.5px); } 37% { transform: translateX(1.2px); } 40% { transform: translateX(-.8px); } 43% { transform: translateX(.5px); } 47%, 100% { transform: translateX(0); } }
+@keyframes gong-ring { 0%, 100% { transform: translateX(-2px) rotate(-.6deg); } 50% { transform: translateX(2px) rotate(.6deg); } }
 :root[data-motion="off"] .gong-scene *, :root[data-motion="off"] .gong-scene *::before { animation: none !important; }
 @media (prefers-reduced-motion: reduce) { .gong-scene * { animation: none !important; } }
 </style><g fill="none" stroke="#b9c7d1" stroke-width="6" stroke-linecap="round" stroke-linejoin="round"><path d="M43 220h198M66 194v26m150-26v26"/><g class="gong-disc"><circle cx="141" cy="114" r="91"/><circle cx="141" cy="114" r="74"/><circle cx="141" cy="114" r="24"/><path d="M141 33v11m-81 70h11m151 0h-11M141 195v-11"/></g><g class="gong-mallet" style="transform-origin:261px 179px" stroke="#e9bf78"><path d="m261 179 22-114"/><circle cx="288" cy="44" r="21"/></g></g></svg>

@@ -7,7 +7,7 @@ services:
       NODE_ENV: production
       HOST: 0.0.0.0
       PORT: "2567"
-      RECONNECT_SECONDS: "120"
+      RECONNECT_SECONDS: "20"
       SKINS_DIR: /app/skins
       # Leer lassen, damit Browserzugriffe im LAN weiterhin funktionieren.
       ALLOWED_ORIGINS: "${ALLOWED_ORIGINS:-}"

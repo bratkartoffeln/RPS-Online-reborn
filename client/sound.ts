@@ -7,10 +7,23 @@ import { freshVictory } from './match-victory';
 import { captureMotionFrame } from './board-motion';
 import { teamColorForPlayer } from './team-ui';
 
-/** Only live, uninterrupted transitions produce speech, never sync/reload/reconnect. */
+/** Only newly observed live results produce speech, never sync/reload/reconnect. */
 export function freshRefereeCue(previous: GameView | null, next: GameView): SoundCue | null {
   if (!previous) return null;
   const before = captureMotionFrame(previous)!, after = captureMotionFrame(next)!;
+  // A permanent departure ends the match after marking the opponent offline and
+  // clearing their army. It may follow a paused reconnect window and advances
+  // several revisions in one snapshot, so it cannot use the normal battle guard.
+  const opponent = next.players.find(player => player.id !== next.you);
+  if (before.identity === after.identity && previous.series.id === next.series.id &&
+      previous.series.matchId === next.series.matchId &&
+      (previous.phase === 'playing' || previous.phase === 'duel') &&
+      next.phase === 'finished' && next.finishReason === 'resign' && next.winner === next.you &&
+      next.revision > previous.revision && next.revision <= previous.revision + 3 &&
+      next.series.completedGames === previous.series.completedGames + 1 &&
+      previous.players.some(player => player.id === previous.you && player.connected) &&
+      next.players.some(player => player.id === next.you && player.connected) &&
+      opponent && !opponent.connected && !next.board.some(piece => piece?.owner === opponent.id)) return 'youWin';
   if (before.identity !== after.identity || !before.connected || !after.connected ||
       before.paused || after.paused || next.revision !== previous.revision + 1 ||
       previous.series.id !== next.series.id || previous.series.matchId !== next.series.matchId) return null;
@@ -122,7 +135,7 @@ export class GameSounds {
     return pending;
   }
 
-  playCue(cue: SoundCue, delayMs = 0): void {
+  playCue(cue: SoundCue, delayMs = 0): Promise<void> {
     let cancel!: () => void;
     const cancelled = new Promise<void>(resolve => { cancel = resolve; });
     this.pendingCancels.add(cancel);
@@ -132,6 +145,7 @@ export class GameSounds {
       this.pending.delete(playback);
       this.pendingCancels.delete(cancel);
     });
+    return playback;
   }
 
   private async playSample(cue: SoundCue, delayMs: number): Promise<void> {
@@ -188,7 +202,7 @@ export class GameSounds {
     }
   }
 
-  playStartGong(delayMs: number): void { this.playCue('gong', delayMs); }
+  playStartGong(delayMs: number): Promise<void> { return this.playCue('gong', delayMs); }
 
   private async fallback(cue: SoundCue, due: number): Promise<void> {
     const context = this.context;

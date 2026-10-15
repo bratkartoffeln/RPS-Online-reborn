@@ -178,10 +178,39 @@
 @keyframes combat-vanish { 0%, 20% { opacity: 1; } 100% { opacity: 0; transform: scale(.2); } }
 @keyframes combat-puff { 0% { opacity: 0; transform: scale(.2); } 35% { opacity: 1; } 100% { opacity: 0; transform: scale(1.4); } }
 @keyframes combat-take-flag { from { transform: translateX(85%) rotate(20deg); } to { transform: translateX(30%) rotate(0); } }
+/* ICQ encounters: intact wrapped rock, a cut sheet, and two separated blades. */
+[data-scene="split"] .combat-shard { clip-path: none; }
+[data-scene="cut"] .combat-shard-0 { clip-path: polygon(0 0, 100% 0, 100% 52%, 0 45%); --shard-x: -28px; --shard-y: -24px; --shard-angle: -24deg; }
+[data-scene="cut"] .combat-shard-1 { clip-path: polygon(0 45%, 100% 52%, 100% 100%, 0 100%); --shard-x: 30px; --shard-y: 35px; --shard-angle: 28deg; }
+[data-scene="cut"] .combat-cloud, [data-scene="wrap"] .combat-cloud { visibility: hidden; }
+.combat-blade { transform-origin: 133px 133px; }
+[data-scene="cut"][data-stage="impact"] .combat-blade-0 { animation: combat-snip 200ms ease-in-out 3 alternate; }
+[data-scene="cut"][data-stage="impact"] .combat-blade-1 { animation: combat-snip 200ms ease-in-out 3 alternate-reverse; }
+[data-scene="cut"][data-stage="impact"] [data-kind="paper"] .combat-art-main { animation: combat-paper-cut 600ms ease-in both; }
+.combat-wrap { position: absolute; inset: 0; display: grid; place-items: center; opacity: 0; perspective: 180px; }
+.combat-wrap > svg { width: 104px; height: 104px; }
+[data-scene="wrap"]:is([data-stage="shatter"], [data-stage="winner"]) [data-kind="rock"] .combat-art-main { opacity: 1; }
+[data-scene="wrap"][data-stage="shatter"] .combat-fighter:first-child .combat-art { --combat-return-x: var(--clash-shift); }
+[data-scene="wrap"][data-stage="shatter"] .combat-fighter:nth-child(2) .combat-art { --combat-return-x: calc(-1 * var(--clash-shift)); }
+[data-scene="wrap"][data-stage="winner"] .combat-fighter:first-child .combat-art { transform: translateX(var(--clash-shift)); }
+[data-scene="wrap"][data-stage="winner"] .combat-fighter:nth-child(2) .combat-art { transform: translateX(calc(-1 * var(--clash-shift))); }
+[data-scene="wrap"]:is([data-stage="shatter"], [data-stage="winner"]) [data-kind="paper"] .combat-art-main { opacity: 0; }
+[data-scene="wrap"][data-stage="shatter"] .combat-wrap { animation: combat-paper-wrap 700ms ease-in-out both; }
+[data-scene="wrap"][data-stage="winner"] .combat-wrap { opacity: 1; transform: scale(1.12, 1.02) rotate(-8deg); }
+[data-scene="wrap"] .combat-wrap svg path:first-child { transform-origin: center; }
+[data-scene="wrap"][data-stage="shatter"] .combat-wrap svg path:first-child { animation: combat-paper-fold 700ms ease-in-out both; }
+[data-scene="wrap"][data-stage="winner"] .combat-wrap svg path:first-child { d: path('M20 27Q64 10 108 26L100 105Q60 90 20 105Q38 66 20 27Z'); }
+[data-motion="reduced"] .combat-wrap { display: none; }
+@keyframes combat-snip { to { transform: rotate(26deg); } }
+@keyframes combat-paper-cut { 50%, 100% { transform: rotate(-8deg) scale(1.04); } }
+@keyframes combat-paper-wrap { 0% { opacity: 0; transform: translateX(-25%) rotateY(-85deg) scale(1.3); } 25% { opacity: 1; } 65% { transform: rotateY(25deg) scale(1.2, 1.08); } 100% { opacity: 1; transform: scale(1.12, 1.02) rotate(-8deg); } }
+@keyframes combat-paper-fold { to { d: path('M20 27Q64 10 108 26L100 105Q60 90 20 105Q38 66 20 27Z'); } }
 @container combat-board (max-width: 420px) {
   [data-outcome="trap"] .combat-fighters { --clash-shift: calc(25cqw + 2px); }
   .combat-trap-hole > .atlas-icon, .combat-capture-flag > .atlas-icon, .combat-puff > .atlas-icon { scale: .78; }
+  .combat-wrap > svg { scale: .78; }
 }
 @container combat-board (max-height: 280px) {
   .combat-trap-hole > .atlas-icon, .combat-capture-flag > .atlas-icon, .combat-puff > .atlas-icon { scale: .52; }
+  .combat-wrap > svg { scale: .52; }
 }

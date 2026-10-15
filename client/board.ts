@@ -1011,7 +1011,9 @@ class ArenaScene extends Phaser.Scene {
     if (action.kind === 'move') {
       if (elapsed >= effect.moveMs) { this.finishEffect(); return; }
       const progress = smoothStep(elapsed / effect.moveMs);
-      attacker.container.setPosition(from.x + dx * progress, from.y + dy * progress - Math.sin(progress * Math.PI) * 5);
+      const leap = Math.sin(progress * Math.PI);
+      attacker.container.setPosition(from.x + dx * progress, from.y + dy * progress - leap * 38)
+        .setScale(1 + leap * .08, 1 - leap * .08);
       this.override(attacker, 'move', elapsed);
       return;
     }
@@ -1021,7 +1023,9 @@ class ArenaScene extends Phaser.Scene {
     if (elapsed < effect.attackMs) {
       const progress = smoothStep(elapsed / effect.attackMs);
       const travel = undecided ? Math.sin(progress * Math.PI) * .42 : progress * .68;
-      attacker.container.setPosition(from.x + dx * travel, from.y + dy * travel - Math.sin(progress * Math.PI) * 14).setScale(1).setAlpha(1);
+      const leap = Math.sin(progress * Math.PI);
+      attacker.container.setPosition(from.x + dx * travel, from.y + dy * travel - leap * 38)
+        .setScale(1 + leap * .08, 1 - leap * .08).setAlpha(1);
       this.override(attacker, 'attack', elapsed);
       if (defender && action.kind === 'duel') this.override(defender, 'attack', elapsed);
       return;
