@@ -26,6 +26,10 @@ test('skin changes repaint both players and the result referee with the matching
       overlay.update(view, false, skin);
       const directory = `/skins/${skin.id}/endgame/`;
       assert.ok(markup.includes(`src="${directory}referee-${winner === 'a' ? 'blue' : 'red'}.svg"`));
+      overlay.update(view, false, skin, true);
+      assert.equal(markup.includes('-speaking.svg'), skin.id.startsWith('icq'), 'The result referee speaks during the actual win/lose announcement');
+      overlay.update(view, false, skin, false);
+      assert.ok(!markup.includes('-speaking.svg'), 'The result referee rests again after speech ends');
       assert.equal((markup.match(new RegExp('src="' + directory.replaceAll('/', '\\/'), 'g')) ?? []).length, 3);
       assert.doesNotMatch(markup, /src="\/endgame\//);
     }
@@ -66,22 +70,27 @@ test('the overlay waits for the last battle and persists through sync, votes and
     set innerHTML(value: string) { markup = value; paints++; },
     replaceChildren() { markup = ''; },
   } as unknown as HTMLElement;
-  const overlay = new EndgameOverlay(root);
+  const revealed: GameView[] = [];
+  const overlay = new EndgameOverlay(root, view => { revealed.push(view); });
   const view = finished();
   overlay.update(view, true);
   assert.equal(root.hidden, true);
+  assert.equal(revealed.length, 0, 'The result sound waits until its overlay is visible');
   overlay.update(view, false);
   assert.equal(root.hidden, false);
+  assert.equal(revealed.length, 1);
   const painted = paints;
   for (let count = 0; count < 20; count++) {
     overlay.update({ ...view, revision: view.revision + count, players: view.players.map(player => ({ ...player, connected: count % 2 === 0, restartRequested: true })) }, false);
     assert.equal(root.hidden, false);
   }
   assert.equal(paints, painted, 'Unchanged results keep the existing DOM');
+  assert.equal(revealed.length, 1, 'Sync, reconnect and votes do not repeat the result sound');
   overlay.update({ ...view, phase: 'setup', series: { ...view.series, matchId: 'new' } }, false);
   assert.equal(root.hidden, true);
   assert.equal(markup, '');
   overlay.update(view, false);
+  assert.equal(revealed.length, 2, 'Showing a new result triggers its announcement');
   overlay.update(null, false);
   assert.equal(root.hidden, true);
 });

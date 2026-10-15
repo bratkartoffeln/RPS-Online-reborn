@@ -36,16 +36,20 @@ export function freshRefereeCue(previous: GameView | null, next: GameView): Soun
 }
 
 const VOICES = new Set<SoundCue>(['redTurn', 'blueTurn', 'youWin', 'youLose']);
+const SPEECH = new Set<SoundCue>([...VOICES, 'win', 'lose']);
 /** Only public encounter data selects the weapon heard at contact. */
 export function combatWeaponCue(action: GameActionView): SoundCue | null {
   if (action.kind === 'move') return null;
+  if (action.outcome === 'flag') return 'flag';
   const winner = [action.attacker, action.defender].find(piece => piece?.id === action.winnerId);
   const piece = winner ?? (action.attacker.kind === action.defender?.kind ? action.attacker : null);
   if (piece?.revealed && (piece.kind === 'rock' || piece.kind === 'paper' || piece.kind === 'scissors')) return piece.kind;
-  return action.outcome === 'trap' || action.outcome === 'flag' ? action.outcome : null;
+  return action.outcome === 'trap' ? action.outcome : null;
 }
 /** Local pack samples decoded once; the browser needs no TTS service or engine. */
 export class GameSounds {
+  onSpeechChange: ((cue: SoundCue | null) => void) | null = null;
+  private speechSource: AudioBufferSourceNode | null = null;
   private context: AudioContext | null = null;
   private enabled = false;
   private skin: LoadedSkin | null = null;
@@ -179,7 +183,13 @@ export class GameSounds {
     this.active.add(source);
     if (VOICES.has(cue)) this.voice = source;
     await new Promise<void>(resolve => {
+      let speechTimer: ReturnType<typeof setTimeout> | undefined;
       const finish = () => {
+        clearTimeout(speechTimer);
+        if (this.speechSource === source) {
+          this.speechSource = null;
+          this.onSpeechChange?.(null);
+        }
         this.active.delete(source);
         this.completions.delete(source);
         if (this.voice === source) this.voice = null;
@@ -189,6 +199,11 @@ export class GameSounds {
       this.completions.set(source, finish);
       source.onended = finish;
       source.start(Math.max(context.currentTime, due));
+      if (SPEECH.has(cue)) {
+        const speak = () => { this.speechSource = source; this.onSpeechChange?.(cue); };
+        const delay = Math.max(0, (due - context.currentTime) * 1000);
+        if (delay > 0) speechTimer = setTimeout(speak, delay); else speak();
+      }
     });
   }
 

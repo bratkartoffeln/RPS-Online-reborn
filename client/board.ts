@@ -123,6 +123,8 @@ class ArenaScene extends Phaser.Scene {
   private tileImages: Array<Phaser.GameObjects.Image | null> = [];
   private visuals = new Map<string, PieceVisual>();
   private effect: BoardEffect | null = null;
+  private combatOverlayBusy = false;
+  private effectSettled = false;
   private effectWaiters = new Set<() => void>();
   private celebration: TeamCelebration | null = null;
   private flagVictory: FlagVictory | null = null;
@@ -852,7 +854,8 @@ class ArenaScene extends Phaser.Scene {
       const now = performance.now();
       if (now >= visual.fidgetAt) {
         visual.fidgetStarted = now;
-        visual.fidgetVariant = Math.floor(Math.random() * (idleEyes(frame) ? 4 : 3));
+        // Three of six slots blink: twice the previous one-in-four frequency.
+        visual.fidgetVariant = Math.min(3, Math.floor(Math.random() * (idleEyes(frame) ? 6 : 3)));
         visual.fidgetAt = now + 720 + nextFidgetDelay();
       }
       const motion = idleDeformation(now - visual.fidgetStarted, visual.fidgetVariant);
@@ -943,12 +946,19 @@ class ArenaScene extends Phaser.Scene {
   }
 
   whenEffectsComplete(): Promise<void> {
-    return this.effect ? new Promise(resolve => this.effectWaiters.add(resolve)) : Promise.resolve();
+    return this.effect && !this.effectSettled ? new Promise(resolve => this.effectWaiters.add(resolve)) : Promise.resolve();
+  }
+
+  setCombatOverlayBusy(busy: boolean): void {
+    this.combatOverlayBusy = busy;
+    if (!busy && this.effectSettled) this.finishEffect();
+    this.requestRender();
   }
 
   private finishEffect(): void {
     if (!this.effect) return;
     this.effect = null;
+    this.effectSettled = false;
     for (const [id, visual] of this.visuals) {
       if (visual.ghost) {
         visual.container.destroy();
@@ -1000,6 +1010,7 @@ class ArenaScene extends Phaser.Scene {
     this.effect = {
       action, elapsed: 0, moveMs, attackMs: moveMs, resultMs: FACEOFF_HOLD_MS,
     };
+    this.effectSettled = false;
     this.pieces.bringToTop(attacker.container);
     this.applyEffect();
     for (const visual of participants) this.animateArtwork(visual, 0);
@@ -1031,7 +1042,12 @@ class ArenaScene extends Phaser.Scene {
       this.override(attacker, 'move', elapsed / NINJA_SPEED_FACTOR);
       return;
     }
-    if (elapsed >= effect.attackMs + effect.resultMs) { this.finishEffect(); return; }
+    if (elapsed >= effect.attackMs + effect.resultMs) {
+      if (!this.combatOverlayBusy) { this.finishEffect(); return; }
+      this.effectSettled = true;
+      for (const resolve of this.effectWaiters) resolve();
+      this.effectWaiters.clear();
+    }
     const staging = combatStaging(from, to);
     if (defender) defender.container.setPosition(staging.defender.x, staging.defender.y).setScale(.8).setAlpha(1);
     if (elapsed < effect.attackMs) {
@@ -1120,6 +1136,10 @@ export class ArenaBoard {
 
   whenEffectsComplete(): Promise<void> {
     return this.scene.whenEffectsComplete();
+  }
+
+  setCombatOverlayBusy(busy: boolean): void {
+    this.scene.setCombatOverlayBusy(busy);
   }
 
   setAnimationsEnabled(enabled: boolean): void {

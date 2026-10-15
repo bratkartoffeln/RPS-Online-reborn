@@ -25,9 +25,11 @@ test('the victorious weapon is heard regardless of attack role; equal weapons ke
   const hidden = encounter('paper', 'rock', 'attacker');
   hidden.attacker.kind = null; hidden.attacker.revealed = false;
   assert.equal(combatWeaponCue(hidden), null);
-  const flag = encounter('rock', 'paper', 'attacker');
-  flag.outcome = 'flag'; flag.defender!.kind = 'flag';
-  assert.equal(combatWeaponCue(flag), 'rock', 'The capturing fighter also keeps its winning weapon sound');
+  for (const weapon of ['rock', 'paper', 'scissors'] as const) {
+    const flag = encounter(weapon, 'paper', 'attacker');
+    flag.outcome = 'flag'; flag.defender!.kind = 'flag';
+    assert.equal(combatWeaponCue(flag), 'flag', 'Capturing the flag always uses the flag sound');
+  }
 });
 
 test('weapon playback has no extra duel cue and the result is announced separately', async (t) => {
@@ -55,8 +57,8 @@ test('side poses face one another for horizontal, vertical and rotated approache
     const skin = parseSkinDefinition(JSON.parse(readFileSync(`public/skins/${id}/skin.json`, 'utf8')));
     for (const color of ['blue', 'red'] as const) for (const facing of ['left', 'right'] as const) {
       const frame = combatFacingFrame(skin, color, facing);
-      assert.equal(frame, `battle-${color}-${facing}`);
-      if (skin.mobileAtlas) assert.ok(skin.mobileAtlas.frames[frame!]);
+      assert.equal(frame, id.startsWith('icq') ? `battle-${color}-${facing}` : null);
+      if (frame && skin.mobileAtlas) assert.ok(skin.mobileAtlas.frames[frame]);
     }
   }
 });

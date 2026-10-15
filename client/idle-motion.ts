@@ -35,18 +35,24 @@ export function inactivityKey(view: GameView): string {
 
 export class RefereeInactivity {
   private key = '';
-  private since = 0;
+  private nextYawn = 0;
   private started: number | null = null;
-  private used = false;
   yawning = false;
+
+  constructor(private readonly random = Math.random) {}
 
   update(key: string, active: boolean, now: number): boolean {
     const previous = this.yawning;
     if (!active || key !== this.key) {
-      this.key = key; this.since = now; this.started = null; this.used = false; this.yawning = false;
-    } else if (!this.used && now - this.since >= YAWN_AFTER_MS) {
-      this.started = now; this.used = true; this.yawning = true;
-    } else if (this.started !== null && now - this.started >= YAWN_DURATION_MS) this.yawning = false;
+      this.key = key; this.nextYawn = now + YAWN_AFTER_MS; this.started = null; this.yawning = false;
+    } else if (this.started !== null) {
+      if (now - this.started >= YAWN_DURATION_MS) {
+        this.started = null; this.yawning = false;
+        this.nextYawn = now + 5000 + this.random() * 5000;
+      }
+    } else if (now >= this.nextYawn) {
+      this.started = now; this.yawning = true;
+    }
     return previous !== this.yawning;
   }
 }

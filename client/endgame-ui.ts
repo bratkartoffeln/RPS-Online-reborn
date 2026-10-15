@@ -39,24 +39,32 @@ export function endgameModel(view: GameView | null): EndgameModel | null {
 
 export class EndgameOverlay {
   private markup = '';
-  constructor(private readonly root: HTMLElement) {
+  private revealedMatch: string | null = null;
+  constructor(private readonly root: HTMLElement, private readonly onReveal?: (view: GameView) => void) {
     root.classList.add('endgame-overlay');
     root.hidden = true;
   }
 
-  update(view: GameView | null, battleBusy: boolean, skin?: LoadedSkin): void {
+  update(view: GameView | null, battleBusy: boolean, skin?: LoadedSkin, speaking = false): void {
     const model = endgameModel(view);
     this.root.hidden = !model || battleBusy;
     if (!model) {
       this.root.replaceChildren();
       this.markup = '';
+      this.revealedMatch = null;
       delete this.root.dataset.winnerTeam;
       return;
     }
     this.root.dataset.winnerTeam = model.winnerTeam ?? 'draw';
     const directory = endgameArtDirectory(skin);
+    const speechSuffix = speaking && skin?.id.startsWith('icq-retro') && model.winnerTeam ? '-speaking' : '';
     const figure = (player: EndgameModel['left'] | EndgameModel['right']) => '<figure class="endgame-player" data-team-color="' + player.team + '" data-mood="' + player.mood + '"><img src="' + directory + player.team + '-' + player.mood + '.svg" alt="' + (player.mood === 'happy' ? 'Siegerteam' : player.mood === 'sad' ? 'Unterlegenes Team' : 'Unentschieden') + '" /><figcaption>' + esc(player.name) + '</figcaption></figure>';
     const markup = '<section class="endgame-result" data-match-id="' + esc(model.matchId) + '" role="status" aria-live="polite" aria-atomic="true"><h2>' + esc(model.title) + '</h2><div class="endgame-cast">' + figure(model.left) + '<figure class="endgame-referee"><img src="' + directory + 'referee-' + (model.winnerTeam ?? 'neutral') + '.svg" alt="' + (model.winnerTeam ? 'Siegeranzeige: ' + (model.winnerTeam === 'blue' ? 'Blau' : 'Rot') + (model.winnerTeam === 'blue' ? ', links' : ', rechts') : 'Unentschieden') + '" /></figure>' + figure(model.right) + '</div></section>';
-    if (markup !== this.markup) { this.root.innerHTML = markup; this.markup = markup; }
+    const spokenMarkup = speechSuffix ? markup.replace('src="' + directory + 'referee-' + model.winnerTeam + '.svg"', 'src="' + directory + 'referee-' + model.winnerTeam + speechSuffix + '.svg"') : markup;
+    if (spokenMarkup !== this.markup) { this.root.innerHTML = spokenMarkup; this.markup = spokenMarkup; }
+    if (!this.root.hidden && this.revealedMatch !== model.matchId) {
+      this.revealedMatch = model.matchId;
+      this.onReveal?.(view!);
+    }
   }
 }
