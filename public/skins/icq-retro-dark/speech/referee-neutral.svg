@@ -42,4 +42,4 @@
         <ellipse cx="80.5" cy="72.7" rx="2.8" ry="1.8" fill="#eda873" fill-opacity=".85" stroke="none"/>
         <g class="speech-mouth"><ellipse cx="80.5" cy="75.5" rx="4.3" ry="3" fill="#582b22" stroke="#966b30" stroke-width=".7"/><path d="M78 74q2.5 1 5 0" fill="none" stroke="#fffdf1" stroke-width="1"/></g>
       </g>
-    </g><style>@keyframes referee-speech{0%,100%{transform:scaleY(.12)}20%{transform:scaleY(1)}45%{transform:scaleY(.25)}70%{transform:scaleY(.85)}}.speech-mouth{transform-box:fill-box;transform-origin:50% 35%;animation:referee-speech 240ms ease-in-out infinite}@media(prefers-reduced-motion:reduce){.speech-mouth{animation:none}}</style></svg>
+    </g><style>@keyframes referee-speech{0%,38%,50%,88%,100%{transform:scaleY(.12)}18%{transform:scaleY(.85)}68%{transform:scaleY(.7)}}.speech-mouth{transform-box:fill-box;transform-origin:50% 35%;animation:referee-speech 960ms ease-in-out infinite}@media(prefers-reduced-motion:reduce){.speech-mouth{animation:none}}</style></svg>
