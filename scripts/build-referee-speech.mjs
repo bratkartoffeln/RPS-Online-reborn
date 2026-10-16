@@ -3,7 +3,7 @@ import { readFile, writeFile, mkdir } from 'node:fs/promises';
 const root = new URL('../public/skins/', import.meta.url);
 const source = await readFile(new URL('icq-retro/source/referees.svg', root), 'utf8');
 const defs = /<defs>([\s\S]*?)<\/defs>/.exec(source)[1];
-const animation = '<style>@keyframes referee-speech{0%,100%{transform:scaleY(.12)}20%{transform:scaleY(1)}45%{transform:scaleY(.25)}70%{transform:scaleY(.85)}}.speech-mouth{transform-box:fill-box;transform-origin:50% 35%;animation:referee-speech 240ms ease-in-out infinite}@media(prefers-reduced-motion:reduce){.speech-mouth{animation:none}}</style>';
+const animation = '<style>@keyframes referee-speech{0%,38%,50%,88%,100%{transform:scaleY(.12)}18%{transform:scaleY(.85)}68%{transform:scaleY(.7)}}.speech-mouth{transform-box:fill-box;transform-origin:50% 35%;animation:referee-speech 960ms ease-in-out infinite}@media(prefers-reduced-motion:reduce){.speech-mouth{animation:none}}</style>';
 function speaking(svg) {
   let changed = false;
   // The narrow white shapes higher on the face are eyes. The mouth is the

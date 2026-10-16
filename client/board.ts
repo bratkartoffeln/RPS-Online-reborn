@@ -224,18 +224,36 @@ class ArenaScene extends Phaser.Scene {
       return;
     }
     const action = this.ready && this.animationsEnabled ? freshActionFromFrame(this.motionFrame, view) : null;
+    const encounter = this.effect?.action;
+    const continuingDuel = !!encounter && encounter.kind !== 'move' && !!view &&
+      this.view?.series.id === view.series.id && this.view.series.matchId === view.series.matchId &&
+      this.motionFrame?.identity === nextFrame?.identity && !!nextFrame?.connected && !view.paused &&
+      (view.phase === 'duel' && view.duel?.from === encounter.from && view.duel.to === encounter.to &&
+        view.board[encounter.from]?.id === encounter.attacker.id && view.board[encounter.to]?.id === encounter.defender?.id ||
+       action?.kind === 'duel' && action.attacker.id === encounter.attacker.id && action.defender?.id === encounter.defender?.id);
     if (this.celebration && (this.celebration.seriesId !== view?.series.id ||
         this.celebration.matchId !== view?.series.matchId || this.celebration.signature !== nextFrame?.signature)) {
       this.finishCelebration();
     }
-    if (this.effect && (action || !canContinueEffect(this.motionFrame, nextFrame))) this.finishEffect();
+    if (this.effect && !continuingDuel && (action || !canContinueEffect(this.motionFrame, nextFrame))) this.finishEffect();
+    if (this.effect && continuingDuel && action) {
+      this.effect.action = action;
+      // A removed loser remains visible beside its opponent until the final overlay closes.
+      for (const piece of [action.attacker, action.defender]) {
+        const visual = piece && this.visuals.get(piece.id);
+        if (piece && visual && action.removedIds.includes(piece.id)) {
+          visual.piece = piece;
+          visual.ghost = true;
+        }
+      }
+    }
     if (this.gesture && (!enabled || !view || view.revision !== this.gesture.revision)) this.cancelGesture();
     this.view = view;
     this.motionFrame = nextFrame;
     this.selected = selected;
     this.enabled = enabled;
     this.paint();
-    if (action) this.startEffect(action);
+    if (action && !continuingDuel) this.startEffect(action);
   }
 
   setSkin(skin: LoadedSkin): void {
@@ -951,7 +969,7 @@ class ArenaScene extends Phaser.Scene {
 
   setCombatOverlayBusy(busy: boolean): void {
     this.combatOverlayBusy = busy;
-    if (!busy && this.effectSettled) this.finishEffect();
+    if (!busy && this.effectSettled && this.view?.phase !== 'duel') this.finishEffect();
     this.requestRender();
   }
 
@@ -1043,7 +1061,7 @@ class ArenaScene extends Phaser.Scene {
       return;
     }
     if (elapsed >= effect.attackMs + effect.resultMs) {
-      if (!this.combatOverlayBusy) { this.finishEffect(); return; }
+      if (!this.combatOverlayBusy && this.view?.phase !== 'duel') { this.finishEffect(); return; }
       this.effectSettled = true;
       for (const resolve of this.effectWaiters) resolve();
       this.effectWaiters.clear();

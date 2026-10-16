@@ -44,6 +44,7 @@ try {
       qa.attack = (from = 21, to = 14, attacker = 'rock', defender = 'paper') => {
         overlay.reset(); qa.effects.length = 0;
         const game = g.createGame();
+        qa.game = game;
         g.addPlayer(game, 'a', 'Blue'); g.addPlayer(game, 'b', 'Red'); g.readyPlayer(game, 'a'); g.readyPlayer(game, 'b');
         game.board.fill(null);
         for (const [cell, owner, kind] of [[from,'a',attacker],[to,'b',defender],[35,'a','paper'],[6,'b','paper'],[41,'a','flag'],[0,'b','flag']]) game.board[cell] = { id: String(cell), owner, kind, revealed: false };
@@ -75,6 +76,16 @@ try {
         const action = { ...qa.action, kind: 'duel', duelRound: 1, attacker: { ...qa.action.attacker, kind: 'scissors' }, defender: { ...qa.action.defender, kind: 'paper' }, outcome: 'attacker', winnerId: qa.action.attacker.id, removedIds: [qa.action.defender.id] };
         qa.view = { ...qa.view, phase: 'playing', duel: null, lastAction: action };
         overlay.present(action, qa.view); overlay.update(qa.view, qa.skin, { connected: true, pending: false });
+      };
+      qa.duelRound = (first, second) => {
+        if (!g.chooseDuel(qa.game, 'a', first).ok) throw new Error('First duel choice rejected');
+        qa.view = { ...g.viewFor(qa.game, 'a'), roomId: 'qa' };
+        board.update(qa.view, null, false);
+        overlay.update(qa.view, qa.skin, { connected: true, pending: false });
+        if (!g.chooseDuel(qa.game, 'b', second).ok) throw new Error('Second duel choice rejected');
+        qa.view = { ...g.viewFor(qa.game, 'a'), roomId: 'qa' };
+        overlay.present(qa.view.lastAction, qa.view);
+        overlay.update(qa.view, qa.skin, { connected: true, pending: false });
       };
     });
     for (const skin of ['classic', 'arcade', 'icq-retro', 'icq-retro-dark'].filter(id => !process.env.RPS_QA_SKIN || id === process.env.RPS_QA_SKIN)) {
@@ -114,6 +125,19 @@ try {
         await page.waitForFunction(() => document.querySelector('.combat-stage')?.dataset.stage === 'shatter');
         await page.locator('.board-surface').screenshot({ path: path.join(tmpdir(), `rps-sideways-cut-${skin}-${touch ? 'mobile' : 'desktop'}.png`) });
       }
+      await page.evaluate(() => qa.attack(21, 14, 'rock', 'rock'));
+      await page.waitForFunction(() => !qa.overlay.busy && document.querySelector('#combat').dataset.mode === 'choice');
+      for (const weapon of ['paper', 'scissors']) {
+        assert.ok(await page.evaluate(() => qa.stance()), 'Side views remain during repeated weapon selection');
+        await page.evaluate(weapon => qa.duelRound(weapon, weapon), weapon);
+        await page.waitForFunction(() => !qa.overlay.busy && document.querySelector('#combat').dataset.mode === 'choice');
+      }
+      assert.ok(await page.evaluate(() => qa.stance()));
+      await page.evaluate(() => qa.duelRound('rock', 'scissors'));
+      await page.waitForFunction(() => document.querySelector('.combat-stage')?.dataset.stage === 'winner');
+      assert.ok(await page.evaluate(() => qa.stance()), 'Winner and removed loser stay side by side through the final result');
+      await page.waitForFunction(() => !qa.overlay.busy);
+      assert.equal(await page.evaluate(() => qa.stance()), null, 'Only the final overlay releases the encounter');
       console.log(`${skin} ${touch ? 'mobile' : 'desktop'}: four attack directions, slow leap, facing atlas poses, effect timing and immediate choice reveal OK`);
     }
     assert.deepEqual(errors, []);

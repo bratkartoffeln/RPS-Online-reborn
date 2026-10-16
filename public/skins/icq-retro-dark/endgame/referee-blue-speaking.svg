@@ -84,4 +84,4 @@
       </g>
     </g>
   </g>
-<style>@keyframes referee-speech{0%,100%{transform:scaleY(.12)}20%{transform:scaleY(1)}45%{transform:scaleY(.25)}70%{transform:scaleY(.85)}}.speech-mouth{transform-box:fill-box;transform-origin:50% 35%;animation:referee-speech 240ms ease-in-out infinite}@media(prefers-reduced-motion:reduce){.speech-mouth{animation:none}}</style></svg>
+<style>@keyframes referee-speech{0%,38%,50%,88%,100%{transform:scaleY(.12)}18%{transform:scaleY(.85)}68%{transform:scaleY(.7)}}.speech-mouth{transform-box:fill-box;transform-origin:50% 35%;animation:referee-speech 960ms ease-in-out infinite}@media(prefers-reduced-motion:reduce){.speech-mouth{animation:none}}</style></svg>
