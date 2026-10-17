@@ -9,6 +9,7 @@ import './chat-ui.css';
 import './lobby.css';
 import './endgame-ui.css';
 import type { FighterKind, PlayerView } from '../shared/game';
+import { CPU_OPPONENTS, isCpuDifficulty, type CpuDifficulty } from '../shared/cpu';
 import type { ChatMessage, Snapshot } from '../shared/protocol';
 import { ArenaBoard, coordinate, kindName } from './board';
 import { escapeHtml as esc, icon } from './icons';
@@ -71,6 +72,8 @@ let chatNoticeOpacity = '.9';
 let renderedChatNotice = '';
 let name = readSession('rps-arena:name') ?? '';
 let seriesMode = readSeriesMode(readPreference('rps-arena:series-mode'));
+const savedOpponent = readPreference('rps-arena:opponent');
+let chosenOpponent: 'human' | CpuDifficulty = isCpuDifficulty(savedOpponent) ? savedOpponent : 'human';
 let inputRoom = roomCodeFrom(new URL(location.href).searchParams.get('room') ?? '');
 let notice = '';
 let lastAnnouncement = '';
@@ -532,11 +535,12 @@ function lobbyMarkup(): string {
   const disabled = busy ? ' disabled' : '';
   return [
     '<span class="version lobby-version">v' + esc(__APP_VERSION__) + '</span><section class="lobby-card"><div class="lobby-logo" aria-label="RPS Arena">' + (atlasIcon(currentSkin, currentSkin.definition.logo, currentSkin.definition.presentation === 'retro' ? 148 : 64) ?? icon('rock', '', 48)) + '<span>RPS ARENA</span></div><div class="lobby-intro"><p class="eyebrow">NAME → RAUM → AUFSTELLUNG → DUELL</p><h1 class="lobby-title">Deine nächste Partie.</h1>',
-    '<p class="body-copy">' + (sessionEnd ? 'Die vorige Partie ist beendet. Erstelle eine neue Partie oder tritt einem anderen Raum bei.' : inputRoom ? 'Du hast einen Raumcode. Gib deinen Namen ein und tritt der Partie bei.' : 'Erstelle eine Partie und lade jemanden über deinen Link ein.') + '</p></div>',
+    '<p class="body-copy">' + (sessionEnd ? 'Die vorige Partie ist beendet. Erstelle eine neue Partie oder tritt einem anderen Raum bei.' : inputRoom ? 'Du hast einen Raumcode. Gib deinen Namen ein und tritt der Partie bei.' : 'Spiele gegen die CPU oder lade jemanden über deinen Link ein.') + '</p></div>',
     '<label class="field lobby-name"><span>Dein Spielername</span><input id="player-name" name="player-name" autocomplete="nickname" placeholder="Wie heißt du?" maxlength="24" aria-describedby="name-hint" value="' + esc(name) + '"' + disabled + ' /><small class="input-hint" id="name-hint">Mit diesem Namen spielst du. Kein Konto nötig.</small></label><div class="lobby-options' + (inputRoom ? ' has-invitation' : '') + '">',
     '<form id="create-form"><h2>Neuen Raum erstellen</h2>',
+    '<label class="field"><span>Dein Gegner</span><select id="opponent-select" aria-describedby="opponent-hint"' + disabled + '><option value="human"' + (chosenOpponent === 'human' ? ' selected' : '') + '>Mitspieler per Einladung</option>' + (Object.entries(CPU_OPPONENTS)).map(([level, cpu]) => '<option value="' + level + '"' + (chosenOpponent === level ? ' selected' : '') + '>CPU · ' + cpu.label + ' – ' + cpu.name + '</option>').join('') + '</select><small class="input-hint" id="opponent-hint">' + (chosenOpponent === 'human' ? 'Lade jemanden mit deinem Raumlink ein.' : CPU_OPPONENTS[chosenOpponent].description) + '</small></label>',
     '<label class="field series-mode-field"><span>Spielmodus für deinen neuen Raum</span><select id="series-mode" name="series-mode" aria-describedby="series-mode-hint"' + disabled + '>' + (['free', 'best-of-3', 'best-of-5'] as const).map((mode) => '<option value="' + mode + '"' + (mode === seriesMode ? ' selected' : '') + '>' + seriesModeLabel(mode) + (mode === 'free' ? ' – Siege weiterzählen' : mode === 'best-of-3' ? ' – zuerst 2 Siege' : ' – zuerst 3 Siege') + '</option>').join('') + '</select><small class="input-hint" id="series-mode-hint">' + seriesModeDescription(seriesMode) + '</small></label>',
-    '<button class="' + (inputRoom ? 'secondary-button' : 'primary-button') + ' full-width action-button" type="submit" id="create-button"' + disabled + '>' + (busy ? '<span class="spinner" aria-hidden="true"></span> Verbinde …' : (sessionEnd ? 'Neue Partie erstellen ' : 'Raum erstellen ') + icon('arrow', 'button-arrow', 18)) + '</button></form>',
+    '<button class="' + (inputRoom ? 'secondary-button' : 'primary-button') + ' full-width action-button" type="submit" id="create-button"' + disabled + '>' + (busy ? '<span class="spinner" aria-hidden="true"></span> Verbinde …' : (chosenOpponent !== 'human' ? 'Gegen ' + CPU_OPPONENTS[chosenOpponent].name + ' spielen ' : sessionEnd ? 'Neue Partie erstellen ' : 'Raum erstellen ') + icon('arrow', 'button-arrow', 18)) + '</button></form>',
     '<form class="join-form" id="join-form"><h2>Du hast eine Einladung?</h2><label class="field join-field"><span>Raumcode oder Einladungslink</span><input id="room-input" name="room-code" autocomplete="off" autocapitalize="off" spellcheck="false" placeholder="Code oder Link einfügen" aria-describedby="join-hint" value="' + esc(inputRoom) + '"' + disabled + ' /><small class="input-hint" id="join-hint">Der Spielmodus ist bereits vom Raum vorgegeben.</small></label>',
     '<button class="' + (inputRoom ? 'primary-button' : 'secondary-button') + ' full-width action-button" type="submit" id="join-button"' + disabled + '>' + (busy ? '<span class="spinner" aria-hidden="true"></span> Verbinde …' : icon('link', '', 16) + 'Raum beitreten') + '</button></form></div>',
     '<p class="trust-note">' + icon('check', '', 13) + 'Danach stellst du dein Team auf. Wenn beide bereit sind, beginnt die Partie.</p>',
@@ -697,9 +701,9 @@ function gameMarkup(): string {
   const preparing = view.phase === 'waiting' || view.phase === 'setup';
   return [
     '<details class="game-details" id="room-details"' + (preparing ? ' open' : '') + '><summary>Raum & Mitspieler · ' + connectionLabel + '</summary>',
-    '<section class="card room-card"><div class="card-heading"><p class="eyebrow">PRIVATER RAUM</p><span class="pill ' + (connected ? 'accent' : 'orange') + '">' + connectionLabel + '</span></div>',
-    '<div class="room-code-row"><code class="room-code" title="Raumcode">' + esc(view.roomId) + '</code><button class="icon-button" data-action="copy" id="copy-button" aria-label="Einladungslink kopieren" title="Einladungslink kopieren"' + (ended ? ' disabled' : '') + '>' + icon('copy', '', 17) + '</button></div>',
-    '<p class="room-help">' + (ended ? 'Dieser Raum ist beendet. Starte eine neue Partie.' : 'Kopiere den Link und lade deinen Mitspieler ein.') + '</p><div class="players">' + playerMarkup(me(), true) + playerMarkup(opponent(), false) + '</div></section>',
+    '<section class="card room-card"><div class="card-heading"><p class="eyebrow">' + (view.cpuDifficulty ? 'CPU · ' + CPU_OPPONENTS[view.cpuDifficulty].label : 'PRIVATER RAUM') + '</p><span class="pill ' + (connected ? 'accent' : 'orange') + '">' + connectionLabel + '</span></div>',
+    view.cpuDifficulty ? '' : '<div class="room-code-row"><code class="room-code" title="Raumcode">' + esc(view.roomId) + '</code><button class="icon-button" data-action="copy" id="copy-button" aria-label="Einladungslink kopieren" title="Einladungslink kopieren"' + (ended ? ' disabled' : '') + '>' + icon('copy', '', 17) + '</button></div>',
+    '<p class="room-help">' + (ended ? 'Dieser Raum ist beendet. Starte eine neue Partie.' : view.cpuDifficulty ? CPU_OPPONENTS[view.cpuDifficulty].description : 'Kopiere den Link und lade deinen Mitspieler ein.') + '</p><div class="players">' + playerMarkup(me(), true) + playerMarkup(opponent(), false) + '</div></section>',
     '</details><details class="game-details" id="game-history"><summary>Spielverlauf</summary>',
     '<section class="card history-card"><div class="card-heading"><h2>' + (ended ? 'Die letzte Partie' : 'Was gerade passiert') + '</h2><span class="eyebrow">' + (ended ? 'VERLAUF' : 'LIVE') + '</span></div><ol class="move-log">' + (recent.length ? recent.map((entry) => '<li>' + esc(entry) + '</li>').join('') : '<li>Deine Arena wartet auf den ersten Zug.</li>') + '</ol>' + (older.length ? '<details class="history-details"><summary id="history-toggle">Ältere Ereignisse (' + older.length + ')</summary><p>Die letzten 100 Ereignisse dieser Partie. Neueste zuerst.</p><ol class="move-log history-scroll" id="history-scroll" tabindex="0" aria-label="Ältere Spielereignisse">' + older.map((entry) => '<li>' + esc(entry) + '</li>').join('') + '</ol></details>' : '') + '</section>',
     '</details><details class="game-details" id="game-rules"><summary>Spielregeln</summary>' + rulesCard() + '</details>',
@@ -829,7 +833,7 @@ function render(): void {
   el('board-hint').textContent = boardHint();
   el('notice').hidden = !notice || !view;
   replaceMarkup(el('notice'), notice ? icon('info', '', 17) + '<span class="notice-content">' + esc(notice) + '</span><button class="notice-button" data-action="dismiss-notice" aria-label="Hinweis schließen">' + icon('close', '', 12) + '</button>' : '');
-  chat.updateSession(view, networkStatus === 'connected');
+  chat.updateSession(view?.cpuDifficulty ? null : view, networkStatus === 'connected');
   paintChatNotice();
   combat.update(view, currentSkin, { connected: networkStatus === 'connected', pending });
   endgame.update(view, combat.busy, currentSkin, refereeIsSpeaking());
@@ -877,7 +881,7 @@ async function begin(action: 'create' | 'join'): Promise<void> {
       shuffleSoundPending = true;
       seriesMode = readSeriesMode(el<HTMLSelectElement>('series-mode')?.value ?? seriesMode);
       savePreference('rps-arena:series-mode', seriesMode);
-      await connection.create(chosenName, seriesMode);
+      await connection.create(chosenName, seriesMode, chosenOpponent === 'human' ? undefined : chosenOpponent);
     }
     else if (connection.hasSavedSession(code)) await connection.resume(code);
     else {
@@ -961,11 +965,12 @@ function requestLeave(): void {
 async function newGame(): Promise<void> {
   const chosenName = (me()?.name ?? name).trim();
   seriesMode = view?.series.mode ?? seriesMode;
+  const cpuDifficulty = view?.cpuDifficulty;
   await leaveRoom();
   name = chosenName;
   if (!chosenName) { el('player-name').focus({ preventScroll: true }); return; }
   writeSession('rps-arena:name', chosenName);
-  try { shuffleSoundPending = true; await connection.create(chosenName, seriesMode); }
+  try { shuffleSoundPending = true; await connection.create(chosenName, seriesMode, cpuDifficulty); }
   catch (error) { shuffleSoundPending = false; notice = error instanceof Error ? error.message : 'Der neue Raum konnte nicht erstellt werden. Bitte versuche es erneut.'; render(); }
 }
 
@@ -998,6 +1003,13 @@ app.addEventListener('keydown', (event) => {
 });
 app.addEventListener('change', (event) => {
   const select = event.target;
+  if (select instanceof HTMLSelectElement && select.id === 'opponent-select') {
+    chosenOpponent = isCpuDifficulty(select.value) ? select.value : 'human';
+    savePreference('rps-arena:opponent', chosenOpponent);
+    render();
+    el('opponent-select').focus({ preventScroll: true });
+    return;
+  }
   if (!(select instanceof HTMLSelectElement) || select.id !== 'series-mode') return;
   seriesMode = readSeriesMode(select.value);
   savePreference('rps-arena:series-mode', seriesMode);

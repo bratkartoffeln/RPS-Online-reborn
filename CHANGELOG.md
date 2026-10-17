@@ -1,5 +1,13 @@
 # Änderungen
 
+## 0.4.32
+
+- Lobby-Formulare bis 850 px durchgehend untereinander angeordnet; ältere Spaltenvorgaben für das Einladungsformular überschrieben. Bei geöffnetem Einladungslink steht der Beitritt weiterhin zuerst, ohne leere oder versetzte Spalten.
+- Flagge und Falle zusätzlich direkt in der CPU-Zugauswahl ausgeschlossen, auch bei zufälligen Fehlerzügen. Regressionstests prüfen ihre festen Feldpositionen über vollständige CPU-Partien; die ursprüngliche Kampfanimation bleibt erhalten.
+- CPU-Gegner direkt im Startbildschirm auswählen: Einfach mit Mochi, Mittel mit Kiko und Schwer mit Mr. Miyagi. Die Auswahl bleibt im Browser gespeichert; Einladungen für menschliche Mitspieler funktionieren weiterhin.
+- Unterschiedliche Fehlerhäufigkeit, wechselnde Bedenkzeiten, taktische Zugbewertung, Fallengedächtnis und Auswertung vergangener Duelle. CPU-Entscheidungen verwenden ausschließlich die eigene eingeschränkte Spielsicht.
+- CPU-Partien unterstützen Aufstellung, verdeckte Duelle, Verbindungspausen, Wiederverbinden und alle Serienmodi einschließlich Revanche und neuer Serie. Automatische Tests prüfen Fairness, Schwierigkeitsunterschiede und den Raumablauf.
+
 ## 0.4.21
 
 - Zufallsabhängige Fehler in drei Netzwerk-Tests behoben: Flagge oder Falle werden vor dem Platzieren der Duell-Steine ausschließlich auf sichere Innenfelder verschoben. So erzeugt die gemeinsame Testvorbereitung keine verbotene Eckblockade mehr.

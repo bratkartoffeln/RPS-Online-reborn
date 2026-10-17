@@ -1,6 +1,6 @@
 ﻿# RPS Arena
 
-Ein taktisches Browserspiel für zwei Personen: Stelle dein Team auf, entdecke die gegnerischen Figuren und erobere die Flagge. Stein, Papier und Schere entscheiden die Kämpfe – Positionierung und Gedächtnis entscheiden, welche Kämpfe du eingehst.
+Ein taktisches Browserspiel für zwei Personen oder gegen die CPU: Stelle dein Team auf, entdecke die gegnerischen Figuren und erobere die Flagge. Stein, Papier und Schere entscheiden die Kämpfe – Positionierung und Gedächtnis entscheiden, welche Kämpfe du eingehst.
 
 ## Eine Partie starten
 
@@ -12,6 +12,14 @@ Ein taktisches Browserspiel für zwei Personen: Stelle dein Team auf, entdecke d
 Der Raumersteller spielt Blau, der zweite Spieler Rot. Deine eigenen Figuren stehen in deiner Ansicht unten, die gegnerischen oben. In der ersten Partie beginnt der Raumersteller; danach wechselt der Startspieler nach jeder Partie.
 
 Wenn beide bereit sind, eröffnet ein kurzer Gongschlag die Partie. Motiv und Klang passen zum gewählten Design; Animationen und Spielsounds lassen sich unter „Design“ einstellen.
+
+Im Startbildschirm kannst du unter „Dein Gegner“ auch direkt eine CPU-Partie wählen:
+
+- **Einfach – Mochi:** Probiert viel aus und übersieht häufiger Gefahren.
+- **Mittel – Kiko:** Bewertet bekannte Kämpfe und erinnert sich einige Züge lang an ausgelöste Fallen.
+- **Schwer – Mr. Miyagi:** Merkt sich ausgelöste Fallen während der Partie, beachtet direkte Gegenangriffe und den Flaggenschutz und sucht nach Mustern in deinen vergangenen Duellentscheidungen.
+
+Alle drei spielen mit wechselnden Bedenkzeiten und können Fehler machen. Die CPU kennt weder deine verdeckten Figurentypen noch deine aktuelle geheime Duellwahl. Auch gegen die CPU sind freie Serien, Best of 3 und Best of 5 möglich. Sie stellt ihr Team selbst auf und stimmt auf deinen Wunsch der nächsten Partie oder einer neuen Serie zu. Bei einem Verbindungsabbruch pausiert sie; nach dem Wiederverbinden geht es weiter. CPU-Partien benötigen den Spielserver, haben keinen Raumchat und keinen Einladungsplatz.
 
 ## Spielfeld und Team
 

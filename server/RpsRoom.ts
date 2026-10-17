@@ -1,6 +1,8 @@
 
 import { CloseCode, Room, type Client } from '@colyseus/core';
-import { randomInt } from 'node:crypto';
+import { randomInt, randomUUID } from 'node:crypto';
+import { CPU_OPPONENTS, isCpuDifficulty, type CpuDifficulty } from '../shared/cpu.js';
+import { CpuBrain } from './cpu.js';
 import {
   addPlayer, chooseDuel, createGame, isSeriesMode, leavePlayer, movePiece,
   newSeriesVote, readyPlayer, resign, restartVote, setConnected,
@@ -46,11 +48,64 @@ export class RpsRoom extends Room {
   private shuttingDown = false;
   private deployGateRegistered = false;
   private readonly chat = new RoomChat();
+  private cpuDifficulty?: CpuDifficulty;
+  private cpu?: CpuBrain;
+  private cpuId = `cpu-${randomUUID()}`;
+  private cpuTimer?: { clear(): void };
+  private cpuTask = '';
+
+  private cancelCpu(): void {
+    this.cpuTimer?.clear();
+    this.cpuTimer = undefined;
+    this.cpuTask = '';
+  }
+
+  private scheduleCpu(): void {
+    if (!this.cpu || this.shuttingDown) return;
+    const view = viewFor(this.game, this.cpuId);
+    this.cpu.observe(view);
+    const player = view.players.find(entry => entry.id === this.cpuId);
+    const human = view.players.find(entry => entry.id !== this.cpuId);
+    let action: (() => ActionResult) | undefined;
+    let task = '';
+    if (player && human && view.players.every(entry => entry.connected)) {
+      if (view.phase === 'setup' && !player.ready) {
+        task = 'ready';
+        action = () => readyPlayer(this.game, this.cpuId);
+      } else if (view.phase === 'playing' && view.currentTurn === this.cpuId) {
+        task = `move:${view.turnNumber}`;
+        action = () => {
+          const move = this.cpu!.chooseMove(viewFor(this.game, this.cpuId));
+          return move ? movePiece(this.game, this.cpuId, move.from, move.to) : { ok: false, error: 'Kein CPU-Zug.' };
+        };
+      } else if (view.phase === 'duel' && view.duel && !view.duel.choiceLocked[this.cpuId]) {
+        task = `duel:${view.duel.id}:${view.duel.round}`;
+        action = () => chooseDuel(this.game, this.cpuId, this.cpu!.chooseDuel());
+      } else if (view.phase === 'finished' && (human.restartRequested || human.newSeriesRequested)) {
+        task = human.newSeriesRequested ? 'new_series' : 'restart';
+        const identity = { seriesId: view.series.id, matchId: view.series.matchId };
+        action = () => (human.newSeriesRequested ? newSeriesVote : restartVote)(this.game, this.cpuId, identity);
+      }
+    }
+    const key = task ? `${view.series.matchId}:${task}` : '';
+    if (key === this.cpuTask) return;
+    this.cancelCpu();
+    if (!action) return;
+    this.cpuTask = key;
+    this.cpuTimer = this.clock.setTimeout(() => {
+      this.cpuTimer = undefined;
+      this.cpuTask = '';
+      if (this.shuttingDown) return;
+      const result = action!();
+      if (result.ok) this.sendViews();
+    }, this.cpu.delay(view.phase));
+  }
 
   override onBeforeShutdown() {
     if (this.shuttingDown) return;
 
     this.shuttingDown = true;
+    this.cancelCpu();
 
     const message: ServerShutdown = {
       message: SERVER_SHUTDOWN_MESSAGE,
@@ -76,6 +131,7 @@ export class RpsRoom extends Room {
   async onCreate(options: {
     reconnectSeconds?: number;
     seriesMode?: unknown;
+    cpuDifficulty?: unknown;
   }) {
     const seriesMode =
       options.seriesMode === undefined
@@ -86,6 +142,13 @@ export class RpsRoom extends Room {
       throw new Error(
         'Wähle Freies Spiel, Best-of-3 oder Best-of-5.',
       );
+    }
+
+    if (options.cpuDifficulty !== undefined) {
+      if (!isCpuDifficulty(options.cpuDifficulty)) throw new Error('Wähle Einfach, Mittel oder Schwer.');
+      this.cpuDifficulty = options.cpuDifficulty;
+      this.cpu = new CpuBrain(options.cpuDifficulty);
+      this.maxClients = 1;
     }
 
     // Neue Räume nur außerhalb eines Deployments zulassen.
@@ -245,6 +308,7 @@ export class RpsRoom extends Room {
    * Auch Wiederverbindungsfristen sind damit berücksichtigt.
    */
   onDispose() {
+    this.cancelCpu();
     this.releaseDeployGate();
   }
 
@@ -282,6 +346,10 @@ export class RpsRoom extends Room {
 
     if (!result.ok) {
       throw new Error(result.error);
+    }
+
+    if (this.cpuDifficulty && this.game.players.length === 1) {
+      addPlayer(this.game, this.cpuId, CPU_OPPONENTS[this.cpuDifficulty].name);
     }
 
     // Keep the same two seats even after a permanent leave.
@@ -390,6 +458,7 @@ export class RpsRoom extends Room {
       ...viewFor(this.game, client.sessionId),
       roomId: this.roomId,
       reconnectSeconds: this.reconnectSeconds,
+      ...(this.cpuDifficulty ? { cpuDifficulty: this.cpuDifficulty } : {}),
     };
 
     client.send('snapshot', snapshot);
@@ -399,6 +468,7 @@ export class RpsRoom extends Room {
     for (const client of this.clients) {
       this.sendView(client);
     }
+    this.scheduleCpu();
   }
 
   private receiveChat(client: Client, data: unknown) {

@@ -16,13 +16,15 @@ body.lobby-open { overflow: hidden; }
 .lobby-logo .atlas-icon { max-width: 100%; }
 .lobby-intro { text-align: center; }
 .lobby-overlay .lobby-title { font-size: 25px; margin-top: 7px; }
-.lobby-overlay .body-copy { max-width: none; margin-top: 8px; }
+.lobby-overlay .lobby-card .lobby-intro .body-copy { max-width: none; margin-top: 8px; }
 .lobby-overlay .lobby-name { margin-top: 22px; }
 .lobby-options { display: grid; grid-template-columns: 1fr 1fr; gap: 22px; margin-top: 22px; padding-top: 20px; border-top: 1px solid var(--line); }
 .lobby-options form { display: flex; flex-direction: column; min-width: 0; }
+.lobby-overlay .lobby-options .join-form { grid-column: auto; }
 .lobby-options h2 { font-size: 13px; font-weight: 650; }
 .lobby-overlay .lobby-options .field { margin-top: 15px; }
 .lobby-options .field { flex: 1; }
+.lobby-options select { width: 100%; min-width: 0; }
 .lobby-options .action-button { margin-top: 16px; }
 .lobby-overlay .trust-note { margin-top: 20px; }
 .lobby-rules { margin-top: 16px; border-top: 1px solid var(--line); padding-top: 12px; }
@@ -78,6 +80,8 @@ details[open] > summary::after { transform: rotate(45deg); }
 .footer-legal a:hover { color: var(--text); }
 .score-referee { display: none; }
 @media (max-width: 850px) {
+  .lobby-options { grid-template-columns: minmax(0, 1fr); gap: 20px; }
+  .lobby-options form + form { padding-top: 20px; border-top: 1px solid var(--line); }
   .game-mode .arena-grid { display: grid; grid-template-columns: minmax(0, 1fr); }
   .game-mode .side-column { display: contents; }
   .game-mode .match-overview { grid-row: 1; }
@@ -143,9 +147,6 @@ details[open] > summary::after { transform: rotate(45deg); }
   .design-choices { grid-template-columns: repeat(2, minmax(0, 1fr)); }
   .lobby-overlay { padding: 18px 12px; }
   .lobby-overlay .lobby-card { padding: 22px 18px; border-radius: 12px; }
-  .lobby-options { grid-template-columns: 1fr; gap: 20px; }
-  .lobby-options .join-form { grid-column: auto; }
-  .lobby-options form + form { padding-top: 20px; border-top: 1px solid var(--line); }
   .lobby-logo > span:last-child { font-size: 21px; }
   .lobby-mode .play-panel { align-self: stretch; }
   .lobby-mode .board-region, .lobby-mode .board-surface { height: 100%; }
