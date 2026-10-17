@@ -1,0 +1,8 @@
+human male scream multi
+JohnsonBrandEditing (Brian R. Johnson)
+https://freesound.org/people/JohnsonBrandEditing/sounds/173944/
+License: CC0-1.0
+https://creativecommons.org/publicdomain/zero/1.0/
+
+aargh4.ogg, extracted and normalized by congusbongus; archive attribution assigns items 3–7 to this CC0 recording.
+OfflineAudioContext: mono 22050 Hz, 1.25 s; descending playback rate 1.08–0.68, low-pass sweep, falling volume, two short echoes; PCM16 WAV normalized to -3 dBFS.

@@ -56,7 +56,7 @@ for (const id of ['classic', 'arcade', 'icq-retro', 'icq-retro-dark']) {
   await mkdir(directory, { recursive: true });
   const manifestFile = path.join(root, id, 'skin.json');
   const manifest = JSON.parse(await readFile(manifestFile, 'utf8'));
-  const originalAudio = Object.fromEntries(Object.entries(manifest.audio ?? {}).filter(([, clip]) => clip.file.startsWith('audio/original-')));
+  const originalAudio = Object.fromEntries(Object.entries(manifest.audio ?? {}).filter(([cue, clip]) => cue === 'trapFall' || clip.file.startsWith('audio/original-')));
   let previousCredits;
   try { previousCredits = JSON.parse(await readFile(path.join(directory, 'SOURCES.json'), 'utf8')); } catch { /* First export. */ }
   manifest.audio = {};
@@ -66,6 +66,7 @@ for (const id of ['classic', 'arcade', 'icq-retro', 'icq-retro-dark']) {
     voice: theme.voice, speed: theme.speed, pitch: theme.pitch, language: 'English phrases spoken using the Mandarin voice',
     note: 'Synthetic voice, no human recording or voice imitation. Generated WAV assets dedicated to CC0-1.0.', phrases,
   } };
+  if (previousCredits?.trapFall) credits.trapFall = previousCredits.trapFall;
   for (const [cue, [pack, name]] of Object.entries(style === 'retro' ? {} : { ...common, ...theme.clips })) {
     const input = await find(path.join(libraries, pack), name);
     if (!input) throw new Error(`Missing ${pack}/${name}`);
@@ -98,10 +99,10 @@ for (const id of ['classic', 'arcade', 'icq-retro', 'icq-retro-dark']) {
     credits.video = previousCredits.video;
     if (previousCredits.yawn) credits.yawn = previousCredits.yawn;
     credits.speech.note = previousCredits.speech.note;
-    Object.assign(manifest.audio, originalAudio);
   }
+  Object.assign(manifest.audio, originalAudio);
   await writeFile(path.join(directory, 'SOURCES.json'), JSON.stringify(credits, null, 2) + '\n');
-  if (!previousCredits?.video) await writeFile(path.join(directory, 'LICENSE.txt'), 'Sound effects: Creative Commons Zero 1.0 Universal (CC0-1.0).\nhttps://creativecommons.org/publicdomain/zero/1.0/\nKenney Vleugels (kenney.nl) and rubberduck (OpenGameArt.org).\nGenerated speech WAVs: CC0-1.0. No human voice samples used.\nPer-file provenance, original filenames and hashes: SOURCES.json.\n');
+  if (!previousCredits?.video) await writeFile(path.join(directory, 'LICENSE.txt'), 'Sound effects: Creative Commons Zero 1.0 Universal (CC0-1.0).\nhttps://creativecommons.org/publicdomain/zero/1.0/\nKenney Vleugels (kenney.nl) and rubberduck (OpenGameArt.org).\nGenerated referee speech WAVs: CC0-1.0, synthetic voices.\nHuman trap-fall scream: JohnsonBrandEditing, CC0-1.0; see LICENSE-trap-fall.txt.\nPer-file provenance, original filenames and hashes: SOURCES.json.\n');
   for (const pack of ['impact', 'digital']) {
     const license = await find(path.join(libraries, pack), 'License.txt');
     await copyFile(license, path.join(directory, `LICENSE-${pack}.txt`));

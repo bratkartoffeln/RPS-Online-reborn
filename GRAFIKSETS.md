@@ -1,4 +1,4 @@
-# Grafiksets für RPS Arena v0.4.32
+# Grafiksets für RPS Arena v0.4.33
 
 Jedes eingebaute Design ist ein eigenständiges Paket unter `public/skins/<id>/`.
 Es enthält sein Manifest, Atlanten, Gewinnerbilder, Gonganimation, Sounds,
@@ -73,13 +73,15 @@ Das optionale Feld `audio` ordnet Ereignisse relativen Dateien zu:
 }
 ```
 
-Alle Audioereignisse: `shuffle`, `move`, `moveBlue`, `moveRed`, `rock`, `paper`, `scissors`, `trap`, `flag`,
+Alle Audioereignisse: `shuffle`, `move`, `moveBlue`, `moveRed`, `rock`, `paper`, `scissors`, `trap`, `trapFall`, `flag`,
 `duel`, `win`, `lose`, `draw`, `gong`, `redTurn`, `blueTurn`, `youWin`, `youLose`.
 `shuffle` begleitet die erste Aufstellung und den bestätigten „Mischen“-Befehl.
 `node scripts/build-shuffle-audio.mjs` erzeugt die Klassisch-/Arcade-Mischsounds
 reproduzierbar und verknüpft die unveränderten `original-bling.wav` der Retro-Pakete.
 Der normale Audioexport ruft diesen Schritt ebenfalls auf. Die Sounds können
 unter „Mischen / Aufstellung“ in der jeweiligen `preview.html` probegehört werden.
+`trapFall` begleitet den eigentlichen Sturz in das Loch (Animationsphase `shatter`), nach dem Öffnen der Falltür. Bei reduzierter Bewegung ertönt er beim statischen Ergebnis. Die Ergebnisansage wartet auf sein Ende. Alle vier Sets verwenden einen bearbeiteten menschlichen CC0-Schrei von [JohnsonBrandEditing](https://freesound.org/people/JohnsonBrandEditing/sounds/173944/), Auszug `aargh4.ogg` aus [Aargh!](https://opengameart.org/content/aargh-male-screams). Nur dieser CC0-Auszug wird verwendet; andere Aufnahmen des Archivs haben andere Lizenzen. Der Originalauszug liegt pro Set unter `source/trap-fall/aargh4.ogg`; `node scripts/build-trap-fall-audio.mjs <aargh4.ogg> [playwright-module]` erzeugt WAV, Metadaten und Lizenznachweis reproduzierbar.
+
 Die ersten drei Waffenereignisse begleiten den Zusammenprall; Falle und Flagge
 besitzen eigene Effekte. `win`/`lose` sind kurze Kampfergebnisse,
 `youWin`/`youLose` die gesprochenen Partieergebnisse aus Sicht des Betrachters.

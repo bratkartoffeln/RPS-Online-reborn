@@ -78,6 +78,13 @@ test('every shipped design owns complete audio, licenses, artwork and correctly 
       assert.ok(peak > 1000, `${id}: ${cue} contains audible PCM`);
     }
     const credits = JSON.parse(readFileSync(directory + 'audio/SOURCES.json', 'utf8'));
+    assert.equal(skin.audio!.trapFall!.file, 'audio/trap-fall.wav');
+    assert.equal(credits.trapFall.license, 'CC0-1.0');
+    const fall = readFileSync(directory + skin.audio!.trapFall!.file);
+    assert.equal(fall.toString('ascii', 0, 4), 'RIFF');
+    assert.equal(fall.readUInt32LE(24), 22050);
+    const fallSeconds = fall.readUInt32LE(40) / 2 / 22050;
+    assert.ok(fallSeconds >= 1 && fallSeconds <= 1.5, 'short enough to fit the falling scene');
     assert.equal(skin.audio!.shuffle!.file, id.startsWith('icq') ? 'audio/original-bling.wav' : 'audio/shuffle.wav');
     assert.equal(credits.shuffle.file, skin.audio!.shuffle!.file.replace('audio/', ''));
     assert.match(credits.speech.voice, /^cmn/);

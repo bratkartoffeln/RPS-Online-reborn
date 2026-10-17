@@ -181,6 +181,7 @@ export class CombatOverlay {
   private timers: Array<ReturnType<typeof setTimeout>> = [];
   private cancelAnimation: (() => void) | null = null;
   private epoch = 0;
+  private battleGeneration = 0;
   private activeStage: CombatStage = 'approach';
   private activeReduced = false;
   private animationsEnabled = true;
@@ -194,6 +195,7 @@ export class CombatOverlay {
     onCelebrate: (ownerId: string) => void;
     onBattleStart?: (action: GameActionView) => void;
     onBattleEffect?: (action: GameActionView) => Promise<void>;
+    onBattleFall?: (action: GameActionView) => Promise<void>;
     onBattleResult?: (action: GameActionView) => void;
     beforeBattle?: () => Promise<void>;
   }) {
@@ -276,6 +278,7 @@ export class CombatOverlay {
   }
 
   private cancelBattles(): void {
+    this.battleGeneration++;
     this.clearTimers();
     this.queue = [];
     this.active = null;
@@ -288,6 +291,7 @@ export class CombatOverlay {
 
   private startNext(): void {
     if (!this.skin || !this.view || !this.options.connected || this.view.paused) return;
+    this.battleGeneration++;
     this.clearTimers();
     const next = this.queue.shift();
     this.active = next?.model ?? null;
@@ -401,7 +405,15 @@ export class CombatOverlay {
   private playResult(): void {
     if (this.resultPlayed || !this.activeAction || !this.active?.winnerOwnerId) return;
     this.resultPlayed = true;
-    this.callbacks.onBattleResult?.(this.activeAction);
+    const action = this.activeAction;
+    if (action.outcome === 'trap' && this.callbacks.onBattleFall) {
+      // Shatter is the actual fall-in stage; reduced motion reaches this via finish().
+      const generation = this.battleGeneration, skin = this.skin;
+      void this.callbacks.onBattleFall(action).then(() => {
+        if (generation === this.battleGeneration && skin === this.skin && this.options.connected && !this.view?.paused &&
+            this.view?.lastAction?.id === action.id) this.callbacks.onBattleResult?.(action);
+      });
+    } else this.callbacks.onBattleResult?.(action);
   }
 
   private rememberFocus(): void {

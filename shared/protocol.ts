@@ -24,3 +24,5 @@ export interface DuelMessage { kind: FighterKind; duelId: string; round: number 
 export interface CreateRoomOptions { name: string; seriesMode?: SeriesMode; cpuDifficulty?: CpuDifficulty }
 /** Used by both restart and new_series; both players may vote from one snapshot. */
 export type ContinuationMessage = MatchIdentity;
+/** The human client has finished presenting the current CPU turn announcement. */
+export type CpuTurnReadyMessage = MatchIdentity & { turnNumber: number };
