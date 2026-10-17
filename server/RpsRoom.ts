@@ -53,6 +53,7 @@ export class RpsRoom extends Room {
   private cpuId = `cpu-${randomUUID()}`;
   private cpuTimer?: { clear(): void };
   private cpuTask = '';
+  private cpuTurnReady: string | null = null;
 
   private cancelCpu(): void {
     this.cpuTimer?.clear();
@@ -72,7 +73,8 @@ export class RpsRoom extends Room {
       if (view.phase === 'setup' && !player.ready) {
         task = 'ready';
         action = () => readyPlayer(this.game, this.cpuId);
-      } else if (view.phase === 'playing' && view.currentTurn === this.cpuId) {
+      } else if (view.phase === 'playing' && view.currentTurn === this.cpuId &&
+          this.cpuTurnReady === `${view.series.matchId}:${view.turnNumber}`) {
         task = `move:${view.turnNumber}`;
         action = () => {
           const move = this.cpu!.chooseMove(viewFor(this.game, this.cpuId));
@@ -172,6 +174,17 @@ export class RpsRoom extends Room {
       this.onMessage('sync', (client) => {
         this.sendView(client);
         this.sendChat(client);
+      });
+
+      this.onMessage('cpu_turn_ready', (client, data: unknown) => {
+        if (!this.cpu || this.shuttingDown || !isRecord(data) ||
+            this.game.phase !== 'playing' || this.game.currentTurn !== this.cpuId ||
+            !this.game.players.some(player => player.id === client.sessionId && player.id !== this.cpuId) ||
+            !this.game.players.every(player => player.connected) ||
+            data.seriesId !== this.game.series.id || data.matchId !== this.game.series.matchId ||
+            data.turnNumber !== this.game.turnNumber) return;
+        this.cpuTurnReady = `${this.game.series.matchId}:${this.game.turnNumber}`;
+        this.scheduleCpu();
       });
 
       this.onMessage('chat_send', (client, data: unknown) =>
@@ -365,6 +378,7 @@ export class RpsRoom extends Room {
 
   onDrop(client: Client) {
     if (this.shuttingDown) return;
+    this.cpuTurnReady = null;
 
     if (
       !this.game.players.some(

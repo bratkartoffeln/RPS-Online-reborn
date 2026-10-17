@@ -63,7 +63,8 @@ export class GameSounds {
   private pendingCancels = new Set<() => void>();
 
   async whenIdle(): Promise<void> {
-    await Promise.all([...this.pending]);
+    // A falling scream can enqueue its result voice as it ends.
+    while (this.pending.size) await Promise.all([...this.pending]);
   }
 
   setEnabled(enabled: boolean): void {

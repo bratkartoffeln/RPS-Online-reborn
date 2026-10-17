@@ -128,5 +128,18 @@
     "sha256": "1bfe9f3618fbc725cea42ac052ccb7cd699045f1dfe5004b9ac0ee753525536d",
     "source": "Generated offline by scripts/build-shuffle-audio.mjs (deterministic PCM synthesis).",
     "license": "CC0-1.0"
+  },
+  "trapFall": {
+    "file": "trap-fall.wav",
+    "author": "JohnsonBrandEditing (Brian R. Johnson)",
+    "source": "https://freesound.org/people/JohnsonBrandEditing/sounds/173944/",
+    "title": "human male scream multi",
+    "license": "CC0-1.0",
+    "licenseUrl": "https://creativecommons.org/publicdomain/zero/1.0/",
+    "archive": "https://opengameart.org/sites/default/files/aargh.zip",
+    "excerpt": "aargh4.ogg, extracted and normalized by congusbongus; archive attribution assigns items 3–7 to this CC0 recording.",
+    "processing": "OfflineAudioContext: mono 22050 Hz, 1.25 s; descending playback rate 1.08–0.68, low-pass sweep, falling volume, two short echoes; PCM16 WAV normalized to -3 dBFS.",
+    "sourceSha256": "6d6bd71c3a639fe79988d89e5ab8e6d3ba28cf7c1a2cecf10d0574ec596f7c50",
+    "sha256": "632f4bc3f79ef537c7ed869f37a2e18679368f51a59a6b0190032d11d1a654d3"
   }
 }

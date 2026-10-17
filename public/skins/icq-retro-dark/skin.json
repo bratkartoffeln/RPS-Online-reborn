@@ -1022,6 +1022,11 @@
       "file": "audio/original-yawn.wav",
       "volume": 0.72,
       "rate": 1
+    },
+    "trapFall": {
+      "file": "audio/trap-fall.wav",
+      "volume": 0.65,
+      "rate": 1
     }
   },
   "artwork": {

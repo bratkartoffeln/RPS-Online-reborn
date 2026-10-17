@@ -227,6 +227,11 @@
       "file": "audio/shuffle.wav",
       "volume": 0.75,
       "rate": 1
+    },
+    "trapFall": {
+      "file": "audio/trap-fall.wav",
+      "volume": 0.65,
+      "rate": 1
     }
   },
   "artwork": {

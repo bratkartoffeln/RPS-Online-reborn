@@ -1,5 +1,6 @@
 Sound effects: Creative Commons Zero 1.0 Universal (CC0-1.0).
 https://creativecommons.org/publicdomain/zero/1.0/
 Kenney Vleugels (kenney.nl) and rubberduck (OpenGameArt.org).
-Generated speech WAVs: CC0-1.0. No human voice samples used.
+Generated referee speech WAVs: CC0-1.0, synthetic voices.
+Human trap-fall scream: JohnsonBrandEditing, CC0-1.0; see LICENSE-trap-fall.txt.
 Per-file provenance, original filenames and hashes: SOURCES.json.

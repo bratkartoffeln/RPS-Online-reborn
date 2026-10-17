@@ -6,10 +6,16 @@ import { CpuBrain } from '../server/cpu.js';
 import { CPU_OPPONENTS } from '../shared/cpu.js';
 import type { Snapshot } from '../shared/protocol.js';
 
-function observe(room: Room) {
+function observe(room: Room, releaseCpu = true) {
+  let automaticallyRelease = releaseCpu;
   let snapshot: Snapshot | undefined;
   const problems: string[] = [];
-  room.onMessage('snapshot', (value: Snapshot) => { snapshot = value; });
+  room.onMessage('snapshot', (value: Snapshot) => {
+    snapshot = value;
+    if (automaticallyRelease && value.cpuDifficulty && value.phase === 'playing' && value.currentTurn !== value.you && !value.paused) {
+      room.send('cpu_turn_ready', { seriesId: value.series.id, matchId: value.series.matchId, turnNumber: value.turnNumber });
+    }
+  });
   room.onMessage('problem', (value: { message: string }) => problems.push(value.message));
   room.onMessage('chat', () => {});
   room.onMessage('server_shutdown', () => {});
@@ -17,6 +23,7 @@ function observe(room: Room) {
   room.send('sync');
   return {
     room, problems,
+    releaseCpuTurns() { automaticallyRelease = true; },
     async wait(predicate: (view: Snapshot) => boolean): Promise<Snapshot> {
       const deadline = Date.now() + 4000;
       while (!snapshot || !predicate(snapshot)) {
@@ -38,7 +45,7 @@ test('CPU rooms play all levels, keep secrets, reconnect and continue series', {
   try {
     await assert.rejects(client.create('rps', { name: 'Test', cpuDifficulty: 'impossible' }), /Einfach/);
     for (const difficulty of ['easy', 'medium', 'hard'] as const) {
-      let a = observe(await client.create('rps', { name: 'Mensch', cpuDifficulty: difficulty, seriesMode: 'best-of-3' }));
+      let a = observe(await client.create('rps', { name: 'Mensch', cpuDifficulty: difficulty, seriesMode: 'best-of-3' }), false);
       rooms.push(a.room);
       let view = await a.wait(v => v.phase === 'setup' && v.players[1]!.ready);
       assert.equal(view.cpuDifficulty, difficulty);
@@ -50,6 +57,15 @@ test('CPU rooms play all levels, keep secrets, reconnect and continue series', {
       const [openingFrom, openingTargets] = Object.entries(view.legalMoves)[0]!;
       a.room.send('move', { from: Number(openingFrom), to: openingTargets[0], revision: view.revision });
       view = await a.wait(v => v.phase === 'playing' && v.currentTurn !== v.you);
+      const waitingRevision = view.revision;
+      await new Promise(resolve => setTimeout(resolve, 180));
+      assert.equal((await a.wait(() => true)).revision, waitingRevision, 'CPU does not move before announcement release');
+      a.room.send('cpu_turn_ready', { seriesId: view.series.id, matchId: view.series.matchId, turnNumber: view.turnNumber - 1 });
+      a.room.send('cpu_turn_ready', { seriesId: view.series.id, matchId: 'old-match', turnNumber: view.turnNumber });
+      await new Promise(resolve => setTimeout(resolve, 180));
+      assert.equal((await a.wait(() => true)).revision, waitingRevision, 'stale releases cannot start a CPU move');
+      a.releaseCpuTurns();
+      a.room.send('cpu_turn_ready', { seriesId: view.series.id, matchId: view.series.matchId, turnNumber: view.turnNumber });
       const pausedTurn = view.turnNumber;
       const token = a.room.reconnectionToken;
       a.room.reconnection.enabled = false;

@@ -255,6 +255,36 @@ function resolvedChoice(id = 8): GameActionView {
   return { ...action('paper', 'rock'), id, kind: 'duel', duelRound: 1 };
 }
 
+test('trap scream starts at the falling stage once, then allows the result voice; reset cancels it', async t => {
+  t.mock.timers.enable({ apis: ['setTimeout'] });
+  for (const reduced of [false, true]) for (const cancelled of [false, true]) {
+    let endFall!: () => void;
+    const falling = new Promise<void>(resolve => { endFall = resolve; });
+    const played: string[] = [];
+    const h = overlayHarness(t, reduced, undefined, {
+      onBattleFall: () => { played.push('fall'); return falling; },
+      onBattleResult: () => { played.push('result'); },
+    });
+    const event = { ...action('rock', 'trap', 'defender'), outcome: 'trap' as const };
+    const view = { ...fixture(), lastAction: event };
+    h.overlay.update(view, h.skin, { connected: true, pending: false });
+    h.overlay.present(event, view);
+    if (reduced) t.mock.timers.tick(350);
+    else {
+      h.left.dispatchEvent(animationEnd('combat-approach-left'));
+      assert.equal(played.length, 0, 'opening the door is not the fall');
+      h.cloud.dispatchEvent(animationEnd('combat-impact'));
+      assert.equal(h.root.dataset.stage, 'shatter');
+    }
+    assert.deepEqual(played, ['fall']);
+    h.overlay.update(view, h.skin, { connected: true, pending: false });
+    if (cancelled) h.overlay.reset();
+    endFall(); await new Promise(resolve => setImmediate(resolve));
+    assert.deepEqual(played, cancelled ? ['fall'] : ['fall', 'result']);
+    h.overlay.reset();
+  }
+});
+
 test('the overlay stays hidden until the board movement completes; a cancelled wait cannot reveal a stale fight', async (t) => {
   for (const cancel of [false, true]) {
     let landed!: () => void;

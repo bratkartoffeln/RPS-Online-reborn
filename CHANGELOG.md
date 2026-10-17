@@ -1,5 +1,10 @@
 # Änderungen
 
+## 0.4.33
+
+- Menschlicher Fall-Schrei in allen vier Designs: setzt beim Sturz in die geöffnete Falle ein, fällt in Tonhöhe und Lautstärke ab und lässt die Ergebnisansage erst anschließend folgen. Lokale CC0-Aufnahme mit dokumentierter Herkunft und reproduzierbarer Bearbeitung; berücksichtigt Spielsounds und reduzierte Animationen.
+- CPU-Züge warten auf die Freigabe des Browsers nach Kampfanimation, Gong und vollständig beendeter Schiedsrichteransage. Die variable CPU-Bedenkzeit beginnt erst danach. Veraltete Freigaben gelten nicht für spätere Züge; Wiederverbinden und stummgeschalteter Ton bleiben möglich.
+
 ## 0.4.32
 
 - Lobby-Formulare bis 850 px durchgehend untereinander angeordnet; ältere Spaltenvorgaben für das Einladungsformular überschrieben. Bei geöffnetem Einladungslink steht der Beitritt weiterhin zuerst, ohne leere oder versetzte Spalten.

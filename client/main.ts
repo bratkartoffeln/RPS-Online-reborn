@@ -20,6 +20,7 @@ import type { LoadedSkin, SkinCatalog, SkinEntry, SoundCue, TeamColor } from './
 import { freshAction } from './board-motion';
 import { GameSounds, freshRefereeCue } from './sound';
 import { RefereeDelay } from './referee-delay';
+import { CpuTurnGate } from './cpu-turn-gate';
 import { readSeriesMode, seriesAnnouncement, seriesModeDescription, seriesModeLabel, seriesScoreMarkup, seriesInfoMarkup, seriesVoteStatus, seriesWinnerText } from './series-ui';
 import { refereePortrait } from './referee-ui';
 import { otherTeamColor, teamColorForPlayer, teamColorName } from './team-ui';
@@ -86,6 +87,7 @@ let startCueTimer: ReturnType<typeof setTimeout> | undefined;
 let pendingRefereeCue: SoundCue | null = null;
 let shuffleSoundPending = false;
 const refereeDelay = new RefereeDelay();
+const cpuTurnGate = new CpuTurnGate();
 const refereeInactivity = new RefereeInactivity();
 let yawnSequence = 0;
 let refereeSpeech: SoundCue | null = null;
@@ -103,6 +105,7 @@ function updateRefereeInactivity(): void {
 setInterval(updateRefereeInactivity, 250);
 
 function cancelReferee(): void {
+  cpuTurnGate.update(null, false, async () => {}, () => false);
   pendingRefereeCue = null;
   refereeDelay.cancel();
 }
@@ -288,6 +291,7 @@ const combat = new CombatOverlay(el('combat-overlay'), {
   onCelebrate(ownerId) { board.celebrate(ownerId); },
   beforeBattle() { return board.whenEffectsComplete(); },
   onBattleEffect(action) { return sounds.playCombatWeapon(action); },
+  onBattleFall() { return sounds.playCue('trapFall'); },
   onBattleResult(action) { if (view && view.phase !== 'finished') sounds.playCombatResult(action, view.you); },
 });
 el('board').addEventListener('pointerdown', () => el('board').focus({ preventScroll: true }));
@@ -839,6 +843,14 @@ function render(): void {
   endgame.update(view, combat.busy, currentSkin, refereeIsSpeaking());
   announceReferee();
   updateBoardInteraction();
+  const cpuTurn = view?.cpuDifficulty && view.phase === 'playing' && view.currentTurn !== view.you &&
+    !view.paused && networkStatus === 'connected' ? view : null;
+  cpuTurnGate.update(cpuTurn ? `${cpuTurn.roomId}:${cpuTurn.series.matchId}:${cpuTurn.turnNumber}` : null,
+    combat.busy || startCueActive || turnAnnouncementPending(),
+    async () => { await Promise.all([board.whenEffectsComplete(), sounds.whenIdle()]); },
+    () => !!cpuTurn && connection.send('cpu_turn_ready', {
+      seriesId: cpuTurn.series.id, matchId: cpuTurn.series.matchId, turnNumber: cpuTurn.turnNumber,
+    }));
   fitBoardToViewport();
 }
 
