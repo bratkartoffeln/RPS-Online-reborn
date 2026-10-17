@@ -1,6 +1,7 @@
 import { Client, CloseCode, ErrorCode, MatchMakeError, ServerError, type Room } from '@colyseus/sdk';
 import { SERVER_SHUTDOWN_MESSAGE as SHUTDOWN_MESSAGE, type Snapshot, type Problem, type ServerShutdown, type ChatState, type ChatProblem } from '../shared/protocol';
 import type { SeriesMode } from '../shared/game';
+import type { CpuDifficulty } from '../shared/cpu';
 
 export type NetworkStatus = 'idle' | 'connecting' | 'connected' | 'reconnecting' | 'disconnected' | 'ended';
 export type SessionEnd = { reason: 'server_shutdown' | 'session_expired'; message: string };
@@ -89,11 +90,11 @@ export class RpsConnection {
     this.callbacks.onStatus(status);
   }
 
-  async create(name: string, seriesMode: SeriesMode = 'free'): Promise<void> {
+  async create(name: string, seriesMode: SeriesMode = 'free', cpuDifficulty?: CpuDifficulty): Promise<void> {
     const generation = ++this.generation;
     this.setStatus('connecting');
     try {
-      const room = await this.client.create('rps', { name, seriesMode });
+      const room = await this.client.create('rps', { name, seriesMode, ...(cpuDifficulty ? { cpuDifficulty } : {}) });
       if (generation !== this.generation) { await this.closeRoom(room); return; }
       this.attach(room, generation);
     } catch (error) {
