@@ -86,6 +86,10 @@ Unter dem Spielfeld findet ihr den Raumchat. Sende eine Nachricht mit Enter oder
 
 Bei einer kurzen Verbindungsunterbrechung pausiert die Partie. Nach erfolgreicher Wiederverbindung könnt ihr weiterspielen. Wenn ihr gegen eine andere Person antreten möchtet, erstellt einen neuen Raum.
 
+## Android-App
+
+RPS Arena gibt es auch als Android-App mit mitgelieferter Spieloberfläche, Grafiksets und Sounds. App- und Browserspieler können über denselben Spielserver gemeinsam spielen. Auch CPU-Partien benötigen eine Internetverbindung. Hinweise zur Installation und zum Bauen der APK stehen in [Android](ANDROID.md).
+
 RPS Arena ist ein unabhängiges Remake mit eigenen, hier beschriebenen Spielregeln.
 
 Die Versionshistorie steht im [Changelog](CHANGELOG.md).

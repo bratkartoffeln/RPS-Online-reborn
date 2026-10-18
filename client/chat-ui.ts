@@ -40,6 +40,7 @@ export class RoomChat {
   private pending = false;
   private error = '';
   private timer: ReturnType<typeof setTimeout> | undefined;
+  private suspended = false;
 
   constructor(private readonly root: HTMLElement, private readonly send: (message: ChatSendMessage) => boolean, private readonly onMessage: (message: ChatMessage) => void = () => {}) {
     root.classList.add('room-chat');
@@ -67,6 +68,23 @@ export class RoomChat {
   }
 
   get hasInputFocus(): boolean { return this.root.ownerDocument.activeElement === this.input; }
+
+  setSuspended(suspended: boolean): void {
+    this.suspended = suspended;
+    if (suspended) {
+      this.clearTimer();
+      this.pending = false;
+      // The next state restores history silently, just like the initial sync.
+      this.synced = false;
+    } else {
+      if (this.staged?.roomId === this.roomId) {
+        const state = this.staged;
+        this.staged = null;
+        this.receive(state);
+      }
+      this.paintControls();
+    }
+  }
 
   updateSession(view: Snapshot | null, connected: boolean): void {
     const nextRoom = view?.roomId ?? null;
@@ -96,7 +114,7 @@ export class RoomChat {
   }
 
   receive(state: ChatState): void {
-    if (state.roomId !== this.roomId) {
+    if (this.suspended || state.roomId !== this.roomId) {
       // The first chat sync may precede the first game snapshot in a handshake.
       this.staged = state;
       return;
@@ -159,7 +177,7 @@ export class RoomChat {
   }
 
   private submit(): void {
-    if (!this.connected || !this.roomId || !this.playerId || this.pending) return;
+    if (this.suspended || !this.connected || !this.roomId || !this.playerId || this.pending) return;
     const text = normalizeChatText(this.input.value);
     if (!text) return;
     if (Array.from(text).length > CHAT_MAX_LENGTH) {
@@ -192,6 +210,7 @@ export class RoomChat {
   private clearTimer(): void { clearTimeout(this.timer); this.timer = undefined; }
 
   private paintControls(): void {
+    if (this.suspended) return;
     this.input.disabled = !this.roomId;
     this.button.disabled = !this.connected || this.pending || !normalizeChatText(this.input.value);
     this.button.textContent = this.pending ? 'Sendet …' : 'Senden';

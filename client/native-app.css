@@ -1,0 +1,45 @@
+/* SystemBars supplies these on recent Android; env() also covers display cutouts. */
+:root[data-native="true"] {
+  --app-safe-top: var(--safe-area-inset-top, env(safe-area-inset-top, 0px));
+  --app-safe-right: var(--safe-area-inset-right, env(safe-area-inset-right, 0px));
+  --app-safe-bottom: var(--safe-area-inset-bottom, env(safe-area-inset-bottom, 0px));
+  --app-safe-left: var(--safe-area-inset-left, env(safe-area-inset-left, 0px));
+  -webkit-tap-highlight-color: transparent;
+}
+:root[data-native="true"] body { padding: var(--app-safe-top) var(--app-safe-right) var(--app-safe-bottom) var(--app-safe-left); }
+/* Keep the configured light system icons legible across all four skin palettes.
+   The transparent centre does not cover content or intercept taps. */
+:root[data-native="true"]::after {
+  content: '';
+  position: fixed;
+  inset: 0;
+  z-index: 20000;
+  pointer-events: none;
+  box-sizing: border-box;
+  border-style: solid;
+  border-color: #14191d;
+  border-width: var(--app-safe-top) var(--app-safe-right) var(--app-safe-bottom) var(--app-safe-left);
+}
+:root[data-native="true"] .lobby-overlay,
+:root[data-native="true"] .modal-backdrop { padding: calc(22px + var(--app-safe-top)) calc(12px + var(--app-safe-right)) calc(20px + var(--app-safe-bottom)) calc(12px + var(--app-safe-left)); }
+:root[data-native="true"] .lobby-version { top: calc(8px + var(--app-safe-top)); right: calc(16px + var(--app-safe-right)); }
+:root[data-native="true"] .startup-screen { padding: calc(24px + var(--app-safe-top)) calc(24px + var(--app-safe-right)) calc(24px + var(--app-safe-bottom)) calc(24px + var(--app-safe-left)); }
+:root[data-native="true"] .toast { bottom: calc(20px + var(--app-safe-bottom)); }
+:root[data-native="true"] .modal { max-height: 100%; overflow-y: auto; overscroll-behavior: contain; }
+:root[data-native="true"] input, :root[data-native="true"] select, :root[data-native="true"] textarea { font-size: 16px; }
+:root[data-native="true"] button, :root[data-native="true"] summary, :root[data-native="true"] a { touch-action: manipulation; }
+:root[data-native="true"][data-app-active="false"] *,
+:root[data-native="true"][data-app-active="false"] *::before,
+:root[data-native="true"][data-app-active="false"] *::after { animation-play-state: paused !important; transition: none !important; }
+:root[data-native="true"][data-app-active="false"] #app { visibility: hidden; }
+.native-server { margin-top: 20px; padding-top: 16px; border-top: 1px solid var(--line); }
+.native-server button { min-height: 44px; width: 100%; }
+.native-server small { display: block; color: var(--muted); overflow-wrap: anywhere; text-align: center; margin-top: 8px; line-height: 1.5; }
+.native-server-error { color: var(--orange); }
+.native-server-form .field { margin-top: 16px; }
+.native-server-form .button-row { margin-top: 18px; }
+.native-server-reset { margin-top: 12px; min-height: 44px; width: 100%; }
+.native-share { margin-top: 12px; width: 100%; min-height: 44px; }
+:root[data-native="true"] .legal-modal { width: min(700px, 100%); height: min(780px, 100%); display: flex; flex-direction: column; padding: 16px; }
+.legal-modal iframe { display: block; flex: 1 1 auto; min-height: 150px; width: 100%; margin-top: 16px; background: #fff; border: 1px solid var(--line); border-radius: 4px; }
+.legal-modal > .button-row { flex: 0 0 auto; margin-top: 12px; }

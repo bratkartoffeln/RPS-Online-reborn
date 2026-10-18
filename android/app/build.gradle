@@ -1,0 +1,55 @@
+import groovy.json.JsonSlurper
+
+apply plugin: 'com.android.application'
+
+// Keep the Android app and the browser/server on the same version source.
+def appPackage = new JsonSlurper().parse(rootProject.file('../package.json'))
+def appVersion = appPackage.version.toString()
+if (!(appVersion ==~ /\d+\.\d+\.\d+/)) {
+    throw new GradleException('package.json version must be a stable major.minor.patch version.')
+}
+def versionParts = appVersion.tokenize('.').collect { it.toLong() }
+def appVersionCode = versionParts[0] * 1000000L + versionParts[1] * 1000L + versionParts[2]
+if (versionParts[1] > 999 || versionParts[2] > 999 || appVersionCode < 1 || appVersionCode > 2100000000L) {
+    throw new GradleException('The package version cannot be represented as a unique Android versionCode.')
+}
+
+android {
+    namespace = "de.bratkartoffeln.rpsarena"
+    compileSdk = rootProject.ext.compileSdkVersion
+    defaultConfig {
+        applicationId = "de.bratkartoffeln.rpsarena"
+        minSdk = rootProject.ext.minSdkVersion
+        targetSdk = rootProject.ext.targetSdkVersion
+        versionCode = appVersionCode.toInteger()
+        versionName = appVersion
+        aaptOptions {
+             // Files and dirs to omit from the packaged assets dir, modified to accommodate modern web apps.
+             // Default: https://android.googlesource.com/platform/frameworks/base/+/282e181b58cf72b6ca770dc7ca5f91f135444502/tools/aapt/AaptAssets.cpp#61
+            ignoreAssetsPattern = '!.svn:!.git:!.ds_store:!*.scc:.*:!CVS:!thumbs.db:!picasa.ini:!*~'
+        }
+    }
+    buildTypes {
+        release {
+            minifyEnabled = false
+            proguardFiles getDefaultProguardFile('proguard-android.txt'), 'proguard-rules.pro'
+        }
+    }
+}
+
+repositories {
+    flatDir{
+        dirs '../capacitor-cordova-android-plugins/src/main/libs', 'libs'
+    }
+}
+
+dependencies {
+    implementation fileTree(include: ['*.jar'], dir: 'libs')
+    implementation "androidx.appcompat:appcompat:$androidxAppCompatVersion"
+    implementation "androidx.coordinatorlayout:coordinatorlayout:$androidxCoordinatorLayoutVersion"
+    implementation "androidx.core:core-splashscreen:$coreSplashScreenVersion"
+    implementation project(':capacitor-android')
+    implementation project(':capacitor-cordova-android-plugins')
+}
+
+apply from: 'capacitor.build.gradle'

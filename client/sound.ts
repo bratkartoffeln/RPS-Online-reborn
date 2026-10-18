@@ -52,6 +52,7 @@ export class GameSounds {
   private speechSource: AudioBufferSourceNode | null = null;
   private context: AudioContext | null = null;
   private enabled = false;
+  private suspended = false;
   private skin: LoadedSkin | null = null;
   private epoch = 0;
   private buffers = new Map<string, Promise<AudioBuffer | null>>();
@@ -72,6 +73,18 @@ export class GameSounds {
     if (!enabled) {
       this.cancel();
       void this.context?.suspend().catch(() => {});
+    }
+  }
+
+  setSuspended(suspended: boolean): void {
+    this.suspended = suspended;
+    if (suspended) {
+      this.cancel();
+      void this.context?.suspend().catch(() => {});
+    } else if (this.enabled && this.context) {
+      // Existing unlocked contexts may resume; the next tap is still a fallback
+      // on devices which insist on a new user gesture after returning.
+      void this.context.resume().catch(() => {});
     }
   }
 
@@ -97,7 +110,7 @@ export class GameSounds {
 
   /** Only invoked by a pointer/key gesture or the sound switch. */
   async unlock(): Promise<void> {
-    if (!this.enabled || typeof window.AudioContext !== 'function') return;
+    if (!this.enabled || this.suspended || typeof window.AudioContext !== 'function') return;
     try {
       this.context ??= new AudioContext();
       if (this.context.state === 'suspended') await this.context.resume();
@@ -106,7 +119,7 @@ export class GameSounds {
   }
 
   private preload(): void {
-    if (!this.enabled || !this.context || !this.skin) return;
+    if (!this.enabled || this.suspended || !this.context || !this.skin) return;
     for (const cue of SOUND_CUES) {
       const clip = this.skin.definition.audio?.[cue];
       if (clip) for (const file of [clip.file, ...clip.variants ?? []]) void this.load(skinAssetUrl(this.skin, file));
@@ -163,7 +176,7 @@ export class GameSounds {
 
   private async playSample(cue: SoundCue, delayMs: number): Promise<void> {
     const context = this.context, skin = this.skin;
-    if (!this.enabled || !context || context.state !== 'running' || document.hidden || !skin) return;
+    if (!this.enabled || this.suspended || !context || context.state !== 'running' || document.hidden || !skin) return;
     const clip = skin.definition.audio?.[cue];
     const epoch = this.epoch, due = context.currentTime + Math.max(0, delayMs) / 1000;
     if (!clip) { if (!VOICES.has(cue)) await this.fallback(cue, due); return; }
@@ -171,7 +184,7 @@ export class GameSounds {
     const variant = this.variants.get(cue) ?? 0;
     this.variants.set(cue, variant + 1);
     const buffer = await this.load(skinAssetUrl(skin, files[variant % files.length]));
-    if (epoch !== this.epoch || !this.enabled || context.state !== 'running' || document.hidden || context.currentTime > due + .3) return;
+    if (epoch !== this.epoch || !this.enabled || this.suspended || context.state !== 'running' || document.hidden || context.currentTime > due + .3) return;
     if (!buffer) { if (!VOICES.has(cue)) await this.fallback(cue, due); return; }
     if (VOICES.has(cue)) {
       try { this.voice?.stop(); } catch { /* Previous announcement ended. */ }
