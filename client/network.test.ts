@@ -21,8 +21,9 @@ class FakeRoom {
   name = 'rps';
   sessionId = 'test-player';
   reconnectionToken: string;
-  reconnection = { enabled: true, minUptime: 5000 };
-  connection = { isOpen: true };
+  reconnection = { enabled: true, minUptime: 5000, isReconnecting: false };
+  connection = { isOpen: true, close: (code: number) => { this.connection.isOpen = false; this.closed.push(code); this.onDrop.invoke(code); } };
+  closed: number[] = [];
   messages = new Map<string, (payload: unknown) => void>();
   sent: string[] = [];
   leaveCount = 0;
@@ -34,7 +35,7 @@ class FakeRoom {
   constructor(public roomId = 'roomOne01') { this.reconnectionToken = roomId + ':initial-token'; }
   onMessage(type: string, callback: (payload: unknown) => void) { this.messages.set(type, callback); }
   send(type: string) { this.sent.push(type); }
-  async leave() {
+  async leave(): Promise<number> {
     this.leaveCount++;
     this.connection.isOpen = false;
     this.onLeave.invoke(CloseCode.CONSENTED);
@@ -45,6 +46,7 @@ class FakeRoom {
 
 const originalWindow = Object.getOwnPropertyDescriptor(globalThis, 'window');
 const originalStorage = Object.getOwnPropertyDescriptor(globalThis, 'sessionStorage');
+const originalLocalStorage = Object.getOwnPropertyDescriptor(globalThis, 'localStorage');
 
 beforeEach(() => {
   const values = new Map<string, string>();
@@ -60,6 +62,12 @@ beforeEach(() => {
       removeItem: (key: string) => { values.delete(key); },
     },
   });
+  const persistentValues = new Map<string, string>();
+  Object.defineProperty(globalThis, 'localStorage', { configurable: true, value: {
+    getItem: (key: string) => persistentValues.get(key) ?? null,
+    setItem: (key: string, value: string) => { persistentValues.set(key, value); },
+    removeItem: (key: string) => { persistentValues.delete(key); },
+  } });
 });
 
 afterEach(() => {
@@ -67,9 +75,11 @@ afterEach(() => {
   else Reflect.deleteProperty(globalThis, 'window');
   if (originalStorage) Object.defineProperty(globalThis, 'sessionStorage', originalStorage);
   else Reflect.deleteProperty(globalThis, 'sessionStorage');
+  if (originalLocalStorage) Object.defineProperty(globalThis, 'localStorage', originalLocalStorage);
+  else Reflect.deleteProperty(globalThis, 'localStorage');
 });
 
-function harness(room = new FakeRoom()) {
+function harness(room = new FakeRoom(), options: { native?: boolean; endpoint?: string } = {}) {
   const statuses: NetworkStatus[] = [];
   const ends: SessionEnd[] = [];
   const problems: string[] = [];
@@ -84,7 +94,7 @@ function harness(room = new FakeRoom()) {
     onEnded: (end) => { ends.push(end); },
     onChat: (state) => { chats.push(state); },
     onChatProblem: (problem) => { chatProblems.push(problem); },
-  });
+  }, options);
   const client = {
     create: async (roomName: string, options: { name: string; seriesMode: SeriesMode }) => {
       creations.push({ roomName, options });
@@ -264,4 +274,110 @@ test('an expired result from a cancelled resume cannot invalidate a newer connec
   assert.equal(h.statuses.at(-1), 'connected');
   assert.equal(h.connection.roomCode, nextRoom.roomId);
   assert.equal(h.ends.length, 0);
+});
+
+test('native foreground sync uses the live socket, never a second reconnect, and is suppressed in the background', async () => {
+  const h = harness(new FakeRoom(), { native: true, endpoint: 'https://native.example' });
+  let resumes = 0;
+  h.client.reconnect = async () => { resumes++; return h.room.asRoom(); };
+  await h.connection.create('Ada');
+  h.connection.setSuspended(true);
+  assert.equal(await h.connection.refresh(), false);
+  assert.deepEqual(h.room.sent, ['sync']);
+  h.connection.setSuspended(false);
+  assert.equal(await h.connection.refresh(), true);
+  assert.deepEqual(h.room.sent, ['sync', 'sync']);
+  assert.equal(resumes, 0);
+  h.room.messages.get('snapshot')?.({ roomId: h.room.roomId });
+  await h.connection.leave();
+});
+
+test('foreground and retry clicks do not compete with automatic SDK reconnection', async () => {
+  const h = harness(new FakeRoom(), { native: true, endpoint: 'https://native.example' });
+  let resumes = 0;
+  h.client.reconnect = async () => { resumes++; return h.room.asRoom(); };
+  await h.connection.create('Ada');
+  h.room.connection.isOpen = false;
+  h.room.reconnection.isReconnecting = true;
+  h.room.onDrop.invoke(CloseCode.ABNORMAL_CLOSURE);
+  await Promise.all([h.connection.refresh(), h.connection.refresh(), h.connection.resume(h.room.roomId)]);
+  assert.equal(resumes, 0);
+  assert.equal(h.statuses.at(-1), 'reconnecting');
+  await h.connection.leave();
+});
+
+test('a dead foreground socket is handed to the SDK after a bounded sync check', async t => {
+  t.mock.timers.enable({ apis: ['setTimeout'] });
+  const h = harness(new FakeRoom(), { native: true, endpoint: 'https://native.example' });
+  await h.connection.create('Ada');
+  await h.connection.refresh();
+  t.mock.timers.tick(7999);
+  assert.deepEqual(h.room.closed, []);
+  t.mock.timers.tick(1);
+  assert.deepEqual(h.room.closed, [CloseCode.MAY_TRY_RECONNECT]);
+  assert.equal(h.statuses.at(-1), 'reconnecting');
+  assert.equal(h.connection.hasSavedSession(h.room.roomId), true);
+  assert.equal(h.room.reconnection.enabled, true);
+  await h.connection.leave();
+});
+
+test('native process recreation resumes a server-scoped seat once and cannot silently create a room', async () => {
+  const options = { native: true, endpoint: 'https://native.example' };
+  const old = harness(new FakeRoom(), options);
+  await old.connection.create('Ada');
+  old.room.connection.isOpen = false;
+  old.room.onLeave.invoke(CloseCode.FAILED_TO_RECONNECT);
+  const h = harness(new FakeRoom(), options);
+  let resumes = 0, complete!: (room: Room) => void;
+  h.client.reconnect = () => { resumes++; return new Promise(resolve => { complete = resolve; }); };
+  const first = h.connection.refresh();
+  await h.connection.refresh();
+  await h.connection.resume(h.room.roomId);
+  assert.equal(resumes, 1);
+  assert.equal(h.connection.savedRoomCode(), h.room.roomId);
+  assert.equal(h.creations.length, 0);
+  complete(h.room.asRoom());
+  assert.equal(await first, true);
+  assert.equal(h.statuses.at(-1), 'connected');
+  await h.connection.leave();
+  assert.equal(h.connection.savedRoomCode(), null);
+});
+
+test('server switching requires a left room and uses only the new server session store', async () => {
+  const h = harness(new FakeRoom(), { native: true, endpoint: 'https://first.example' });
+  await h.connection.create('Ada');
+  assert.throws(() => h.connection.changeServer('https://second.example'), /zuerst verlassen/);
+  // The interrupted seat remains resumable only on its original server.
+  h.room.connection.isOpen = false;
+  h.room.onLeave.invoke(CloseCode.FAILED_TO_RECONNECT);
+  h.connection.changeServer('https://second.example');
+  assert.equal(h.connection.endpoint, 'https://second.example');
+  assert.equal(h.connection.hasSavedSession(h.room.roomId), false);
+  assert.equal(await h.connection.refresh(), false);
+  h.connection.changeServer('https://first.example');
+  assert.equal(h.connection.hasSavedSession(h.room.roomId), true);
+  assert.equal(h.connection.savedRoomCode(), h.room.roomId);
+});
+
+test('a user-confirmed leave finishes even when an apparently open socket never acknowledges it', async t => {
+  t.mock.timers.enable({ apis: ['setTimeout'] });
+  const h = harness(new FakeRoom(), { native: true, endpoint: 'https://native.example' });
+  await h.connection.create('Ada');
+  h.room.leave = () => new Promise<number>(() => {});
+  let completed = false;
+  const leaving = h.connection.leave().then(() => { completed = true; });
+  await Promise.resolve();
+  assert.equal(completed, false);
+  assert.equal(h.room.reconnection.enabled, false);
+  assert.equal(h.connection.savedRoomCode(), null);
+  t.mock.timers.tick(2000);
+  await leaving;
+  assert.equal(completed, true);
+  assert.deepEqual(h.room.closed, [CloseCode.CONSENTED]);
+  const next = new FakeRoom('nextRoom');
+  h.client.create = async () => next.asRoom();
+  await h.connection.create('Ada');
+  assert.equal(h.connection.roomCode, 'nextRoom');
+  assert.equal(h.statuses.at(-1), 'connected');
+  await h.connection.leave();
 });

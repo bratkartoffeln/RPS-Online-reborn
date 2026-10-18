@@ -1,5 +1,12 @@
 # Änderungen
 
+## 0.4.34
+
+- Android-App mit Capacitor 8: Spielclient, alle vier Grafiksets und Sounds lokal mitgeliefert; Partien und Chat verbinden sich mit dem bestehenden Colyseus-Server. Eigener Android-Build ohne Überschreiben des Webbundles.
+- Einstellbare HTTPS-Serveradresse in der App, öffentliche Einladungslinks und nach Server getrennte gespeicherte Sitzungen.
+- Android-Zurück-Geste, Hintergrundpausen für Darstellung und Ton sowie Synchronisierung beim Zurückkehren. Sichere Displayränder und Platz für die Bildschirmtastatur.
+- Reproduzierbarer APK-Build, gemeinsame Projektversion, Android-Anleitung und zusätzlicher GitHub-Workflow mit APK-Artefakt.
+
 ## 0.4.33
 
 - Menschlicher Fall-Schrei in allen vier Designs: setzt beim Sturz in die geöffnete Falle ein, fällt in Tonhöhe und Lautstärke ab und lässt die Ergebnisansage erst anschließend folgen. Lokale CC0-Aufnahme mit dokumentierter Herkunft und reproduzierbarer Bearbeitung; berücksichtigt Spielsounds und reduzierte Animationen.

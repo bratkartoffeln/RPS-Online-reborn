@@ -30,9 +30,17 @@ import { freshVictory } from './match-victory';
 import { EndgameOverlay } from './endgame-ui';
 import { freshMatchStart, gongMarkup, preloadGongArtwork, GONG_TIMING } from './gong-ui';
 import './gong-ui.css';
+import './native-app.css';
+import { invitationUrl, isNativeApp, nativeDefaultServer, normalizeNativeServerUrl, roomCodeForServer, saveNativeServer } from './server-config';
+import { copyText, installNativeLifecycle, minimizeNativeApp, nativeBackAction, shareInvitation } from './native-app';
 
 const app = document.querySelector<HTMLDivElement>('#app')!;
-const legalLinks = '<nav aria-label="Rechtliche Informationen"><a href="/copyright.html" target="_blank" rel="noopener">Copyright<span class="sr-only"> (öffnet in neuem Tab)</span></a><a href="/impressum.html" target="_blank" rel="noopener">Impressum<span class="sr-only"> (öffnet in neuem Tab)</span></a></nav>';
+const nativeApp = isNativeApp();
+if (nativeApp) document.documentElement.dataset.native = 'true';
+const preferenceScope = nativeApp ? 'Deine Auswahl gilt für diese App.' : 'Deine Auswahl gilt für diesen Browser.';
+const legalLinks = nativeApp
+  ? '<nav aria-label="Rechtliche Informationen"><a href="/copyright.html" data-action="legal">Copyright</a><a href="/impressum.html" data-action="legal">Impressum</a></nav>'
+  : '<nav aria-label="Rechtliche Informationen"><a href="/copyright.html" target="_blank" rel="noopener">Copyright<span class="sr-only"> (öffnet in neuem Tab)</span></a><a href="/impressum.html" target="_blank" rel="noopener">Impressum<span class="sr-only"> (öffnet in neuem Tab)</span></a></nav>';
 const legalFooter = '<footer class="legal-footer">' + legalLinks + '</footer>';
 app.innerHTML = [
   '<div class="app-shell" id="shell">',
@@ -58,6 +66,7 @@ const phaseSidebarHost = document.createElement('div');
 phaseSidebarHost.className = 'phase-sidebar-host';
 el('match-sidebar').insertBefore(phaseSidebarHost, el('sidebar'));
 let view: Snapshot | null = null;
+let appActive = true;
 let networkStatus: NetworkStatus = 'idle';
 let sessionEnd: SessionEnd | null = null;
 let selected: number | null = null;
@@ -95,14 +104,14 @@ let refereeSpeechSequence = 0;
 
 function updateRefereeInactivity(): void {
   const active = !!view && (view.phase === 'playing' || view.phase === 'duel') && !view.paused &&
-    view.players.every(player => player.connected) && networkStatus === 'connected' && !document.hidden &&
+    view.players.every(player => player.connected) && networkStatus === 'connected' && appActive && !document.hidden &&
     !!currentSkin.definition.audio?.yawn && !startCueActive;
   if (refereeInactivity.update(view ? inactivityKey(view) : '', active, performance.now())) {
     if (refereeInactivity.yawning) { yawnSequence++; sounds.playCue('yawn'); }
     render();
   }
 }
-setInterval(updateRefereeInactivity, 250);
+let refereeInterval: ReturnType<typeof setInterval> | undefined = setInterval(updateRefereeInactivity, 250);
 
 function cancelReferee(): void {
   cpuTurnGate.update(null, false, async () => {}, () => false);
@@ -119,7 +128,7 @@ function refereeView() {
 }
 
 function announceReferee(): void {
-  if (!pendingRefereeCue || combat.busy || startCueActive || view?.paused || networkStatus !== 'connected') return;
+  if (!appActive || !pendingRefereeCue || combat.busy || startCueActive || view?.paused || networkStatus !== 'connected') return;
   const cue = pendingRefereeCue;
   pendingRefereeCue = null;
   refereeDelay.schedule(async () => {
@@ -180,6 +189,19 @@ const connection = new RpsConnection({
     render();
   },
   onSnapshot(snapshot) {
+    if (!appActive) {
+      // Keep authoritative state and the rotating token, without replaying hidden
+      // battles, sound or DOM work when Android resumes the WebView.
+      view = snapshot;
+      inputRoom = snapshot.roomId;
+      sessionEnd = null;
+      notice = '';
+      selected = null;
+      clearPending();
+      board.update(snapshot, null, false);
+      setRoomUrl(snapshot.roomId);
+      return;
+    }
     const start = networkStatus === 'connected' && freshMatchStart(view, snapshot);
     const refereeCue = networkStatus === 'connected' ? freshRefereeCue(view, snapshot) : null;
     const sameFinishedResult = view?.phase === 'finished' && snapshot.phase === 'finished' &&
@@ -320,7 +342,7 @@ function updateMotion(): void {
   document.documentElement.dataset.motion = enabled ? 'on' : 'off';
   el('motion-hint').textContent = reducedMotion.matches
     ? 'Animationen sind durch deine Systemeinstellung für reduzierte Bewegung ausgeschaltet.'
-    : 'Deine Auswahl gilt für diesen Browser.';
+    : preferenceScope;
 }
 
 function applySkin(skin: LoadedSkin): void {
@@ -362,7 +384,7 @@ function lobbyDesigns(): string {
   return '<fieldset class="lobby-designs"><legend>Dein Design</legend><div class="design-choices">' + entries.map(entry => {
     const skin = skinPreviews.get(entry.id);
     return '<button type="button" class="design-choice" id="design-' + esc(entry.id) + '" data-action="choose-skin" data-skin="' + esc(entry.id) + '" aria-pressed="' + (currentSkin.id === entry.id) + '"' + (skin ? '' : ' disabled') + '><span class="design-preview"' + (skin ? ' style="--preview-background:' + skin.definition.palette.ui.panel + ';--preview-foreground:' + skin.definition.palette.ui.own + '"' : '') + '>' + (skin ? pieceIcon(skin, 'rock', 76) : icon('unknown', '', 48)) + '</span><span>' + esc(entry.name) + '</span></button>';
-  }).join('') + '</div><p class="appearance-hint">Deine Auswahl gilt für diesen Browser.</p></fieldset>';
+  }).join('') + '</div><p class="appearance-hint">' + preferenceScope + '</p></fieldset>';
 }
 
 async function chooseSkin(id: string): Promise<void> {
@@ -413,8 +435,8 @@ async function initializeSkins(): Promise<void> {
     app.setAttribute('aria-busy', 'false');
     delete document.documentElement.dataset.startup;
     el('startup-screen')?.remove();
-    if (!view) el('player-name').focus({ preventScroll: true });
-    else el('board').focus({ preventScroll: true });
+    if (view) el('board').focus({ preventScroll: true });
+    else if (!nativeApp) el('player-name').focus({ preventScroll: true });
   }
 }
 
@@ -548,7 +570,8 @@ function lobbyMarkup(): string {
     '<form class="join-form" id="join-form"><h2>Du hast eine Einladung?</h2><label class="field join-field"><span>Raumcode oder Einladungslink</span><input id="room-input" name="room-code" autocomplete="off" autocapitalize="off" spellcheck="false" placeholder="Code oder Link einfügen" aria-describedby="join-hint" value="' + esc(inputRoom) + '"' + disabled + ' /><small class="input-hint" id="join-hint">Der Spielmodus ist bereits vom Raum vorgegeben.</small></label>',
     '<button class="' + (inputRoom ? 'primary-button' : 'secondary-button') + ' full-width action-button" type="submit" id="join-button"' + disabled + '>' + (busy ? '<span class="spinner" aria-hidden="true"></span> Verbinde …' : icon('link', '', 16) + 'Raum beitreten') + '</button></form></div>',
     '<p class="trust-note">' + icon('check', '', 13) + 'Danach stellst du dein Team auf. Wenn beide bereit sind, beginnt die Partie.</p>',
-    '<div class="lobby-notice" role="alert"' + (!notice ? ' hidden' : '') + '>' + esc(notice) + '</div><details class="lobby-rules" id="lobby-rules"><summary>So wird gespielt</summary>' + rulesCard() + '</details>' + lobbyDesigns() + legalFooter + '</section>',
+    '<div class="lobby-notice" role="alert"' + (!notice ? ' hidden' : '') + '>' + esc(notice) + '</div><details class="lobby-rules" id="lobby-rules"><summary>So wird gespielt</summary>' + rulesCard() + '</details>' + lobbyDesigns() +
+      (nativeApp ? '<section class="native-server"><button type="button" class="secondary-button" data-action="server-settings"' + disabled + '>Spielserver ändern</button><small>' + esc(connection.endpoint) + '</small></section>' : '') + legalFooter + '</section>',
   ].join('');
 }
 
@@ -707,7 +730,8 @@ function gameMarkup(): string {
     '<details class="game-details" id="room-details"' + (preparing ? ' open' : '') + '><summary>Raum & Mitspieler · ' + connectionLabel + '</summary>',
     '<section class="card room-card"><div class="card-heading"><p class="eyebrow">' + (view.cpuDifficulty ? 'CPU · ' + CPU_OPPONENTS[view.cpuDifficulty].label : 'PRIVATER RAUM') + '</p><span class="pill ' + (connected ? 'accent' : 'orange') + '">' + connectionLabel + '</span></div>',
     view.cpuDifficulty ? '' : '<div class="room-code-row"><code class="room-code" title="Raumcode">' + esc(view.roomId) + '</code><button class="icon-button" data-action="copy" id="copy-button" aria-label="Einladungslink kopieren" title="Einladungslink kopieren"' + (ended ? ' disabled' : '') + '>' + icon('copy', '', 17) + '</button></div>',
-    '<p class="room-help">' + (ended ? 'Dieser Raum ist beendet. Starte eine neue Partie.' : view.cpuDifficulty ? CPU_OPPONENTS[view.cpuDifficulty].description : 'Kopiere den Link und lade deinen Mitspieler ein.') + '</p><div class="players">' + playerMarkup(me(), true) + playerMarkup(opponent(), false) + '</div></section>',
+    '<p class="room-help">' + (ended ? 'Dieser Raum ist beendet. Starte eine neue Partie.' : view.cpuDifficulty ? CPU_OPPONENTS[view.cpuDifficulty].description : 'Kopiere den Link und lade deinen Mitspieler ein.') + '</p>' +
+      (nativeApp && !view.cpuDifficulty ? '<button class="secondary-button native-share" data-action="share"' + (ended ? ' disabled' : '') + '>Einladung teilen</button>' : '') + '<div class="players">' + playerMarkup(me(), true) + playerMarkup(opponent(), false) + '</div></section>',
     '</details><details class="game-details" id="game-history"><summary>Spielverlauf</summary>',
     '<section class="card history-card"><div class="card-heading"><h2>' + (ended ? 'Die letzte Partie' : 'Was gerade passiert') + '</h2><span class="eyebrow">' + (ended ? 'VERLAUF' : 'LIVE') + '</span></div><ol class="move-log">' + (recent.length ? recent.map((entry) => '<li>' + esc(entry) + '</li>').join('') : '<li>Deine Arena wartet auf den ersten Zug.</li>') + '</ol>' + (older.length ? '<details class="history-details"><summary id="history-toggle">Ältere Ereignisse (' + older.length + ')</summary><p>Die letzten 100 Ereignisse dieser Partie. Neueste zuerst.</p><ol class="move-log history-scroll" id="history-scroll" tabindex="0" aria-label="Ältere Spielereignisse">' + older.map((entry) => '<li>' + esc(entry) + '</li>').join('') + '</ol></details>' : '') + '</section>',
     '</details><details class="game-details" id="game-rules"><summary>Spielregeln</summary>' + rulesCard() + '</details>',
@@ -738,6 +762,7 @@ function replaceMarkup(target: HTMLElement, markup: string): void {
 }
 
 function render(): void {
+  if (!appActive) return;
   if (chatNoticeRoom !== view?.roomId) {
     chatNoticeRoom = null; chatNotices.clear(); clearTimeout(chatNoticeTimer); clearTimeout(chatNoticeExitTimer); chatNoticeLeaving = false;
   }
@@ -790,7 +815,7 @@ function render(): void {
     const next = el<HTMLInputElement>(focusId);
     next?.focus({ preventScroll: true });
     if (selection && next instanceof HTMLInputElement) next.setSelectionRange(selection[0], selection[1]);
-  } else if (!view && (!wasLobby || active === document.body)) {
+  } else if (!view && !nativeApp && (!wasLobby || active === document.body)) {
     el('player-name').focus({ preventScroll: true });
   } else if (view && wasLobby) {
     el('board').focus({ preventScroll: true });
@@ -863,6 +888,9 @@ function toast(message: string, error = false): void {
 }
 
 function setRoomUrl(roomCode: string | null): void {
+  // Native assets always stay at the bundled origin; persistent room state is
+  // stored by the connection under its public server, never under localhost.
+  if (nativeApp) return;
   const url = new URL(location.href);
   if (roomCode) url.searchParams.set('room', roomCode);
   else url.searchParams.delete('room');
@@ -881,7 +909,9 @@ async function begin(action: 'create' | 'join'): Promise<void> {
   const chosenName = playerName();
   if (!chosenName) return;
   inputRoom = el<HTMLInputElement>('room-input').value.trim();
-  const code = roomCodeFrom(inputRoom);
+  let code: string;
+  try { code = action === 'join' ? roomCodeForServer(inputRoom, connection.endpoint) : ''; }
+  catch (error) { toast(error instanceof Error ? error.message : 'Ungültiger Einladungslink.', true); return; }
   if (action === 'join' && !code) {
     toast('Füge einen gültigen Raumcode oder Einladungslink ein. Groß- und Kleinschreibung bleiben erhalten.', true);
     el('room-input').focus({ preventScroll: true });
@@ -905,24 +935,68 @@ async function begin(action: 'create' | 'join'): Promise<void> {
 
 async function copyInvitation(): Promise<void> {
   if (!view || networkStatus === 'ended') return;
-  const url = new URL(location.href);
-  url.searchParams.set('room', view.roomId);
-  url.hash = '';
+  const url = invitationUrl(view.roomId, connection.endpoint);
   try {
-    if (navigator.clipboard?.writeText) await navigator.clipboard.writeText(url.href);
-    else {
-      const field = document.createElement('textarea');
-      field.value = url.href;
-      field.style.position = 'fixed';
-      field.style.opacity = '0';
-      document.body.append(field);
-      field.select();
-      const copied = document.execCommand('copy');
-      field.remove();
-      if (!copied) throw new Error('Clipboard unavailable');
-    }
+    await copyText(url);
     toast('Einladungslink kopiert. Dein Mitspieler kann direkt beitreten.');
-  } catch { showLinkDialog(url.href); }
+  } catch { showLinkDialog(url); }
+}
+
+async function shareRoomInvitation(): Promise<void> {
+  if (!view || networkStatus === 'ended') return;
+  const url = invitationUrl(view.roomId, connection.endpoint);
+  try { if (await shareInvitation(url) === 'unavailable') showLinkDialog(url); }
+  catch { showLinkDialog(url); }
+}
+
+function showServerSettings(): void {
+  if (!nativeApp || view || networkStatus === 'connecting' || networkStatus === 'reconnecting') return;
+  lastModalFocus = document.activeElement as HTMLElement | null;
+  el('modal-root').innerHTML = '<div class="modal-backdrop"><section class="modal" role="dialog" aria-modal="true" aria-labelledby="modal-title"><h2 id="modal-title">Spielserver</h2><p>Hier laufen deine Onlinepartien. Nach einem Serverumzug kannst du die neue Adresse eintragen.</p><form class="native-server-form" id="server-form"><label class="field"><span>HTTPS-Adresse</span><input id="server-url" type="url" inputmode="url" autocomplete="off" autocapitalize="off" spellcheck="false" required value="' + esc(connection.endpoint) + '" aria-describedby="server-hint" /></label><p id="server-hint">Nur die Serveradresse, optional mit Port. Deine Mitspieler müssen denselben Server verwenden.</p><p id="server-error" class="native-server-error" role="alert" hidden></p><div class="button-row"><button type="button" class="secondary-button" data-action="cancel-modal">Abbrechen</button><button type="submit" class="primary-button">Speichern</button></div><button class="secondary-button native-server-reset" type="button" data-action="server-default">Standardadresse einsetzen</button></form></section></div>';
+  el('server-url').focus({ preventScroll: true });
+}
+
+function saveServerSettings(): void {
+  if (!nativeApp || view || networkStatus === 'connecting' || networkStatus === 'reconnecting') return;
+  try {
+    const endpoint = normalizeNativeServerUrl(el<HTMLInputElement>('server-url').value);
+    saveNativeServer(endpoint);
+    connection.changeServer(endpoint);
+    inputRoom = connection.savedRoomCode() ?? '';
+    sessionEnd = null;
+    notice = '';
+    closeModal();
+    render();
+    toast('Spielserver gespeichert. Du kannst jetzt eine Partie erstellen oder beitreten.');
+  } catch (error) {
+    el('server-error').hidden = false;
+    el('server-error').textContent = error instanceof Error ? error.message : 'Die Serveradresse konnte nicht gespeichert werden.';
+  }
+}
+
+function showLegalPage(path: string): void {
+  if (!nativeApp || !['/copyright.html', '/impressum.html'].includes(path)) return;
+  lastModalFocus = document.activeElement as HTMLElement | null;
+  const title = path === '/copyright.html' ? 'Copyright' : 'Impressum';
+  el('modal-root').innerHTML = '<div class="modal-backdrop"><section class="modal legal-modal" role="dialog" aria-modal="true" aria-labelledby="modal-title"><h2 id="modal-title">' + title + '</h2><iframe id="legal-frame" title="' + title + '" sandbox="allow-same-origin" src="' + path + '"></iframe><div class="button-row"><button class="primary-button" data-action="cancel-modal" id="close-legal">Zurück zum Spiel</button></div></section></div>';
+  const frame = el<HTMLIFrameElement>('legal-frame');
+  frame.addEventListener('load', () => {
+    // Local bundled documents stay inside this dialog. A home link must never
+    // load a second game client in the frame or navigate away from the match.
+    frame.contentDocument?.addEventListener('click', event => {
+      const link = (event.target as Element).closest<HTMLAnchorElement>('a');
+      if (!link) return;
+      event.preventDefault();
+      const destination = new URL(link.href);
+      if (destination.origin === location.origin) {
+        if (destination.pathname === '/') closeModal();
+        else if (['/copyright.html', '/impressum.html'].includes(destination.pathname)) frame.src = destination.pathname;
+      } else if (destination.protocol === 'https:') {
+        window.open(destination.href, '_blank', 'noopener');
+      }
+    });
+  });
+  el('close-legal').focus({ preventScroll: true });
 }
 
 function showLinkDialog(link: string): void {
@@ -1000,6 +1074,7 @@ async function retry(): Promise<void> {
 
 app.addEventListener('submit', (event) => {
   const form = event.target as HTMLFormElement;
+  if (form.id === 'server-form') { event.preventDefault(); saveServerSettings(); return; }
   if (form.id === 'create-form' || form.id === 'join-form') { event.preventDefault(); void begin(form.id === 'create-form' ? 'create' : 'join'); }
 });
 app.addEventListener('input', (event) => {
@@ -1032,6 +1107,9 @@ app.addEventListener('click', (event) => {
   if (!button || button instanceof HTMLButtonElement && button.disabled) return;
   const action = button.dataset.action;
   if (action === 'home') { event.preventDefault(); if (view) requestLeave(); return; }
+  if (action === 'legal') { event.preventDefault(); showLegalPage(button.getAttribute('href') ?? ''); return; }
+  if (action === 'server-settings') showServerSettings();
+  if (action === 'server-default') el<HTMLInputElement>('server-url').value = nativeDefaultServer();
   if (action === 'choose-skin' && button.dataset.skin) void chooseSkin(button.dataset.skin);
   if (action === 'dismiss-chat') {
     hideChatNotice();
@@ -1039,6 +1117,7 @@ app.addEventListener('click', (event) => {
   }
   if (action === 'back-to-board') scrollToGameElement('board');
   if (action === 'copy') void copyInvitation();
+  if (action === 'share') void shareRoomInvitation();
   if (action === 'dismiss-notice') { notice = ''; render(); }
   if (action === 'shuffle' && view) {
     if (pending || networkStatus !== 'connected') return;
@@ -1090,9 +1169,72 @@ el<HTMLInputElement>('sounds-enabled').checked = soundsPreferred;
 el<HTMLInputElement>('sounds-enabled').disabled = typeof window.AudioContext !== 'function';
 sounds.setEnabled(soundsPreferred);
 void initializeSkins();
+if (nativeApp) inputRoom = connection.savedRoomCode() ?? inputRoom;
 if (inputRoom && connection.hasSavedSession(inputRoom)) {
   void connection.resume(inputRoom).catch((error: unknown) => {
     notice = error instanceof Error ? error.message : 'Die vorige Sitzung konnte nicht wiederhergestellt werden. Du kannst dem Raum erneut beitreten.';
     render();
   });
 }
+
+async function refreshNativeConnection(): Promise<void> {
+  if (!nativeApp || !appActive) return;
+  try { await connection.refresh(); }
+  catch (error) {
+    notice = error instanceof Error ? error.message : 'Die Sitzung konnte nicht wiederhergestellt werden.';
+    render();
+  }
+}
+
+function nativeActivityChanged(active: boolean): void {
+  appActive = active;
+  document.documentElement.dataset.appActive = String(active);
+  connection.setSuspended(!active);
+  clearInterval(refereeInterval);
+  refereeInterval = undefined;
+  if (!active) {
+    selected = null;
+    cancelStartCue();
+    cancelReferee();
+    clearPending();
+    sounds.setSuspended(true);
+    chat.setSuspended(true);
+    combat.reset();
+    board.setSuspended(true);
+    clearTimeout(chatNoticeTimer);
+    clearTimeout(chatNoticeExitTimer);
+    chatNotices.clear();
+    chatNoticeLeaving = false;
+    refereeInactivity.update('', false, performance.now());
+  } else {
+    // Capture any hidden snapshots before waking Phaser, so a finished battle
+    // cannot be replayed and hold back the CPU acknowledgement after returning.
+    board.update(view, null, false);
+    board.setSuspended(false);
+    sounds.setSuspended(false);
+    refereeInterval = setInterval(updateRefereeInactivity, 250);
+    render();
+    chat.setSuspended(false);
+    void refreshNativeConnection();
+  }
+}
+
+function handleNativeBack(): void {
+  const action = nativeBackAction({
+    modal: !!el('modal-root').firstElementChild,
+    menu: el<HTMLDetailsElement>('appearance-menu').open,
+    selection: selected !== null,
+    room: !!view,
+    connecting: networkStatus === 'connecting' || networkStatus === 'reconnecting',
+  });
+  if (action === 'close-modal') closeModal();
+  else if (action === 'close-menu') el<HTMLDetailsElement>('appearance-menu').open = false;
+  else if (action === 'clear-selection') { selected = null; render(); }
+  else if (action === 'confirm-leave') requestLeave();
+  else if (action === 'cancel-connect') confirm('Verbindung abbrechen?', 'Du kehrst zur Lobby zurück.', 'Abbrechen und zur Lobby', () => { void leaveRoom(); });
+  else void minimizeNativeApp().catch(() => {});
+}
+
+void installNativeLifecycle({ onActive: nativeActivityChanged, onBack: handleNativeBack, onOnline: () => { void refreshNativeConnection(); } }).catch(() => {
+  if (nativeApp) toast('Android-Systemfunktionen konnten nicht vollständig gestartet werden.', true);
+});

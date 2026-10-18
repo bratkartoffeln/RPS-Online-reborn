@@ -161,13 +161,33 @@ class ArenaScene extends Phaser.Scene {
 
   private wakeFrame: number | null = null;
   private idleWakeTimer: ReturnType<typeof setTimeout> | null = null;
+  private suspended = false;
+
+  setSuspended(suspended: boolean): void {
+    this.suspended = suspended;
+    if (suspended) {
+      if (this.wakeFrame !== null) cancelAnimationFrame(this.wakeFrame);
+      this.wakeFrame = null;
+      if (this.idleWakeTimer !== null) clearTimeout(this.idleWakeTimer);
+      this.idleWakeTimer = null;
+      this.cancelGesture();
+      // Settle promises before sleeping; CPU turn gating must never wait for a
+      // Phaser frame which Android has stopped delivering.
+      this.finishCelebration();
+      this.finishEffect();
+      if (this.ready) this.sys.game.loop.sleep();
+    } else if (this.ready) {
+      this.paint();
+      this.requestRender();
+    }
+  }
 
   requestRender(): void {
-    if (!this.ready || document.hidden || this.sys.game.loop.running || this.wakeFrame !== null) return;
+    if (!this.ready || this.suspended || document.hidden || this.sys.game.loop.running || this.wakeFrame !== null) return;
     // Defer until input has been queued and snapshot/effect changes are complete.
     this.wakeFrame = requestAnimationFrame(() => {
       this.wakeFrame = null;
-      if (!this.ready || document.hidden || this.sys.game.loop.running) return;
+      if (!this.ready || this.suspended || document.hidden || this.sys.game.loop.running) return;
       this.sys.game.loop.resetDelta();
       this.sys.game.loop.wake();
     });
@@ -185,6 +205,7 @@ class ArenaScene extends Phaser.Scene {
 
   update(_time: number, delta: number): void {
     if (!this.ready) return;
+    if (this.suspended) { this.sys.game.loop.sleep(); return; }
     const elapsed = Number.isFinite(delta) ? Math.max(0, delta) : 0;
     if (this.effect) {
       this.effect.elapsed += elapsed;
@@ -218,6 +239,13 @@ class ArenaScene extends Phaser.Scene {
 
   setView(view: GameView | null, selected: number | null, enabled: boolean): void {
     const nextFrame = captureMotionFrame(view);
+    if (this.suspended) {
+      this.view = view;
+      this.motionFrame = nextFrame;
+      this.selected = null;
+      this.enabled = false;
+      return;
+    }
     if (this.mobile && this.ready && this.motionFrame?.signature === nextFrame?.signature &&
         this.view?.revision === view?.revision && this.selected === selected && this.enabled === enabled) {
       this.view = view;
@@ -1155,6 +1183,8 @@ export class ArenaBoard {
   whenEffectsComplete(): Promise<void> {
     return this.scene.whenEffectsComplete();
   }
+
+  setSuspended(suspended: boolean): void { this.scene.setSuspended(suspended); }
 
   setCombatOverlayBusy(busy: boolean): void {
     this.scene.setCombatOverlayBusy(busy);

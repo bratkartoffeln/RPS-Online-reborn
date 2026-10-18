@@ -1,0 +1,5 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <color name="rps_background">#14191D</color>
+    <color name="rps_accent">#C5F277</color>
+</resources>

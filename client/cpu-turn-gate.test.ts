@@ -54,3 +54,22 @@ test('muted audio and restored turns release without a new audible announcement'
   await flush();
   assert.equal(sent, 1);
 });
+
+test('an interrupted Android presentation cannot release a CPU turn in the background or strand its restored turn', async () => {
+  const gate = new CpuTurnGate(), motion = deferred();
+  let sent = 0;
+  const release = () => { sent++; return true; };
+  gate.update('same-room:turn-3', false, () => motion.promise, release);
+  await flush();
+  // Lifecycle cancels the gate before board/audio completion promises settle.
+  gate.update(null, false, async () => {}, () => false);
+  motion.resolve();
+  await flush();
+  assert.equal(sent, 0);
+  gate.update('same-room:turn-3', false, async () => {}, release);
+  await flush();
+  assert.equal(sent, 1);
+  gate.update('same-room:turn-3', false, async () => {}, release);
+  await flush();
+  assert.equal(sent, 1);
+});

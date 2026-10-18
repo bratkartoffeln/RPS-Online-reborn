@@ -2,6 +2,10 @@ import { Client, CloseCode, ErrorCode, MatchMakeError, ServerError, type Room } 
 import { SERVER_SHUTDOWN_MESSAGE as SHUTDOWN_MESSAGE, type Snapshot, type Problem, type ServerShutdown, type ChatState, type ChatProblem } from '../shared/protocol';
 import type { SeriesMode } from '../shared/game';
 import type { CpuDifficulty } from '../shared/cpu';
+import { isNativeApp, normalizeNativeServerUrl, serverEndpoint } from './server-config';
+import { ReconnectStore } from './session-store';
+export { readSession, writeSession } from './session-store';
+export { roomCodeFrom } from './server-config';
 
 export type NetworkStatus = 'idle' | 'connecting' | 'connected' | 'reconnecting' | 'disconnected' | 'ended';
 export type SessionEnd = { reason: 'server_shutdown' | 'session_expired'; message: string };
@@ -14,20 +18,7 @@ type Callbacks = {
   onChatProblem?: (problem: ChatProblem) => void;
 };
 
-const SESSION_PREFIX = 'rps-arena:reconnect:';
 const EXPIRED_MESSAGE = 'Dieser Raum oder deine gespeicherte Sitzung ist nicht mehr verfügbar. Die vorige Partie lässt sich nicht fortsetzen. Du kannst eine neue Partie erstellen oder mit einem neuen Link beitreten.';
-
-export function readSession(key: string): string | null {
-  try { return sessionStorage.getItem(key); } catch { return null; }
-}
-
-export function writeSession(key: string, value: string): void {
-  try { sessionStorage.setItem(key, value); } catch { /* Play remains possible when browser storage is unavailable. */ }
-}
-
-function removeSession(key: string): void {
-  try { sessionStorage.removeItem(key); } catch { /* Storage is optional. */ }
-}
 
 function isInvalidSession(error: unknown): boolean {
   if (error instanceof MatchMakeError || error instanceof ServerError) {
@@ -47,27 +38,6 @@ function isServerShutdown(error: unknown): boolean {
   return (error instanceof MatchMakeError || error instanceof ServerError) && error.code === CloseCode.SERVER_SHUTDOWN;
 }
 
-function serverEndpoint(): string {
-  if (import.meta.env?.VITE_SERVER_URL) return import.meta.env.VITE_SERVER_URL;
-  if (import.meta.env?.DEV) {
-    const endpoint = new URL(window.location.href);
-    endpoint.port = '2567';
-    return endpoint.origin;
-  }
-  return window.location.origin;
-}
-
-export function roomCodeFrom(input: string): string {
-  const value = input.trim();
-  if (!value) return '';
-  if (/^[A-Za-z0-9_-]{3,64}$/.test(value)) return value;
-  try {
-    const url = new URL(value, window.location.origin);
-    const room = url.searchParams.get('room')?.trim() ?? '';
-    return /^[A-Za-z0-9_-]{3,64}$/.test(room) ? room : '';
-  } catch { return ''; }
-}
-
 export function friendlyError(error: unknown): string {
   const raw = error instanceof Error ? error.message : typeof error === 'object' && error !== null && 'message' in error ? String(error.message) : String(error);
   if (/full|maxClients|locked/i.test(raw)) return 'Dieser Raum ist bereits belegt. Für eine Partie gibt es genau zwei Plätze.';
@@ -77,13 +47,74 @@ export function friendlyError(error: unknown): string {
 }
 
 export class RpsConnection {
-  private client = new Client(serverEndpoint());
+  private client: Client;
+  private sessions: ReconnectStore;
+  private native: boolean;
+  private endpointValue: string;
   private room: Room | null = null;
   private generation = 0;
   private status: NetworkStatus = 'idle';
   roomCode: string | null = null;
+  private syncTimeout: ReturnType<typeof setTimeout> | undefined;
+  private suspended = false;
 
-  constructor(private callbacks: Callbacks) {}
+  constructor(private callbacks: Callbacks, options: { native?: boolean; endpoint?: string } = {}) {
+    this.native = options.native ?? isNativeApp();
+    const endpoint = options.endpoint ?? serverEndpoint(this.native);
+    this.endpointValue = this.native ? normalizeNativeServerUrl(endpoint) : endpoint;
+    this.sessions = new ReconnectStore(this.endpointValue, this.native);
+    this.client = new Client(this.endpointValue);
+  }
+
+  get endpoint(): string { return this.endpointValue; }
+  savedRoomCode(): string | null { return this.sessions.lastRoom(); }
+
+  changeServer(endpoint: string): void {
+    if (!this.native || this.room || this.status === 'connecting' || this.status === 'reconnecting') {
+      throw new Error('Bitte den Raum zuerst verlassen, bevor du den Spielserver änderst.');
+    }
+    const normalized = normalizeNativeServerUrl(endpoint);
+    this.generation++;
+    this.endpointValue = normalized;
+    this.sessions = new ReconnectStore(normalized, true);
+    this.client = new Client(normalized);
+    this.roomCode = null;
+    this.clearSyncTimeout();
+    this.setStatus('idle');
+  }
+
+  setSuspended(suspended: boolean): void {
+    this.suspended = suspended;
+    if (suspended) this.clearSyncTimeout();
+  }
+
+  /** Resume the existing seat only. The SDK owns any retry already in progress. */
+  async refresh(): Promise<boolean> {
+    if (this.suspended || this.status === 'connecting' || this.status === 'reconnecting' || this.room?.reconnection.isReconnecting) return false;
+    if (this.room) {
+      if (this.status !== 'connected' || !this.room.connection.isOpen) return false;
+      const room = this.room, generation = this.generation;
+      this.clearSyncTimeout();
+      if (this.native) this.syncTimeout = setTimeout(() => {
+        this.syncTimeout = undefined;
+        if (this.suspended || generation !== this.generation || this.room !== room || room.reconnection.isReconnecting) return;
+        // Android can preserve a socket that no longer reaches the server. Close
+        // it with the SDK's reconnect code, never start a competing HTTP resume.
+        this.setStatus('reconnecting');
+        room.connection.close(CloseCode.MAY_TRY_RECONNECT, 'App resume sync timeout');
+      }, 8000);
+      room.send('sync');
+      return true;
+    }
+    if (this.status === 'ended') return false;
+    const code = this.roomCode ?? this.savedRoomCode();
+    return code ? this.resume(code) : false;
+  }
+
+  private clearSyncTimeout(): void {
+    clearTimeout(this.syncTimeout);
+    this.syncTimeout = undefined;
+  }
 
   private setStatus(status: NetworkStatus): void {
     this.status = status;
@@ -127,11 +158,15 @@ export class RpsConnection {
   }
 
   hasSavedSession(roomCode: string): boolean {
-    return !!readSession(SESSION_PREFIX + roomCode);
+    return !!this.sessions.token(roomCode);
   }
 
   async resume(roomCode: string): Promise<boolean> {
-    const token = readSession(SESSION_PREFIX + roomCode);
+    // Lifecycle, online and retry-button events may arrive together. Neither may
+    // compete with the SDK or consume the same one-use reconnect token twice.
+    if (this.status === 'connecting' || this.status === 'reconnecting' || this.room?.reconnection.isReconnecting) return false;
+    if (this.room && this.status === 'connected') return this.roomCode === roomCode;
+    const token = this.sessions.token(roomCode);
     if (!token) return false;
     const generation = ++this.generation;
     this.roomCode = roomCode;
@@ -153,13 +188,13 @@ export class RpsConnection {
   }
 
   send(message: string, data?: unknown): boolean {
-    if (!this.room || this.status !== 'connected') return false;
+    if (!this.room || this.status !== 'connected' || !this.room.connection.isOpen) return false;
     this.room.send(message, data);
     return true;
   }
 
   private saveToken(room: Room): void {
-    if (room.reconnectionToken) writeSession(SESSION_PREFIX + room.roomId, room.reconnectionToken);
+    if (room.reconnectionToken) this.sessions.save(room.roomId, room.reconnectionToken);
   }
 
   private attach(room: Room, generation: number): void {
@@ -171,6 +206,7 @@ export class RpsConnection {
 
     room.onMessage<Snapshot>('snapshot', (snapshot) => {
       if (!current()) return;
+      this.clearSyncTimeout();
       this.saveToken(room);
       this.callbacks.onSnapshot(snapshot);
     });
@@ -187,6 +223,7 @@ export class RpsConnection {
       if (current()) this.endSession('server_shutdown', shutdown?.message);
     });
     room.onDrop((code) => {
+      if (current()) this.clearSyncTimeout();
       if (current() && code === CloseCode.SERVER_SHUTDOWN) {
         this.endSession('server_shutdown');
         return;
@@ -206,6 +243,7 @@ export class RpsConnection {
     });
     room.onLeave((code) => {
       if (!current()) return;
+      this.clearSyncTimeout();
       if (code === CloseCode.SERVER_SHUTDOWN) {
         this.endSession('server_shutdown');
         return;
@@ -231,10 +269,11 @@ export class RpsConnection {
   }
 
   private endSession(reason: SessionEnd['reason'], message?: string): void {
+    this.clearSyncTimeout();
     const room = this.room;
     this.generation += 1;
     this.room = null;
-    if (this.roomCode) removeSession(SESSION_PREFIX + this.roomCode);
+    if (this.roomCode) this.sessions.forget(this.roomCode);
     this.roomCode = null;
     const fallback = reason === 'server_shutdown' ? SHUTDOWN_MESSAGE : EXPIRED_MESSAGE;
     const detail = typeof message === 'string' && message.trim() ? message.slice(0, 500) : fallback;
@@ -244,10 +283,11 @@ export class RpsConnection {
   }
 
   async leave(): Promise<void> {
+    this.clearSyncTimeout();
     const room = this.room;
     this.generation += 1;
     this.room = null;
-    if (this.roomCode) removeSession(SESSION_PREFIX + this.roomCode);
+    if (this.roomCode) this.sessions.forget(this.roomCode);
     this.roomCode = null;
     this.setStatus('idle');
     if (room) await this.closeRoom(room);
@@ -258,6 +298,21 @@ export class RpsConnection {
     // A retry may already have been scheduled before reconnect was disabled.
     room.onReconnect.once(() => { void room.leave(true).catch(() => {}); });
     // Waiting for leave() on a socket which is already closed never resolves.
-    if (room.connection.isOpen) await room.leave(true);
+    if (room.connection.isOpen) {
+      let timeout: ReturnType<typeof setTimeout> | undefined;
+      try {
+        // A foreground socket may still look open after Android discarded its
+        // network route. A user-confirmed leave must not strand the next game.
+        await Promise.race([
+          room.leave(true),
+          new Promise<void>(resolve => {
+            timeout = setTimeout(() => {
+              try { room.connection.close(CloseCode.CONSENTED, 'Left game'); } catch { /* It may have closed in the meantime. */ }
+              resolve();
+            }, 2000);
+          }),
+        ]);
+      } finally { clearTimeout(timeout); }
+    }
   }
 }

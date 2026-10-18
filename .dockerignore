@@ -9,3 +9,8 @@ dist
 .DS_Store
 skins
 secrets
+android
+*.apk
+*.aab
+*.jks
+*.keystore

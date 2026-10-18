@@ -11,5 +11,5 @@
     "resolveJsonModule": true,
     "types": ["vite/client", "node"]
   },
-  "include": ["client/**/*.ts", "shared/**/*.ts", "vite.config.ts", "tests/**/*.ts"]
+  "include": ["client/**/*.ts", "shared/**/*.ts", "vite.config.ts", "capacitor.config.ts", "tests/**/*.ts"]
 }
