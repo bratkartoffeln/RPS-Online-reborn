@@ -1,0 +1,55 @@
+.arena-toolbar { display: none; }
+.game-mode .arena-toolbar { display: flex; justify-content: flex-end; }
+.fullscreen-button { min-height: 40px; gap: 7px; }
+@media (max-height: 500px) {
+  :root:not(.game-fullscreen) .game-mode.compact-game .app-header { padding-block: 4px; margin-bottom: 6px; }
+}
+.game-fullscreen, .game-fullscreen body { overflow: hidden; }
+.game-fullscreen #shell.game-mode {
+  position: fixed;
+  inset: 0;
+  z-index: 100;
+  max-width: none;
+  width: 100%;
+  height: 100%;
+  margin: 0;
+  padding: calc(6px + var(--app-safe-top, env(safe-area-inset-top, 0px))) calc(8px + var(--app-safe-right, env(safe-area-inset-right, 0px))) calc(6px + var(--app-safe-bottom, env(safe-area-inset-bottom, 0px))) calc(8px + var(--app-safe-left, env(safe-area-inset-left, 0px)));
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  grid-template-rows: auto auto minmax(0, 1fr);
+  gap: 6px;
+  background: var(--bg);
+}
+.game-fullscreen #shell > .arena-toolbar { padding: 0; grid-row: 1; }
+.game-fullscreen #shell > .app-header { grid-row: 2; display: block; width: 100%; min-height: 0; padding: 0; margin: 0; border: 0; }
+.game-fullscreen #shell .header-arena { width: 100%; }
+.game-fullscreen #shell .header-right,
+.game-fullscreen #shell .brand,
+.game-fullscreen #shell > .intro-row,
+.game-fullscreen #shell > .notice,
+.game-fullscreen #shell > .footer,
+.game-fullscreen #shell #match-sidebar,
+.game-fullscreen #shell #room-chat { display: none; }
+.game-fullscreen #shell .arena-grid { grid-row: 3; display: grid; grid-template-columns: minmax(0, 1fr); grid-template-rows: auto minmax(0, 1fr); gap: 6px; min-height: 0; width: 100%; }
+.game-fullscreen #shell .phase-top-host { grid-row: 1; width: 100%; }
+.game-fullscreen #shell .play-panel { grid-row: 2; display: grid; align-items: center; width: 100%; height: 100%; min-height: 0; border: 0; box-shadow: none; background: transparent; }
+.game-fullscreen #shell .board-region { padding: 0; width: min(100%, calc(var(--board-max-height, 50dvh) * 680 / 616)); }
+.game-fullscreen #shell .phase-top-host .phase-card { height: auto; max-height: 130px; overflow-y: auto; padding-block: 6px; }
+.game-fullscreen #shell .phase-top-host h2 { height: auto; }
+.game-fullscreen #shell .phase-top-host .body-copy { display: none; }
+.game-fullscreen #shell .score-referee { height: 94px; }
+.game-fullscreen #shell .score-referee .referee-portrait { height: 60px; flex-basis: 60px; }
+.game-fullscreen #shell .header-arena .series-scores { grid-template-columns: minmax(0, 1fr) 112px minmax(0, 1fr); }
+.game-fullscreen #shell .score-referee .referee-portrait > * { transform: scale(1.4); }
+@media (min-aspect-ratio: 4/3) {
+  .game-fullscreen #shell.game-mode { grid-template-columns: minmax(0, 1fr) minmax(180px, 240px); grid-template-rows: auto minmax(0, 1fr) auto; gap: 8px; }
+  .game-fullscreen #shell > .arena-toolbar { grid-column: 2; }
+  .game-fullscreen #shell > .app-header { grid-column: 2; align-self: center; }
+  .game-fullscreen #shell .header-arena .series-scores { grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 4px 8px; }
+  .game-fullscreen #shell .score-referee { grid-column: 1 / -1; grid-row: 1; }
+  .game-fullscreen #shell .series-player { grid-row: 2; }
+  .game-fullscreen #shell .arena-grid { display: contents; }
+  .game-fullscreen #shell .play-panel { grid-column: 1; grid-row: 1 / 4; }
+  .game-fullscreen #shell .phase-top-host { grid-column: 2; grid-row: 3; min-height: 0; max-height: 40dvh; overflow-y: auto; }
+  .game-fullscreen #shell .phase-top-host .phase-card { max-height: none; }
+}

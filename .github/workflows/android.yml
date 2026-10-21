@@ -64,6 +64,7 @@ jobs:
       - run: npm run android:apk
       - run: npx playwright install --with-deps chromium
       - run: npm run check:android
+      - run: node scripts/check-fullscreen.mjs
       - name: Save test APK and SHA-256 checksum
         uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7
         with:

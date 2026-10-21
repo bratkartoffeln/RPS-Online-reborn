@@ -1,6 +1,8 @@
-export type IconName = 'rock' | 'paper' | 'scissors' | 'flag' | 'trap' | 'unknown' | 'arrow' | 'copy' | 'shuffle' | 'check' | 'close' | 'link' | 'info' | 'chevron' | 'refresh' | 'leave' | 'chat';
+export type IconName = 'rock' | 'paper' | 'scissors' | 'flag' | 'trap' | 'unknown' | 'arrow' | 'copy' | 'shuffle' | 'check' | 'close' | 'link' | 'info' | 'chevron' | 'refresh' | 'leave' | 'chat' | 'maximize' | 'minimize';
 
 const paths: Record<IconName, string> = {
+  maximize: '<path d="M8 3H3v5m13-5h5v5M3 16v5h5m13-5v5h-5"/>',
+  minimize: '<path d="M3 8h5V3m8 0v5h5M8 21v-5H3m18 0h-5v5"/>',
   chat: '<path d="M4 4h16v12H9l-5 4V4Z"/><path d="M8 8h8M8 12h5"/>',
   rock: '<path d="m8 4 9 1 4 7-5 8H7l-4-8 5-8Z"/><path d="m8 4 3 8 10 0M11 12l-4 8m4-8 5 8" opacity=".5"/>',
   paper: '<path d="M6 3h9l4 4v14H6V3Z"/><path d="M14 3v5h5M9 12h7m-7 4h7"/>',

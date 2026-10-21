@@ -78,6 +78,8 @@ Ein Unentschieden vergibt keinen Sieg. Eine weitere Partie oder eine neue Serie 
 
 Die Arena lässt sich mit Maus, Touch oder Tastatur bedienen. Mit den Pfeiltasten wählst du ein Feld, mit Enter oder Leertaste bestätigst du Figur und Ziel. Escape hebt die Auswahl auf.
 
+„Vollbild“ vergrößert Spielfeld, Schiedsrichter und Spielstand gemeinsam. Aufstellung, Duellauswahl und nächste Partie bleiben bedienbar. „Vollbild beenden“ oder Escape stellt die normale Ansicht wieder her; in der Android-App geht das auch mit der Zurück-Geste. Ein Klick auf eine Chat-Sprechblase beendet Vollbild und öffnet den Raumchat.
+
 Unter „Design“ stehen Klassisch, Arcade, ICQ Retro und ICQ Retro Dark zur Auswahl. Dort kannst du außerdem Animationen und Spielsounds einstellen. Deine Auswahl bleibt in deinem Browser gespeichert.
 
 ## Gemeinsam im Raum
