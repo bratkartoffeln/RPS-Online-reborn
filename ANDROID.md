@@ -8,7 +8,7 @@ Colyseus-Spielserver. App- und Browserspieler können dieselben Räume nutzen.
 
 ## Auf dem Handy testen
 
-1. Die Datei `RPS-Arena-0.4.34-debug.apk` auf dem Android-Gerät installieren.
+1. Die Datei `RPS-Arena-0.4.35-debug.apk` auf dem Android-Gerät installieren.
 2. RPS Arena über das App-Symbol öffnen. Android 7 oder neuer und eine aktuelle
    Android-WebView ab Version 107 sind erforderlich. Für ältere WebViews zeigt
    die App einen lokal mitgelieferten Aktualisierungshinweis.
@@ -83,6 +83,34 @@ Die Zurück-Geste schließt zunächst offene Dialoge oder Menüs. Während einer
 Partie erscheint die vorhandene Rückfrage zum Verlassen des Raums. Die Lobby
 kann in den Hintergrund wechseln. Spielernamen und wiederherstellbare Sitzungen
 bleiben innerhalb der App erhalten; Android-Backups für diese App sind deaktiviert.
+
+„Vollbild“ zeigt Spielfeld, Schiedsrichter, Spielstand und Spielaktionen zusammen
+und blendet die Android-Systemleisten aus. Hoch- und Querformat werden passend
+skaliert. „Vollbild beenden“ oder die Zurück-Geste stellt die normale Ansicht samt
+Systemleisten wieder her; offene Dialoge werden weiterhin zuerst geschlossen.
+
+## App aktualisieren
+
+Beim Start prüft die App den neuesten stabilen GitHub-Release dieses Repositorys.
+In der Lobby unter „App-Updates“ kannst du jederzeit erneut prüfen. Bei einer
+neueren Version mit passender APK erscheint „Update herunterladen“. Der Button
+öffnet den APK-Download im Android-Browser. Öffne anschließend die heruntergeladene
+Datei und bestätige die Installation; Android fragt gegebenenfalls zuerst nach
+der Erlaubnis, Apps aus dieser Quelle zu installieren. Die Installation und der
+Wechsel aus einer laufenden Partie werden nicht automatisch gestartet.
+
+Die Updatesuche benötigt Internetzugang zu `api.github.com`, der Download zu
+`github.com`. Fehler oder GitHub-Ratenlimits verhindern keine Partie. Entwürfe,
+Vorabversionen, ältere Versionen und Releases ohne passende APK werden ignoriert.
+Automatische Abfragen erfolgen höchstens einmal pro Stunde der laufenden App;
+der manuelle Button erlaubt einen erneuten Versuch.
+
+Android übernimmt die vorhandenen App-Daten nur bei gleichem Paketnamen und
+gleicher Signatur. Für zukünftige GitHub-Release-APKs deshalb denselben lokalen
+Debugschlüssel sicher aufbewahren (`%USERPROFILE%/.android/debug.keystore`);
+APK-Artefakte anderer CI-Läufe können anders signiert sein. Ein Wechsel von einer
+anders signierten Testversion erfordert einmalig eine Neuinstallation. Die App
+umgeht Androids Signaturprüfung nicht.
 
 ## Entwicklung und APK-Build
 

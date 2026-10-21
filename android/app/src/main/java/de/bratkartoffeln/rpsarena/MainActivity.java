@@ -10,6 +10,7 @@ import com.getcapacitor.BridgeActivity;
 public class MainActivity extends BridgeActivity {
     @Override
     protected void onCreate(Bundle savedInstanceState) {
+        registerPlugin(AppUpdatePlugin.class);
         SplashScreen.installSplashScreen(this);
         // Capacitor's SystemBars plugin handles display cutouts, the IME and CSS insets.
         // Enable the same edge-to-edge behavior on every supported Android version.

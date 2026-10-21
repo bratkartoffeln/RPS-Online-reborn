@@ -31,6 +31,9 @@ import { EndgameOverlay } from './endgame-ui';
 import { freshMatchStart, gongMarkup, preloadGongArtwork, GONG_TIMING } from './gong-ui';
 import './gong-ui.css';
 import './native-app.css';
+import './fullscreen.css';
+import { installFullscreen } from './fullscreen';
+import { AppUpdates } from './app-updates';
 import { invitationUrl, isNativeApp, nativeDefaultServer, normalizeNativeServerUrl, roomCodeForServer, saveNativeServer } from './server-config';
 import { copyText, installNativeLifecycle, minimizeNativeApp, nativeBackAction, shareInvitation } from './native-app';
 
@@ -44,6 +47,7 @@ const legalLinks = nativeApp
 const legalFooter = '<footer class="legal-footer">' + legalLinks + '</footer>';
 app.innerHTML = [
   '<div class="app-shell" id="shell">',
+  '<div class="arena-toolbar"><button type="button" class="secondary-button fullscreen-button" id="fullscreen-button" aria-pressed="false" aria-label="Spielfeld und Schiedsrichter im Vollbild anzeigen">' + icon('maximize') + 'Vollbild</button></div>',
   '<header class="app-header"><div class="header-arena"><a class="brand" href="' + esc(location.pathname) + '" aria-label="RPS Arena Startseite" data-action="home">',
   '<span class="brand-emblem" id="brand-emblem">' + icon('rock', '', 29) + '</span><span><span class="brand-title">RPS ARENA</span><span class="brand-tagline" style="display:block">Stein. Papier. Schere.</span></span></a>',
   '<section class="series-scoreboard" id="series-scoreboard" aria-label="Spielstand der Serie" aria-live="polite" aria-atomic="true" hidden></section></div><div class="header-right"><span class="header-note" id="header-note"><span class="status-dot"></span>PRIVATE PARTIEN</span><details class="appearance-menu" id="appearance-menu"><summary>Design ' + icon('chevron', '', 12) + '</summary><div class="appearance-panel"><label class="appearance-label" for="skin-select">Dein Design</label><select id="skin-select" aria-describedby="skin-status"><option value="classic">Klassisch</option></select><p class="appearance-status" id="skin-status" role="status">Grafiksets werden geladen …</p><label class="motion-option"><input id="animations-enabled" type="checkbox" checked />Animationen</label><p class="appearance-hint" id="motion-hint">Deine Auswahl gilt für diesen Browser.</p><label class="motion-option"><input id="sounds-enabled" type="checkbox" />Spielsounds</label><p class="appearance-hint">Designsounds und Schiedsrichter-Ansagen.</p></div></details><span class="version">v' + esc(__APP_VERSION__) + '</span></div></header>',
@@ -61,6 +65,7 @@ app.innerHTML = [
 ].join('');
 
 const el = <T extends HTMLElement = HTMLElement>(id: string) => document.getElementById(id) as T;
+el('shell').querySelector('.header-right')!.prepend(el('fullscreen-button').parentElement!);
 const phaseControls = el('phase-controls');
 const phaseSidebarHost = document.createElement('div');
 phaseSidebarHost.className = 'phase-sidebar-host';
@@ -455,9 +460,13 @@ el('sounds-enabled').addEventListener('change', () => {
 reducedMotion.addEventListener('change', updateMotion);
 compactLayout.addEventListener('change', render);
 window.addEventListener('resize', fitBoardToViewport);
+window.visualViewport?.addEventListener('resize', fitBoardToViewport);
+const fullscreen = installFullscreen(el<HTMLButtonElement>('fullscreen-button'), render);
+const appUpdates = new AppUpdates(__APP_VERSION__, () => { if (!view) render(); });
 const layoutObserver = new ResizeObserver(fitBoardToViewport);
 layoutObserver.observe(el('shell').querySelector<HTMLElement>('.app-header')!);
 layoutObserver.observe(phaseControls);
+layoutObserver.observe(el('shell').querySelector<HTMLElement>('.play-panel')!);
 document.addEventListener('pointerdown', (event) => {
   void sounds.unlock();
   if (!(event.target instanceof Node) || el('appearance-menu').contains(event.target)) return;
@@ -571,7 +580,7 @@ function lobbyMarkup(): string {
     '<button class="' + (inputRoom ? 'primary-button' : 'secondary-button') + ' full-width action-button" type="submit" id="join-button"' + disabled + '>' + (busy ? '<span class="spinner" aria-hidden="true"></span> Verbinde …' : icon('link', '', 16) + 'Raum beitreten') + '</button></form></div>',
     '<p class="trust-note">' + icon('check', '', 13) + 'Danach stellst du dein Team auf. Wenn beide bereit sind, beginnt die Partie.</p>',
     '<div class="lobby-notice" role="alert"' + (!notice ? ' hidden' : '') + '>' + esc(notice) + '</div><details class="lobby-rules" id="lobby-rules"><summary>So wird gespielt</summary>' + rulesCard() + '</details>' + lobbyDesigns() +
-      (nativeApp ? '<section class="native-server"><button type="button" class="secondary-button" data-action="server-settings"' + disabled + '>Spielserver ändern</button><small>' + esc(connection.endpoint) + '</small></section>' : '') + legalFooter + '</section>',
+      (nativeApp ? '<section class="native-server"><button type="button" class="secondary-button" data-action="server-settings"' + disabled + '>Spielserver ändern</button><small>' + esc(connection.endpoint) + '</small></section>' + appUpdates.markup() : '') + legalFooter + '</section>',
   ].join('');
 }
 
@@ -611,8 +620,12 @@ function hideChatNotice(): void {
 function fitBoardToViewport(): void {
   if (!view) return;
   const top = el('board').getBoundingClientRect().top + window.scrollY;
-  const available = Math.max(120, Math.floor(window.innerHeight - top - 14));
   const shell = el('shell');
+  const panel = shell.querySelector<HTMLElement>('.play-panel')!;
+  const available = fullscreen.active
+    ? Math.max(1, Math.floor(Math.min(panel.clientHeight,
+      window.innerHeight - panel.getBoundingClientRect().top - parseFloat(getComputedStyle(shell).paddingBottom))))
+    : Math.max(120, Math.floor(window.innerHeight - top - 14));
   if (shell.style.getPropertyValue('--board-max-height') !== available + 'px') {
     shell.style.setProperty('--board-max-height', available + 'px');
   }
@@ -662,7 +675,7 @@ function refereeMarkup(size: number): string {
 function phaseSection(label: string, title: string, copy: string, controls = '', classes = ''): string {
   const color = phaseTeamColor();
   const referee = view ? refereeMarkup(180) : '';
-  const showTurnWithReferee = !compactLayout.matches && referee.includes('class="referee-portrait"') && view?.phase === 'playing' && !view.paused && networkStatus === 'connected';
+  const showTurnWithReferee = !compactLayout.matches && !fullscreen.active && referee.includes('class="referee-portrait"') && view?.phase === 'playing' && !view.paused && networkStatus === 'connected';
   const heading = showTurnWithReferee
     ? '<h2 class="phase-referee-turn" aria-label="' + esc(title) + '">' + referee + '</h2>'
     : '<h2>' + esc(title) + '</h2>' + (referee ? '<div class="phase-referee">' + referee + '</div>' : '');
@@ -775,7 +788,8 @@ function render(): void {
   const historyOpen = el('sidebar').querySelector<HTMLDetailsElement>('.history-details')?.open;
   el('shell').classList.toggle('game-mode', !!view);
   el('shell').classList.toggle('lobby-mode', !view);
-  el('shell').classList.toggle('compact-game', !!view && compactLayout.matches);
+  const compact = compactLayout.matches || fullscreen.active;
+  el('shell').classList.toggle('compact-game', !!view && compact);
   el('shell').classList.toggle('active-match', !!view && (view.phase === 'playing' || view.phase === 'duel'));
   el('match-sidebar').hidden = !view;
   el('shell').querySelector<HTMLElement>('.app-header')!.inert = !view;
@@ -784,9 +798,9 @@ function render(): void {
   el('lobby-overlay').hidden = !!view;
   el('board').inert = !view;
   const topHost = el('phase-top-host');
-  topHost.hidden = !view || !compactLayout.matches;
-  phaseSidebarHost.hidden = !view || compactLayout.matches;
-  const phaseHost = compactLayout.matches ? topHost : phaseSidebarHost;
+  topHost.hidden = !view || !compact;
+  phaseSidebarHost.hidden = !view || compact;
+  const phaseHost = compact ? topHost : phaseSidebarHost;
   if (phaseControls.parentElement !== phaseHost) phaseHost.append(phaseControls);
   replaceMarkup(phaseControls, view ? phaseCard() : '');
   replaceMarkup(el('sidebar'), view ? gameMarkup() : '');
@@ -1021,6 +1035,7 @@ function closeModal(): void {
 }
 
 async function leaveRoom(): Promise<void> {
+  await fullscreen.exit();
   view = null;
   cancelStartCue();
   cancelReferee();
@@ -1111,9 +1126,11 @@ app.addEventListener('click', (event) => {
   if (action === 'server-settings') showServerSettings();
   if (action === 'server-default') el<HTMLInputElement>('server-url').value = nativeDefaultServer();
   if (action === 'choose-skin' && button.dataset.skin) void chooseSkin(button.dataset.skin);
+  if (action === 'check-update' && nativeApp) void appUpdates.check(true);
+  if (action === 'download-update' && nativeApp) void appUpdates.open().catch(() => toast('Der Update-Download konnte nicht geöffnet werden. Bitte erneut versuchen.', true));
   if (action === 'dismiss-chat') {
     hideChatNotice();
-    scrollToGameElement('room-chat');
+    void fullscreen.exit().then(() => scrollToGameElement('room-chat'));
   }
   if (action === 'back-to-board') scrollToGameElement('board');
   if (action === 'copy') void copyInvitation();
@@ -1187,6 +1204,7 @@ async function refreshNativeConnection(): Promise<void> {
 }
 
 function nativeActivityChanged(active: boolean): void {
+  if (active) void appUpdates.check();
   appActive = active;
   document.documentElement.dataset.appActive = String(active);
   connection.setSuspended(!active);
@@ -1220,6 +1238,7 @@ function nativeActivityChanged(active: boolean): void {
 }
 
 function handleNativeBack(): void {
+  if (fullscreen.active && !el('modal-root').firstElementChild) { void fullscreen.exit(); return; }
   const action = nativeBackAction({
     modal: !!el('modal-root').firstElementChild,
     menu: el<HTMLDetailsElement>('appearance-menu').open,
@@ -1238,3 +1257,4 @@ function handleNativeBack(): void {
 void installNativeLifecycle({ onActive: nativeActivityChanged, onBack: handleNativeBack, onOnline: () => { void refreshNativeConnection(); } }).catch(() => {
   if (nativeApp) toast('Android-Systemfunktionen konnten nicht vollständig gestartet werden.', true);
 });
+if (nativeApp) void appUpdates.check();

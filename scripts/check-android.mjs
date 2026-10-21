@@ -151,7 +151,7 @@ function initializeBrowser({ native, endpoint, allowedSockets }) {
   }
   const listeners = new Map();
   const qa = window.__androidQA = {
-    clipboard: [], shares: [], calls: [], minimized: 0, active: true,
+    clipboard: [], shares: [], downloads: [], calls: [], minimized: 0, active: true,
     emit(eventName, value = {}) {
       if (eventName === 'appStateChange') qa.active = value.isActive;
       for (const listener of listeners.values()) {
@@ -166,9 +166,13 @@ function initializeBrowser({ native, endpoint, allowedSockets }) {
       { name: 'App', methods: methods(['addListener', 'removeListener', 'getState', 'minimizeApp']) },
       { name: 'Clipboard', methods: methods(['write']) },
       { name: 'Share', methods: methods(['canShare', 'share']) },
+      { name: 'SystemBars', methods: methods(['hide', 'show']) },
+      { name: 'AppUpdate', methods: methods(['openDownload']) },
     ],
     async nativePromise(plugin, method, options = {}) {
       qa.calls.push(`${plugin}.${method}`);
+      if (plugin === 'SystemBars' && ['hide', 'show'].includes(method)) return {};
+      if (plugin === 'AppUpdate' && method === 'openDownload') { qa.downloads.push(options.url); return {}; }
       if (plugin === 'App' && method === 'getState') return { isActive: qa.active };
       if (plugin === 'App' && method === 'minimizeApp') { qa.minimized++; return {}; }
       if (plugin === 'App' && method === 'removeListener') { listeners.delete(options.callbackId); return {}; }
@@ -188,7 +192,7 @@ function initializeBrowser({ native, endpoint, allowedSockets }) {
 }
 
 async function createPage(native) {
-  const state = { offline: false };
+  const state = { offline: false, updateMode: 'missing' };
   const context = await browser.newContext({
     viewport: native ? { width: 412, height: 915 } : { width: 1280, height: 960 },
     isMobile: native, hasTouch: native, reducedMotion: 'reduce',
@@ -259,6 +263,16 @@ async function createPage(native) {
   await context.route('**/*', async route => {
     const request = route.request();
     const url = new URL(request.url());
+    if (native && url.href === 'https://api.github.com/repos/bratkartoffeln/RPS-Online-reborn/releases/latest') {
+      // Explicitly simulate the release service; the test never contacts GitHub.
+      const entry = pending.get(request);
+      if (entry) entry.mockUpdateService = true;
+      const filename = 'RPS-Arena-999.0.0-debug.apk';
+      await route.fulfill({ status: state.updateMode === 'error' ? 503 : state.updateMode === 'missing' ? 404 : 200,
+        contentType: 'application/json', body: JSON.stringify({ draft: false, prerelease: false, tag_name: 'v999.0.0',
+          assets: [{ name: filename, size: 1234, browser_download_url: 'https://github.com/bratkartoffeln/RPS-Online-reborn/releases/download/v999.0.0/' + filename }] }) });
+      return;
+    }
     if (native && url.origin === assetOrigin) {
       const relative = decodeURIComponent(url.pathname === '/' ? '/index.html' : url.pathname);
       const filename = path.resolve(bundle, '.' + relative);
@@ -387,6 +401,19 @@ async function run() {
   assert.equal(await app.locator('html').getAttribute('data-native'), 'true');
   assert.equal(await opponent.locator('html').getAttribute('data-native'), null);
   assert.equal(await app.locator('.native-server small').textContent(), apiOrigin);
+  log('Updatesuche, Fehlerwiederholung und ausdrücklich gestarteter APK-Download');
+  await app.locator('#check-update').waitFor({ state: 'visible' });
+  await app.waitForFunction(() => !document.querySelector('#check-update').disabled);
+  native.state.updateMode = 'error';
+  await app.locator('#check-update').click();
+  await app.waitForFunction(() => document.querySelector('.native-updates').textContent.includes('nicht erreichbar'));
+  native.state.updateMode = 'available';
+  await app.locator('#check-update').click();
+  await app.locator('#download-update').waitFor();
+  assert.equal(await app.evaluate(() => window.__androidQA.downloads.length), 0);
+  await app.locator('#download-update').click();
+  await app.waitForFunction(() => window.__androidQA.downloads.length === 1);
+  assert.match(await app.evaluate(() => window.__androidQA.downloads[0]), /\/releases\/download\/v999\.0\.0\/RPS-Arena-999\.0\.0-debug\.apk$/);
   await app.locator('#player-name').fill('Android Test');
   await changeSkins(app);
   assert.equal(await app.locator('#player-name').inputValue(), 'Android Test');
@@ -415,10 +442,13 @@ async function run() {
   await sendChat(opponent, app, 'Antwort aus dem Browser.');
 
   log('Aufstellung, bestätigter Spielzug und Wiederaufnahme nach App-Wechsel');
+  await app.locator('#fullscreen-button').click();
   await app.locator('#ready-button').click();
   await opponent.locator('#ready-button').click();
   await Promise.all([waitTurn(app, 1), waitTurn(opponent, 1)]);
   await makeFirstMove(app);
+  assert.equal(await app.locator('#fullscreen-button').getAttribute('aria-pressed'), 'true');
+  await app.locator('#fullscreen-button').click();
   await Promise.all([waitTurn(app, 2), waitTurn(opponent, 2)]);
   assert.match(await opponent.locator('.phase-card h2').evaluate(heading => heading.getAttribute('aria-label') || heading.textContent), /Du bist am Zug/);
   assert.deepEqual(await app.locator('.move-log').first().locator('li').allTextContents(),
@@ -470,6 +500,14 @@ async function run() {
   assert.equal((await app.locator('.room-code').textContent()).trim(), code);
 
   log('Zurück-Ereignis schützt die Partie; Lobby und Grafiksets ohne Spielserver');
+  await app.locator('#fullscreen-button').click();
+  await app.waitForFunction(() => window.__androidQA.calls.includes('SystemBars.hide'));
+  assert.equal(await app.locator('#fullscreen-button').getAttribute('aria-pressed'), 'true');
+  assert.ok(await app.locator('.score-referee').isVisible(), 'Fullscreen includes the referee');
+  await app.evaluate(() => window.__androidQA.emit('backButton'));
+  await app.waitForFunction(() => !document.documentElement.classList.contains('game-fullscreen'));
+  assert.ok(await app.evaluate(() => window.__androidQA.calls.includes('SystemBars.show')));
+  assert.equal(await app.locator('#modal-title').count(), 0, 'Back from fullscreen must keep the room');
   await app.evaluate(() => window.__androidQA.emit('backButton'));
   await app.locator('#modal-title').waitFor();
   assert.match(await app.locator('#modal-title').textContent(), /Zur Lobby zurück/);
@@ -506,7 +544,7 @@ async function run() {
   assert.ok(androidRequests.some(entry => entry.expectedOffline), 'Offline API failure was not exercised');
   assert.deepEqual(unexpected, [], 'A request escaped the local origins');
   assert.deepEqual(pageErrors, [], 'Uncaught browser exceptions');
-  assert.deepEqual(requests.filter(entry => entry.status >= 400 || (entry.failure && !entry.expectedOffline && !entry.failure.includes('ERR_ABORTED'))), [],
+  assert.deepEqual(requests.filter(entry => !entry.mockUpdateService && (entry.status >= 400 || (entry.failure && !entry.expectedOffline && !entry.failure.includes('ERR_ABORTED')))), [],
     'A bundled resource or real local server request failed');
   assert.ok(sockets.some(entry => entry.client === 'android' && entry.sent >= 5 && entry.received >= 5));
   assert.ok(sockets.some(entry => entry.client === 'browser' && entry.sent >= 3 && entry.received >= 3));

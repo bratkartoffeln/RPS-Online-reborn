@@ -1,5 +1,11 @@
 # Änderungen
 
+## 0.4.35
+
+- Android-App prüft beim Start auf neuere stabile GitHub-Releases; manuelle Suche mit Fehleranzeige und APK-Download in der Lobby. Android bestätigt die Installation; Signaturkontinuität und Datenübernahme sind dokumentiert.
+- Vollbildbutton für Spielfeld, Schiedsrichter und Spielstand; Spielaktionen, Duelle und Ergebnisanzeige bleiben erreichbar. Passende Skalierung in Hoch- und Querformat für alle vier Designs, auch ohne Browser-Vollbildunterstützung.
+- Android-Vollbild blendet die Systemleisten aus. Button, Escape und Zurück-Geste beenden Vollbild; Chat-Sprechblasen führen zurück zum Raumchat. Die Android-Test-APK verwendet ebenfalls die gemeinsame Projektversion.
+
 ## 0.4.34
 
 - Android-App mit Capacitor 8: Spielclient, alle vier Grafiksets und Sounds lokal mitgeliefert; Partien und Chat verbinden sich mit dem bestehenden Colyseus-Server. Eigener Android-Build ohne Überschreiben des Webbundles.

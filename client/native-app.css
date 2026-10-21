@@ -36,6 +36,10 @@
 .native-server button { min-height: 44px; width: 100%; }
 .native-server small { display: block; color: var(--muted); overflow-wrap: anywhere; text-align: center; margin-top: 8px; line-height: 1.5; }
 .native-server-error { color: var(--orange); }
+.native-updates { margin-top: 20px; padding-top: 16px; border-top: 1px solid var(--line); }
+.native-updates h2 { font-size: 14px; }
+.native-updates p, .native-updates small { display: block; margin-top: 10px; font-size: 12px; line-height: 1.5; color: var(--muted); }
+.native-updates button { width: 100%; min-height: 44px; margin-top: 10px; }
 .native-server-form .field { margin-top: 16px; }
 .native-server-form .button-row { margin-top: 18px; }
 .native-server-reset { margin-top: 12px; min-height: 44px; width: 100%; }
