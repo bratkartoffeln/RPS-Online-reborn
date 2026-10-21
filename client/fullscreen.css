@@ -32,7 +32,7 @@
 .game-fullscreen #shell #room-chat { display: none; }
 .game-fullscreen #shell .arena-grid { grid-row: 3; display: grid; grid-template-columns: minmax(0, 1fr); grid-template-rows: auto minmax(0, 1fr); gap: 6px; min-height: 0; width: 100%; }
 .game-fullscreen #shell .phase-top-host { grid-row: 1; width: 100%; }
-.game-fullscreen #shell .play-panel { grid-row: 2; display: grid; align-items: center; width: 100%; height: 100%; min-height: 0; border: 0; box-shadow: none; background: transparent; }
+.game-fullscreen #shell .play-panel { grid-row: 2; display: grid; align-items: center; align-self: stretch; width: 100%; height: auto; min-height: 0; border: 0; box-shadow: none; background: transparent; }
 .game-fullscreen #shell .board-region { padding: 0; width: min(100%, calc(var(--board-max-height, 50dvh) * 680 / 616)); }
 .game-fullscreen #shell .phase-top-host .phase-card { height: auto; max-height: 130px; overflow-y: auto; padding-block: 6px; }
 .game-fullscreen #shell .phase-top-host h2 { height: auto; }

@@ -620,10 +620,12 @@ function hideChatNotice(): void {
 function fitBoardToViewport(): void {
   if (!view) return;
   const top = el('board').getBoundingClientRect().top + window.scrollY;
-  const available = fullscreen.active
-    ? Math.max(1, Math.floor(el('shell').querySelector<HTMLElement>('.play-panel')!.clientHeight))
-    : Math.max(120, Math.floor(window.innerHeight - top - 14));
   const shell = el('shell');
+  const panel = shell.querySelector<HTMLElement>('.play-panel')!;
+  const available = fullscreen.active
+    ? Math.max(1, Math.floor(Math.min(panel.clientHeight,
+      window.innerHeight - panel.getBoundingClientRect().top - parseFloat(getComputedStyle(shell).paddingBottom))))
+    : Math.max(120, Math.floor(window.innerHeight - top - 14));
   if (shell.style.getPropertyValue('--board-max-height') !== available + 'px') {
     shell.style.setProperty('--board-max-height', available + 'px');
   }
